@@ -1,0 +1,3 @@
+[submodule "external/Easy3DViewer"]
+	path = external/Easy3DViewer
+	url = git@github.com:changhaonan/Easy3DViewer.git
