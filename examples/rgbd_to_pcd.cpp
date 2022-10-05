@@ -10,9 +10,11 @@
  */
 // #include <argparse/argparse.hpp>
 #include <iostream>
+#include <Eigen/Core>
 
 int main(int argc, char **argv)
 {
-    printf("Hello World!\n");
+    auto M = Eigen::Matrix3d::Random();
+    std::cout << M << std::endl;
     return 0;
 }
