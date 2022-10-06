@@ -1,0 +1,44 @@
+{
+  "model_path": "C:/Users/50367/source/repos/StarCore/Star/test_data/models",
+  "start_frame": 20,
+  "num_frames": 30,
+  "step_frame": 1,
+  "use_gaussian_filter": false,
+  "tsdf_width": 200,
+  "tsdf_height": 400,
+  "tsdf_depth": 500,
+  "tsdf_voxel_size": 0.005,
+  "tsdf_origin": [
+    -0.5,
+    -1.2,
+    0
+  ],
+  "node_radius": 0.030,
+  "surfel_radius_scale": 0.8,
+  "enable_semantic_surfel": true,
+  "geometry_update_counter": 10,
+  "opticalflow_suppress_threshold": 0.0,
+  "measure_mode": "offline",
+  "segmentation_mode": "segmentor",
+  "opticalflow_mode": "gma",
+  "optimization_mode": "warp_field",
+  "nodeflow_mode": "gcn",
+  "dynamic_geometry_mode": "r_star",
+  "monitor_mode": "r_star",
+  "monitor_save_counter": 10,
+  "nn_device": "cuda:0",
+  "semantic_prior": {
+    "people": {
+      "label": 0,
+      "rigidness": 0.5
+    },
+    "table": {
+      "label": 1,
+      "rigidness": 1.0
+    },
+    "play_thing": {
+      "label": 14,
+      "rigidness": 0.5
+    }
+  }
+}

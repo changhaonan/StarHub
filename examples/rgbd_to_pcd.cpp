@@ -8,7 +8,6 @@
  * @copyright Copyright (c) 2022
  * 
  */
-// #include <star/common/common_types.h>
 #include <Eigen/Eigen>
 #include <iostream>
 // using namespace star;
