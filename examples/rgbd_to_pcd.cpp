@@ -8,13 +8,14 @@
  * @copyright Copyright (c) 2022
  * 
  */
-// #include <argparse/argparse.hpp>
+// #include <star/common/common_types.h>
+#include <Eigen/Eigen>
 #include <iostream>
-#include <Eigen/Core>
+// using namespace star;
 
 int main(int argc, char **argv)
 {
-    auto M = Eigen::Matrix3d::Random();
+    auto M = Eigen::Matrix4f::Identity();
     std::cout << M << std::endl;
     return 0;
 }

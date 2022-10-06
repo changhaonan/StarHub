@@ -1,0 +1,6 @@
+file(GLOB IO_SRC *.h *.hpp *.cpp)
+source_group("src" FILES ${IO_SRC})
+add_library(star_io_lib SHARED ${IO_SRC})
+target_link_libraries(star_io_lib ${OpenCV_LIBRARIES})
+target_link_libraries(star_io_lib ${PCL_COMMON_LIBRARIES})
+target_link_libraries(star_io_lib ${Boost_FILESYSTEM_LIBRARY})
