@@ -38,8 +38,8 @@
 #include "convenience.cuh"
 #include "safe_call.hpp"
 
-#include "cuda_runtime_api.h"
-#include "assert.h"
+#include <cuda_runtime_api.h>
+#include <assert.h>
 
 //////////////////////////    XADD    ///////////////////////////////
 

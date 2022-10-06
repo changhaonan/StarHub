@@ -17,7 +17,15 @@ include_directories(${EIGEN_INCLUDE_DIR})
 find_package(Boost)
 include_directories(${Boost_INCLUDE_DIRS})
 
+# Include
+include_directories("${CMAKE_SOURCE_DIR}/libs")
+
 # subdirectories
 add_subdirectory(external)
 
+# Libraries
+add_subdirectory(libs/star)
+
 add_executable(rgbd_to_pcd examples/rgbd_to_pcd.cpp)
+add_executable(compile_test examples/compile_test.cu)
+target_link_libraries(compile_test star_common_lib)

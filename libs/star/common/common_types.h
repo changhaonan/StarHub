@@ -1,22 +1,32 @@
+/**
+ * @file compile_test.cu
+ * @author Haonan Chang (chnme40cs@gmail.com)
+ * @brief This file is used to provide the declare the widely types
+ * @version 0.1
+ * @date 2022-10-06
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #pragma once
-#include <common/containers/device_array.hpp>
-#include <common/containers/kernel_containers.hpp>
-#include <common/containers/safe_call.hpp>
-#include "common/types/typeX.h"
+#include <star/common/containers/device_array.hpp>
+#include <star/common/containers/kernel_containers.hpp>
+#include <star/common/containers/safe_call.hpp>
+#include <star/common/types/typeX.h>
 
-//Do not use cuda on Eigen
+// Do not use cuda on Eigen
 #ifndef EIGEN_NO_CUDA
 #define EIGEN_NO_CUDA
 #endif
 #include <Eigen/Eigen>
 
-//Cuda types
+// Cuda types
 #include <vector_functions.h>
 #include <vector>
 
-
 namespace star {
-	//Access of common Eigen types
+
+	// Access of common Eigen types
 	using Matrix3f = Eigen::Matrix3f;
 	using Vector3f = Eigen::Vector3f;
 	using Matrix4f = Eigen::Matrix4f;
@@ -30,13 +40,13 @@ namespace star {
 	/* Types for host and device accessed gpu containers
 	*/
 	template<typename T>
-	using DeviceArray = DeviceArrayPCL<T>;
+	using GArray = DeviceArrayPCL<T>;
 
 	template<typename T>
-	using DeviceArray2D = DeviceArray2DPCL<T>;
+	using GArray2D = DeviceArray2DPCL<T>;
 
 	namespace device {
-		//Types for device accessed gpu containers
+		// Types for device accessed gpu containers
 		template<typename T>
 		using DevicePtr = DevPtr<T>;
 
@@ -68,12 +78,12 @@ namespace star {
 		) : principal_x(principal_x_), principal_y(principal_y_),
 			focal_x(focal_x_), focal_y(focal_y_) {}
 		
-		//Cast to float4
+		// Cast to float4
 		__host__ operator float4() {
 			return make_float4(principal_x, principal_y, focal_x, focal_y);
 		}
 
-        //Sacle
+        // Sacle
         __host__ __device__ Intrinsic scale(const float scale_) const {
             return Intrinsic(
                 focal_x * scale_, focal_y * scale_, principal_x * scale_, principal_y * scale_
@@ -96,21 +106,21 @@ namespace star {
 		float inv_focal_x, inv_focal_y;
 	};
 
-	//The texture collection of a given array
+	// The texture collection of a given array
 	struct CudaTextureSurface {
 		cudaTextureObject_t texture;
 		cudaSurfaceObject_t surface;
 		cudaArray_t d_array;
 	};
 
-	//The divUp function provided by pcl
+	// The divUp function provided by pcl
 	using pcl::gpu::divUp;
 
-	//The frame peroid for many usages
+	// The frame peroid for many usages
 	struct FramePeriods {
 		std::vector<int> start_frames; //included
 		std::vector<int> end_frames; //included
 		size_t size() const { return start_frames.size(); }
 	};
 	
-}//End of namespace star
+}
