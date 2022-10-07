@@ -117,7 +117,7 @@ namespace star
 		LogMessageFatal &operator=(LogMessageFatal &) = delete;
 
 		// Die the whole system
-		~LogMessageFatal()
+		~LogMessageFatal() noexcept(false)
 		{
 			LOG_BEFORE_THROW << log_stream_.str();
 			throw new std::runtime_error(log_stream_.str());

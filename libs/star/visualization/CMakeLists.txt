@@ -1,0 +1,5 @@
+file(GLOB VISUALIZATION_SRC *.h *.hpp *.cuh *.cpp *.cu)
+source_group("src" FILES ${VISUALIZATION_SRC})
+add_library(star_visualization_lib SHARED ${VISUALIZATION_SRC})
+set_target_properties(star_visualization_lib PROPERTIES LINKER_LANGUAGE CUDA)
+target_link_libraries(star_visualization_lib star_common_lib)

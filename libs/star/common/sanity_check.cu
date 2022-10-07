@@ -564,7 +564,7 @@ void star::residualVectorStatistic(const std::vector<float> &residual_in, int to
 	output << "The top " << topk << " residual is";
 	for (auto i = 0; i < topk; i++)
 	{
-		auto idx = sorted_residual_vec.size() - 1 - i;
+		int idx = sorted_residual_vec.size() - 1 - i;
 		if (idx >= 0 && idx < sorted_residual_vec.size())
 		{
 			output << " " << sorted_residual_vec[idx];

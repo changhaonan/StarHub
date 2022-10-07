@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.24)
 
 # CUDA architecture
 if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
