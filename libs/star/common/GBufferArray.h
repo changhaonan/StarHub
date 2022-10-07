@@ -2,10 +2,10 @@
 #include <star/common/logging.h>
 #include <star/common/ArrayView.h>
 #include <star/common/ArraySlice.h>
+#include <star/common/common_types.h>
 
 namespace star
 {
-
 	template <typename T>
 	class GBufferArray
 	{

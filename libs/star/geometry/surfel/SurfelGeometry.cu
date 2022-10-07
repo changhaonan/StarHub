@@ -105,9 +105,6 @@ star::SurfelGeometry::GeometryAttributes star::SurfelGeometry::Geometry()
 	geometry_attributes.live_vertex_confid = m_live_vertex_confid.Slice();
 	geometry_attributes.live_normal_radius = m_live_normal_radius.Slice();
 	geometry_attributes.color_time = m_color_time.Slice();
-	// if (m_semantic_prob) {
-	//	geometry_attributes.semantic_prob = m_semantic_prob->ArraySlice();
-	// }
 	geometry_attributes.semantic_prob = m_semantic_prob.Slice();
 	return geometry_attributes;
 }
