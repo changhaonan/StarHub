@@ -1,4 +1,7 @@
-file(GLOB COMMON_SRC *.h *.hpp *.cuh *.cpp *.cu containers/*.hpp containers/*.cuh containers/*.cpp containers/*.cu)
+file(GLOB COMMON_SRC 
+    *.h *.hpp *.cuh *.cpp *.cu 
+    containers/*.hpp containers/*.cuh containers/*.cpp containers/*.cu
+    types/*.h)
 source_group("src" FILES ${COMMON_SRC})
 add_library(star_common_lib SHARED ${COMMON_SRC})
 set_target_properties(star_common_lib PROPERTIES LINKER_LANGUAGE CUDA)
