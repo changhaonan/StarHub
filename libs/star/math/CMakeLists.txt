@@ -1,0 +1,5 @@
+file(GLOB MATH_SRC *.h *.hpp *.cuh *.cpp *.cu)
+source_group("src" FILES ${MATH_SRC})
+add_library(star_math_lib SHARED ${MATH_SRC})
+set_target_properties(star_math_lib PROPERTIES LINKER_LANGUAGE CUDA)
+target_link_libraries(star_math_lib star_common_lib)

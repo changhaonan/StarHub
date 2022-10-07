@@ -4,9 +4,9 @@
  * @brief This file is used to test the correctness of the compiler.
  * @version 0.1
  * @date 2022-10-05
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 #include <star/common/common_types.h>
 #include <star/common/ArrayView.h>
@@ -17,7 +17,8 @@
 
 using namespace star;
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     // Create ArrayBuffer
     GBufferArray<float4> buffer_array;
     buffer_array.AllocateBuffer(1000);

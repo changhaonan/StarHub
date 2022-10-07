@@ -36,7 +36,7 @@
 
 #include "device_memory.hpp"
 #include "convenience.cuh"
-#include "safe_call.hpp"
+#include "safe_call.cuh"
 
 #include <cuda_runtime_api.h>
 #include <assert.h>
@@ -72,7 +72,7 @@
     
 #endif
 
-////////////////////////    DeviceArray    /////////////////////////////
+////////////////////////    GArray    /////////////////////////////
     
 DeviceMemory::DeviceMemory() : data_(0), sizeBytes_(0), refcount_(0) {}
 DeviceMemory::DeviceMemory(void *ptr_arg, size_t sizeBytes_arg) : data_(ptr_arg), sizeBytes_(sizeBytes_arg), refcount_(0){}
@@ -168,7 +168,7 @@ bool DeviceMemory::empty() const { return !data_; }
 size_t DeviceMemory::sizeBytes() const { return sizeBytes_; }
 
 
-////////////////////////    DeviceArray2D    /////////////////////////////
+////////////////////////    GArray2D    /////////////////////////////
 
 DeviceMemory2D::DeviceMemory2D() : data_(0), step_(0), colsBytes_(0), rows_(0), refcount_(0) {}
 

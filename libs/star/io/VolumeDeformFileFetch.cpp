@@ -2,29 +2,15 @@
 #include <pcl/io/pcd_io.h>
 #include <star/common/OpenCV_CrossPlatform.h>
 #include "VolumeDeformFileFetch.h"
-// Noise-related
 #include <iostream>
-#include <star/data_proc/noise_generator.h>
 
-
-bool star::VolumeDeformFileFetch::FetchDepthImage(size_t cam_idx, size_t frame_idx, cv::Mat& depth_img)
+bool star::VolumeDeformFileFetch::FetchDepthImage(size_t cam_idx, size_t frame_idx, cv::Mat &depth_img)
 {
-	path file_path = FileNameStar(cam_idx, frame_idx, FileType::depth_img_file);
-	//Read the image
-	cv::Mat raw_depth_img = cv::imread(file_path.string(), CV_ANYCOLOR | CV_ANYDEPTH);
+    path file_path = FileNameStar(cam_idx, frame_idx, FileType::depth_img_file);
+    // Read the image
+    cv::Mat raw_depth_img = cv::imread(file_path.string(), CV_ANYCOLOR | CV_ANYDEPTH);
     std::cout << "Depth loaded from " << file_path.string() << " !" << std::endl;
-	// Apply noises
-//#define APPLY_NOISES
-#ifdef APPLY_NOISES
-	cv::Mat noise_depth_img = cv::Mat::zeros(depth_img.rows, depth_img.cols, CV_16UC1);
-	apply_gaussian_noise(raw_depth_img, noise_depth_img, 0.01f);
-	apply_random_corp(noise_depth_img, depth_img, 0.3f);
-	
-	//apply_gaussian_noise(raw_depth_img, depth_img, 0.03f);
-#else
-	raw_depth_img.copyTo(depth_img);
-#endif // APPLY_NOISES
-
+    raw_depth_img.copyTo(depth_img);
     return true;
 }
 
@@ -33,23 +19,24 @@ bool star::VolumeDeformFileFetch::FetchDepthImage(size_t cam_idx, size_t frame_i
     return false;
 }
 
-bool star::VolumeDeformFileFetch::FetchRGBImage(size_t cam_idx, size_t frame_idx, cv::Mat& rgb_img)
+bool star::VolumeDeformFileFetch::FetchRGBImage(size_t cam_idx, size_t frame_idx, cv::Mat &rgb_img)
 {
-	path file_path = FileNameStar(cam_idx, frame_idx, FileType::color_img_file);
-	//Read the image
-	rgb_img = cv::imread(file_path.string(), CV_ANYCOLOR | CV_ANYDEPTH);
+    path file_path = FileNameStar(cam_idx, frame_idx, FileType::color_img_file);
+    // Read the image
+    rgb_img = cv::imread(file_path.string(), CV_ANYCOLOR | CV_ANYDEPTH);
     std::cout << "RGB loaded from " << file_path.string() << " !" << std::endl;
     return true;
 }
 
-bool star::VolumeDeformFileFetch::FetchRGBImage(size_t cam_idx, size_t frame_idx, void* rgb_img)
+bool star::VolumeDeformFileFetch::FetchRGBImage(size_t cam_idx, size_t frame_idx, void *rgb_img)
 {
     return false;
 }
 
-bool star::VolumeDeformFileFetch::FetchOFImage(size_t cam_idx, size_t frame_idx, cv::Mat& of_img) {
+bool star::VolumeDeformFileFetch::FetchOFImage(size_t cam_idx, size_t frame_idx, cv::Mat &of_img)
+{
     path file_path = FileNameStar(cam_idx, frame_idx, FileType::opticalflow_file);
-    //Read the xml file
+    // Read the xml file
     cv::FileStorage fs;
     fs.open(file_path.string(), cv::FileStorage::READ);
     cv::FileNode fn = fs.root();
@@ -57,15 +44,18 @@ bool star::VolumeDeformFileFetch::FetchOFImage(size_t cam_idx, size_t frame_idx,
     {
         cv::FileNode item = *fit;
         std::cout << item.name() << std::endl;
-        if (item.name() == "optical_flow") {
+        if (item.name() == "optical_flow")
+        {
             of_img = item.mat();
             return true;
         }
-        else if (item.name() == "opticalflow") {
+        else if (item.name() == "opticalflow")
+        {
             of_img = item.mat();
             return true;
         }
-        else if (item.name() == "OpticalFlow") {
+        else if (item.name() == "OpticalFlow")
+        {
             of_img = item.mat();
             return true;
         }
@@ -73,7 +63,8 @@ bool star::VolumeDeformFileFetch::FetchOFImage(size_t cam_idx, size_t frame_idx,
     return false;
 }
 
-bool star::VolumeDeformFileFetch::FetchOFImage(size_t cam_idx, size_t frame_idx, void* of_img) {
+bool star::VolumeDeformFileFetch::FetchOFImage(size_t cam_idx, size_t frame_idx, void *of_img)
+{
     return false;
 }
 
@@ -87,13 +78,13 @@ bool star::VolumeDeformFileFetch::FetchPcd(size_t cam_idx, size_t frame_idx, pcl
 
 boost::filesystem::path star::VolumeDeformFileFetch::FileNameVolumeDeform(size_t cam_idx, size_t frame_idx, FileType file_type) const
 {
-	//Construct the file_name
-	char frame_idx_str[20];
-	sprintf(frame_idx_str, "%06d", static_cast<int>(frame_idx));
-	char cam_idx_str[20];
-	sprintf(cam_idx_str, "%02d", static_cast<int>(cam_idx));
-	std::string file_name = "cam-" + std::string(cam_idx_str);
-	file_name += "/frame-" + std::string(frame_idx_str);
+    // Construct the file_name
+    char frame_idx_str[20];
+    sprintf(frame_idx_str, "%06d", static_cast<int>(frame_idx));
+    char cam_idx_str[20];
+    sprintf(cam_idx_str, "%02d", static_cast<int>(cam_idx));
+    std::string file_name = "cam-" + std::string(cam_idx_str);
+    file_name += "/frame-" + std::string(frame_idx_str);
     switch (file_type)
     {
     case FileType::color_img_file:
@@ -114,12 +105,12 @@ boost::filesystem::path star::VolumeDeformFileFetch::FileNameVolumeDeform(size_t
         break;
     }
 
-	//Construct the path
-	path file_path = m_data_path / path(file_name);
-	return file_path;
+    // Construct the path
+    path file_path = m_data_path / path(file_name);
+    return file_path;
 }
 
-
-boost::filesystem::path star::VolumeDeformFileFetch::FileNameStar(size_t cam_idx, size_t frame_idx, FileType file_type) const {
-	return FileNameVolumeDeform(cam_idx, frame_idx, file_type);
+boost::filesystem::path star::VolumeDeformFileFetch::FileNameStar(size_t cam_idx, size_t frame_idx, FileType file_type) const
+{
+    return FileNameVolumeDeform(cam_idx, frame_idx, file_type);
 }

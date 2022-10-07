@@ -32,33 +32,33 @@ namespace star
 	 * including one of {mask, Mask, MASK}, the masks are applied to both the RGB and depth images in memory as part
 	 * of the fetch operation.
 	 */
-	template<unsigned max_cam = 4>
+	template <unsigned max_cam = 4>
 	class GenericFileFetch : public FetchInterface
 	{
 	public:
 		using Ptr = std::shared_ptr<GenericFileFetch>;
 		using path = boost::filesystem::path;
 
-		explicit GenericFileFetch(const path& data_path, std::string file_extension = ".png", bool force_no_masks = false);
+		explicit GenericFileFetch(const path &data_path, std::string file_extension = ".png", bool force_no_masks = false);
 		~GenericFileFetch() override = default;
 
-		//Buffer may be maintained outside fetch object for thread safety
-		bool FetchDepthImage(size_t cam_idx, size_t frame_idx, cv::Mat& depth_img) override;
-		bool FetchDepthImage(size_t cam_idx, size_t frame_idx, void* depth_img) override;
+		// Buffer may be maintained outside fetch object for thread safety
+		bool FetchDepthImage(size_t cam_idx, size_t frame_idx, cv::Mat &depth_img) override;
+		bool FetchDepthImage(size_t cam_idx, size_t frame_idx, void *depth_img) override;
 
-		//Should be rgb, in CV_8UC3 format
-		bool FetchRGBImage(size_t cam_idx, size_t frame_idx, cv::Mat& rgb_img) override;
-		bool FetchRGBImage(size_t cam_idx, size_t frame_idx, void* rgb_img) override;
+		// Should be rgb, in CV_8UC3 format
+		bool FetchRGBImage(size_t cam_idx, size_t frame_idx, cv::Mat &rgb_img) override;
+		bool FetchRGBImage(size_t cam_idx, size_t frame_idx, void *rgb_img) override;
 
 	private:
-		static int GetFrameNumber(const path& filename);
-		static int GetCamNumber(const path& filename);
-		static bool HasSubstringFromSet(const std::string& string, const std::string* set, int set_size);
-		static bool FilenameIndicatesDepthImage(const path& filename, const std::string& valid_extension);
-		static bool FilenameIndicatesRGBImage(const path& filename, const std::string& valid_extension);
-		static bool FilenameIndicatesMaskImage(const path& filename, const std::string& valid_extension);
+		static int GetFrameNumber(const path &filename);
+		static int GetCamNumber(const path &filename);
+		static bool HasSubstringFromSet(const std::string &string, const std::string *set, int set_size);
+		static bool FilenameIndicatesDepthImage(const path &filename, const std::string &valid_extension);
+		static bool FilenameIndicatesRGBImage(const path &filename, const std::string &valid_extension);
+		static bool FilenameIndicatesMaskImage(const path &filename, const std::string &valid_extension);
 
-		std::vector<path> m_rgb_image_paths[max_cam];  // Array of vector
+		std::vector<path> m_rgb_image_paths[max_cam]; // Array of vector
 		std::vector<path> m_depth_image_paths[max_cam];
 		std::vector<path> m_mask_image_paths[max_cam];
 
@@ -68,4 +68,3 @@ namespace star
 		std::mutex mask_mutex;
 	};
 } // end namespace star
-
