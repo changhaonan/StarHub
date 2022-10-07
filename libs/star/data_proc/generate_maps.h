@@ -3,7 +3,6 @@
 
 namespace star
 {
-
 	void createVertexConfigMap(
 		cudaTextureObject_t depth_img,
 		const unsigned rows, const unsigned cols,

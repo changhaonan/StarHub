@@ -9,251 +9,246 @@
 // Local macro
 #define boundary_clip 20
 
-namespace star
+namespace star::device
 {
-	namespace device
+	__global__ void clipNormalizeRGBImageKernel(
+		const PtrSz<const uchar3> raw_rgb_img,
+		const unsigned clip_rows, const unsigned clip_cols,
+		cudaSurfaceObject_t clip_rgb_img)
 	{
+		// Check the position of this kernel
+		const auto clip_x = threadIdx.x + blockDim.x * blockIdx.x;
+		const auto clip_y = threadIdx.y + blockDim.y * blockIdx.y;
+		if (clip_x >= clip_cols || clip_y >= clip_rows)
+			return;
 
-		__global__ void clipNormalizeRGBImageKernel(
-			const PtrSz<const uchar3> raw_rgb_img,
-			const unsigned clip_rows, const unsigned clip_cols,
-			cudaSurfaceObject_t clip_rgb_img)
+		// From here, the access to raw_rgb_img should be in range
+		const auto raw_x = clip_x + boundary_clip;
+		const auto raw_y = clip_y + boundary_clip;
+		const auto raw_flatten = raw_x + raw_y * (clip_cols + 2 * boundary_clip);
+		const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
+
+		// Normalize and write to output
+		float4 noramlized_rgb;
+		noramlized_rgb.x = float(raw_pixel.x) / 255.0f;
+		noramlized_rgb.y = float(raw_pixel.y) / 255.0f;
+		noramlized_rgb.z = float(raw_pixel.z) / 255.0f;
+		noramlized_rgb.w = 1.0f;
+		surf2Dwrite(noramlized_rgb, clip_rgb_img, clip_x * sizeof(float4), clip_y);
+	}
+
+	__global__ void clipNormalizeRGBImageKernel(
+		const PtrSz<const uchar3> raw_rgb_img,
+		const unsigned clip_rows, const unsigned clip_cols,
+		cudaSurfaceObject_t clip_rgb_img,
+		cudaSurfaceObject_t density_map)
+	{
+		// Check the position of this kernel
+		const auto clip_x = threadIdx.x + blockDim.x * blockIdx.x;
+		const auto clip_y = threadIdx.y + blockDim.y * blockIdx.y;
+		if (clip_x >= clip_cols || clip_y >= clip_rows)
+			return;
+
+		// From here, the access to raw_rgb_img should be in range
+		const auto raw_x = clip_x + boundary_clip;
+		const auto raw_y = clip_y + boundary_clip;
+		const auto raw_flatten = raw_x + raw_y * (clip_cols + 2 * boundary_clip);
+		const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
+
+		// Normalize and write to output
+		float4 noramlized_rgb;
+		noramlized_rgb.x = float(raw_pixel.x) / 255.0f;
+		noramlized_rgb.y = float(raw_pixel.y) / 255.0f;
+		noramlized_rgb.z = float(raw_pixel.z) / 255.0f;
+		noramlized_rgb.w = 1.0f;
+		const float density = rgba2density(noramlized_rgb); // TODO:Density function can be changed here
+
+		surf2Dwrite(noramlized_rgb, clip_rgb_img, clip_x * sizeof(float4), clip_y);
+		surf2Dwrite(density, density_map, clip_x * sizeof(float), clip_y);
+	}
+
+	__global__ void createColorTimeMapKernel(
+		const PtrSz<const uchar3> raw_rgb_img,
+		const unsigned clip_rows, const unsigned clip_cols,
+		const float init_time,
+		cudaSurfaceObject_t color_time_map)
+	{
+		const auto clip_x = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto clip_y = threadIdx.y + blockIdx.y * blockDim.y;
+		if (clip_x >= clip_cols || clip_y >= clip_rows)
+			return;
+
+		// From here, the access to raw_rgb_img should be in range
+		const auto raw_x = clip_x + boundary_clip;
+		const auto raw_y = clip_y + boundary_clip;
+		const auto raw_flatten = raw_x + raw_y * (clip_cols + 2 * boundary_clip);
+		const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
+		const float encoded_pixel = float_encode_rgb(raw_pixel);
+
+		// Construct the result and store it
+		const float4 color_time_value = make_float4(encoded_pixel, 0, init_time, init_time);
+		surf2Dwrite(color_time_value, color_time_map, clip_x * sizeof(float4), clip_y);
+	}
+
+	__global__ void createScaledColorTimeMapKernel(
+		const PtrSz<const uchar3> raw_rgb_img,
+		const unsigned raw_rows, const unsigned raw_cols,
+		const unsigned scaled_rows, const unsigned scaled_cols,
+		const float window_size, // Average by window size
+		const float init_time,
+		cudaSurfaceObject_t color_time_map)
+	{
+		const auto x = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto y = threadIdx.y + blockIdx.y * blockDim.y;
+		if (x >= scaled_cols || y >= scaled_rows)
+			return;
+
+		// From here, the access to raw_rgb_img should be in range
+		// corresponding pixel in the original image
+		// TODO: currently, we are only doing sampling, change it to average if need?
+		const auto raw_x = __float2int_rn(x * window_size);
+		const auto raw_y = __float2int_rn(y * window_size);
+		const auto raw_flatten = raw_x + raw_y * raw_cols;
+		const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
+		const float encoded_pixel = float_encode_rgb(raw_pixel);
+
+		// Construct the result and store it
+		const float4 color_time_value = make_float4(encoded_pixel, 0, init_time, init_time);
+		surf2Dwrite(color_time_value, color_time_map, x * sizeof(float4), y);
+	}
+
+	__global__ void createScaledRGBDMapKernel(
+		const PtrSz<const uchar3> raw_rgb_img,
+		cudaTextureObject_t filtered_depth_img,
+		const unsigned raw_rows, const unsigned raw_cols,
+		const unsigned scaled_rows, const unsigned scaled_cols,
+		const float window_size, // Average by window size
+		const float clip_near, const float clip_far,
+		cudaSurfaceObject_t rgbd_map)
+	{
+		const auto x = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto y = threadIdx.y + blockIdx.y * blockDim.y;
+		if (x >= scaled_cols || y >= scaled_rows)
+			return;
+
+		// From here, the access to raw_rgb_img should be in range
+		// corresponding pixel in the original image
+		// TODO: currently, we are only doing sampling, change it to average if need?
+		const auto raw_x = __float2int_rn(x * window_size);
+		const auto raw_y = __float2int_rn(y * window_size);
+		const auto raw_flatten = raw_x + raw_y * raw_cols;
+		const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
+		const float depth_val = tex2D<float>(filtered_depth_img, raw_x, raw_y);
+
+		float4 color_depth;
+		if (fabs(depth_val) <= clip_near || depth_val >= clip_far)
 		{
-			// Check the position of this kernel
-			const auto clip_x = threadIdx.x + blockDim.x * blockIdx.x;
-			const auto clip_y = threadIdx.y + blockDim.y * blockIdx.y;
-			if (clip_x >= clip_cols || clip_y >= clip_rows)
-				return;
-
-			// From here, the access to raw_rgb_img should be in range
-			const auto raw_x = clip_x + boundary_clip;
-			const auto raw_y = clip_y + boundary_clip;
-			const auto raw_flatten = raw_x + raw_y * (clip_cols + 2 * boundary_clip);
-			const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
-
-			// Normalize and write to output
-			float4 noramlized_rgb;
-			noramlized_rgb.x = float(raw_pixel.x) / 255.0f;
-			noramlized_rgb.y = float(raw_pixel.y) / 255.0f;
-			noramlized_rgb.z = float(raw_pixel.z) / 255.0f;
-			noramlized_rgb.w = 1.0f;
-			surf2Dwrite(noramlized_rgb, clip_rgb_img, clip_x * sizeof(float4), clip_y);
+			color_depth = make_float4(0.f, 0.f, 0.f, 0.f);
 		}
-
-		__global__ void clipNormalizeRGBImageKernel(
-			const PtrSz<const uchar3> raw_rgb_img,
-			const unsigned clip_rows, const unsigned clip_cols,
-			cudaSurfaceObject_t clip_rgb_img,
-			cudaSurfaceObject_t density_map)
+		else
 		{
-			// Check the position of this kernel
-			const auto clip_x = threadIdx.x + blockDim.x * blockIdx.x;
-			const auto clip_y = threadIdx.y + blockDim.y * blockIdx.y;
-			if (clip_x >= clip_cols || clip_y >= clip_rows)
-				return;
-
-			// From here, the access to raw_rgb_img should be in range
-			const auto raw_x = clip_x + boundary_clip;
-			const auto raw_y = clip_y + boundary_clip;
-			const auto raw_flatten = raw_x + raw_y * (clip_cols + 2 * boundary_clip);
-			const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
-
-			// Normalize and write to output
-			float4 noramlized_rgb;
-			noramlized_rgb.x = float(raw_pixel.x) / 255.0f;
-			noramlized_rgb.y = float(raw_pixel.y) / 255.0f;
-			noramlized_rgb.z = float(raw_pixel.z) / 255.0f;
-			noramlized_rgb.w = 1.0f;
-			const float density = rgba2density(noramlized_rgb); // TODO:Density function can be changed here
-
-			surf2Dwrite(noramlized_rgb, clip_rgb_img, clip_x * sizeof(float4), clip_y);
-			surf2Dwrite(density, density_map, clip_x * sizeof(float), clip_y);
-		}
-
-		__global__ void createColorTimeMapKernel(
-			const PtrSz<const uchar3> raw_rgb_img,
-			const unsigned clip_rows, const unsigned clip_cols,
-			const float init_time,
-			cudaSurfaceObject_t color_time_map)
-		{
-			const auto clip_x = threadIdx.x + blockIdx.x * blockDim.x;
-			const auto clip_y = threadIdx.y + blockIdx.y * blockDim.y;
-			if (clip_x >= clip_cols || clip_y >= clip_rows)
-				return;
-
-			// From here, the access to raw_rgb_img should be in range
-			const auto raw_x = clip_x + boundary_clip;
-			const auto raw_y = clip_y + boundary_clip;
-			const auto raw_flatten = raw_x + raw_y * (clip_cols + 2 * boundary_clip);
-			const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
-			const float encoded_pixel = float_encode_rgb(raw_pixel);
-
 			// Construct the result and store it
-			const float4 color_time_value = make_float4(encoded_pixel, 0, init_time, init_time);
-			surf2Dwrite(color_time_value, color_time_map, clip_x * sizeof(float4), clip_y);
+			color_depth = make_float4(
+				float(raw_pixel.x) / 127.5f - 1.0f,
+				float(raw_pixel.y) / 127.5f - 1.0f,
+				float(raw_pixel.z) / 127.5f - 1.0f,
+				1.f / depth_val);
 		}
+		surf2Dwrite(color_depth, rgbd_map, x * sizeof(float4), y);
+	}
 
-		__global__ void createScaledColorTimeMapKernel(
-			const PtrSz<const uchar3> raw_rgb_img,
-			const unsigned raw_rows, const unsigned raw_cols,
-			const unsigned scaled_rows, const unsigned scaled_cols,
-			const float window_size, // Average by window size
-			const float init_time,
-			cudaSurfaceObject_t color_time_map)
+	__global__ void filterDensityMapKernel(
+		cudaTextureObject_t density_map,
+		unsigned rows, unsigned cols,
+		cudaSurfaceObject_t filter_density_map)
+	{
+		const auto x = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto y = threadIdx.y + blockIdx.y * blockDim.y;
+		if (x >= cols || y >= rows)
+			return;
+
+		const auto half_width = 5;
+		const float center_density = tex2D<float>(density_map, x, y);
+
+		// The window search: Gaussian average
+		float sum_all = 0.0f;
+		float sum_weight = 0.0f;
+		for (auto y_idx = y - half_width; y_idx <= y + half_width; y_idx++)
 		{
-			const auto x = threadIdx.x + blockIdx.x * blockDim.x;
-			const auto y = threadIdx.y + blockIdx.y * blockDim.y;
-			if (x >= scaled_cols || y >= scaled_rows)
-				return;
-
-			// From here, the access to raw_rgb_img should be in range
-			// corresponding pixel in the original image
-			// TODO: currently, we are only doing sampling, change it to average if need?
-			const auto raw_x = __float2int_rn(x * window_size);
-			const auto raw_y = __float2int_rn(y * window_size);
-			const auto raw_flatten = raw_x + raw_y * raw_cols;
-			const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
-			const float encoded_pixel = float_encode_rgb(raw_pixel);
-
-			// Construct the result and store it
-			const float4 color_time_value = make_float4(encoded_pixel, 0, init_time, init_time);
-			surf2Dwrite(color_time_value, color_time_map, x * sizeof(float4), y);
+			for (auto x_idx = x - half_width; x_idx <= x + half_width; x_idx++)
+			{
+				const float density = tex2D<float>(density_map, x_idx, y_idx);
+				const float value_diff2 = (center_density - density) * (center_density - density);
+				const float pixel_diff2 = (x_idx - x) * (x_idx - x) + (y_idx - y) * (y_idx - y);
+				const float this_weight = (density > 0.0f) * expf(-(1.0f / 25) * pixel_diff2) * expf(-(1.0f / 0.01) * value_diff2);
+				sum_weight += this_weight;
+				sum_all += this_weight * density;
+			}
 		}
 
-		__global__ void createScaledRGBDMapKernel(
-			const PtrSz<const uchar3> raw_rgb_img,
-			cudaTextureObject_t filtered_depth_img,
-			const unsigned raw_rows, const unsigned raw_cols,
-			const unsigned scaled_rows, const unsigned scaled_cols,
-			const float window_size, // Average by window size
-			const float clip_near, const float clip_far,
-			cudaSurfaceObject_t rgbd_map)
+		// The filter value
+		float filter_density_value = sum_all / (sum_weight);
+
+		// Clip the value to suitable range
+		if (filter_density_value >= 1.0f)
 		{
-			const auto x = threadIdx.x + blockIdx.x * blockDim.x;
-			const auto y = threadIdx.y + blockIdx.y * blockDim.y;
-			if (x >= scaled_cols || y >= scaled_rows)
-				return;
-
-			// From here, the access to raw_rgb_img should be in range
-			// corresponding pixel in the original image
-			// TODO: currently, we are only doing sampling, change it to average if need?
-			const auto raw_x = __float2int_rn(x * window_size);
-			const auto raw_y = __float2int_rn(y * window_size);
-			const auto raw_flatten = raw_x + raw_y * raw_cols;
-			const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
-			const float depth_val = tex2D<float>(filtered_depth_img, raw_x, raw_y);
-
-			float4 color_depth;
-			if (fabs(depth_val) <= clip_near || depth_val >= clip_far)
-			{
-				color_depth = make_float4(0.f, 0.f, 0.f, 0.f);
-			}
-			else
-			{
-				// Construct the result and store it
-				color_depth = make_float4(
-					float(raw_pixel.x) / 127.5f - 1.0f,
-					float(raw_pixel.y) / 127.5f - 1.0f,
-					float(raw_pixel.z) / 127.5f - 1.0f,
-					1.f / depth_val);
-			}
-			surf2Dwrite(color_depth, rgbd_map, x * sizeof(float4), y);
+			filter_density_value = 1.0f;
 		}
-
-		__global__ void filterDensityMapKernel(
-			cudaTextureObject_t density_map,
-			unsigned rows, unsigned cols,
-			cudaSurfaceObject_t filter_density_map)
+		else if (filter_density_value >= 0.0f)
 		{
-			const auto x = threadIdx.x + blockIdx.x * blockDim.x;
-			const auto y = threadIdx.y + blockIdx.y * blockDim.y;
-			if (x >= cols || y >= rows)
-				return;
-
-			const auto half_width = 5;
-			const float center_density = tex2D<float>(density_map, x, y);
-
-			// The window search: Gaussian average
-			float sum_all = 0.0f;
-			float sum_weight = 0.0f;
-			for (auto y_idx = y - half_width; y_idx <= y + half_width; y_idx++)
-			{
-				for (auto x_idx = x - half_width; x_idx <= x + half_width; x_idx++)
-				{
-					const float density = tex2D<float>(density_map, x_idx, y_idx);
-					const float value_diff2 = (center_density - density) * (center_density - density);
-					const float pixel_diff2 = (x_idx - x) * (x_idx - x) + (y_idx - y) * (y_idx - y);
-					const float this_weight = (density > 0.0f) * expf(-(1.0f / 25) * pixel_diff2) * expf(-(1.0f / 0.01) * value_diff2);
-					sum_weight += this_weight;
-					sum_all += this_weight * density;
-				}
-			}
-
-			// The filter value
-			float filter_density_value = sum_all / (sum_weight);
-
-			// Clip the value to suitable range
-			if (filter_density_value >= 1.0f)
-			{
-				filter_density_value = 1.0f;
-			}
-			else if (filter_density_value >= 0.0f)
-			{
-				// pass
-			}
-			else
-			{
-				filter_density_value = 0.0f;
-			}
-			// if(isnan(filter_density_value)) printf("Nan in the image");
-			surf2Dwrite(filter_density_value, filter_density_map, x * sizeof(float), y);
+			// pass
 		}
-
-		__global__ void createNormalizedRGBMapKernel(
-			const PtrSz<const uchar3> raw_rgb_img,
-			cudaSurfaceObject_t normalized_rgb_map,
-			const unsigned rows, const unsigned cols)
+		else
 		{
-			const auto x = threadIdx.x + blockIdx.x * blockDim.x;
-			const auto y = threadIdx.y + blockIdx.y * blockDim.y;
-			if (x >= cols || y >= rows)
-				return;
-			const auto raw_flatten = x + y * cols;
-			const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
-
-			// Construct the result and store it
-			// FIXME: float3 seems not working, so use float4 through padding
-			float4 normalized_color = make_float4(
-				float(raw_pixel.x) / 255.f,
-				float(raw_pixel.y) / 255.f,
-				float(raw_pixel.z) / 255.f,
-				0.f);
-
-			surf2Dwrite(normalized_color, normalized_rgb_map, x * sizeof(float4), y);
+			filter_density_value = 0.0f;
 		}
+		// if(isnan(filter_density_value)) printf("Nan in the image");
+		surf2Dwrite(filter_density_value, filter_density_map, x * sizeof(float), y);
+	}
 
-		__global__ void createScaledDepthMapKernel(
-			cudaTextureObject_t filtered_depth_img,
-			const unsigned scaled_rows, const unsigned scaled_cols,
-			const float window_size, // Average by window size
-			cudaSurfaceObject_t scaled_depth_map)
-		{
-			const auto x = threadIdx.x + blockIdx.x * blockDim.x;
-			const auto y = threadIdx.y + blockIdx.y * blockDim.y;
-			if (x >= scaled_cols || y >= scaled_rows)
-				return;
+	__global__ void createNormalizedRGBMapKernel(
+		const PtrSz<const uchar3> raw_rgb_img,
+		cudaSurfaceObject_t normalized_rgb_map,
+		const unsigned rows, const unsigned cols)
+	{
+		const auto x = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto y = threadIdx.y + blockIdx.y * blockDim.y;
+		if (x >= cols || y >= rows)
+			return;
+		const auto raw_flatten = x + y * cols;
+		const uchar3 raw_pixel = raw_rgb_img[raw_flatten];
 
-			// From here, the access to raw_rgb_img should be in range
-			// corresponding pixel in the original image
-			// TODO: currently, we are only doing sampling, change it to average if need?
-			const auto raw_x = __float2int_rn(x * window_size);
-			const auto raw_y = __float2int_rn(y * window_size);
-			const float depth_val = tex2D<float>(filtered_depth_img, raw_x, raw_y);
-			surf2Dwrite(depth_val, scaled_depth_map, x * sizeof(float), y);
-		}
+		// Construct the result and store it
+		// FIXME: float3 seems not working, so use float4 through padding
+		float4 normalized_color = make_float4(
+			float(raw_pixel.x) / 255.f,
+			float(raw_pixel.y) / 255.f,
+			float(raw_pixel.z) / 255.f,
+			0.f);
 
-	}; /* End of namespace device */
-};	   /* End of namespace star */
+		surf2Dwrite(normalized_color, normalized_rgb_map, x * sizeof(float4), y);
+	}
+
+	__global__ void createScaledDepthMapKernel(
+		cudaTextureObject_t filtered_depth_img,
+		const unsigned scaled_rows, const unsigned scaled_cols,
+		const float window_size, // Average by window size
+		cudaSurfaceObject_t scaled_depth_map)
+	{
+		const auto x = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto y = threadIdx.y + blockIdx.y * blockDim.y;
+		if (x >= scaled_cols || y >= scaled_rows)
+			return;
+
+		// From here, the access to raw_rgb_img should be in range
+		// corresponding pixel in the original image
+		// TODO: currently, we are only doing sampling, change it to average if need?
+		const auto raw_x = __float2int_rn(x * window_size);
+		const auto raw_y = __float2int_rn(y * window_size);
+		const float depth_val = tex2D<float>(filtered_depth_img, raw_x, raw_y);
+		surf2Dwrite(depth_val, scaled_depth_map, x * sizeof(float), y);
+	}
+};
 
 void star::clipNormalizeRGBImage(
 	const GArray<uchar3> raw_rgb_img,

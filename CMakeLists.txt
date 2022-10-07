@@ -6,7 +6,7 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
 endif()
 
 # CUDA runtime
-set (CUDA_RUNTIME_LIBRARY Shared)
+set(CUDA_RUNTIME_LIBRARY Shared)
 
 # Project language
 project(StarHub VERSION 0.1 LANGUAGES CXX CUDA)
@@ -16,6 +16,7 @@ LIST(APPEND CMAKE_PREFIX_PATH /usr/lib/x86_64-linux-gnu/cmake)
 
 # Language options
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # External libraries

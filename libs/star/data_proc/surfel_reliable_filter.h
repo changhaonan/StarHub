@@ -4,7 +4,6 @@
 
 namespace star
 {
-
     /**
      * \brief: The goal of this method is to filter out those measurement with low confidence under real physical system.
      * There are several considerations:

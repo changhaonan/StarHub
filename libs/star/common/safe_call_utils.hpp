@@ -19,7 +19,6 @@
 
 namespace star
 {
-
 	// The actual handler for function for cublas errors
 	static inline void __cublasSafeCall(cublasStatus_t err, const char *file, const int line)
 	{
@@ -45,5 +44,4 @@ namespace star
 			std::exit(1);
 		}
 	}
-
 }

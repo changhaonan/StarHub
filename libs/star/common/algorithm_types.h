@@ -106,7 +106,7 @@ namespace star
 			GArray<unsigned> &valid_select_to_array,
 			cudaStream_t stream = 0);
 
-		// The buffer for flag?
+		// The buffer for flag
 		GArray<char> select_indicator_buffer;
 	};
 

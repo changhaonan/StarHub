@@ -3,7 +3,6 @@
 
 namespace star
 {
-
 	void clipNormalizeRGBImage(
 		const GArray<uchar3> raw_rgb_img,
 		const unsigned clip_rows, const unsigned clip_cols,
