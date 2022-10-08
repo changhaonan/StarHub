@@ -1,5 +1,6 @@
 #pragma once
 #include <star/common/common_types.h>
+#include <star/common/ArrayView.h>
 
 namespace star
 {
@@ -25,7 +26,7 @@ namespace star
 		cudaStream_t stream = 0);
 
 	void createScaledColorTimeMap( // Color time map creation, but scaled
-		const GArray<uchar3> raw_rgb_img,
+		const GArrayView<uchar3> raw_rgb_img,
 		const unsigned raw_rows, const unsigned raw_cols,
 		const float scale,
 		const float init_time,
@@ -33,7 +34,7 @@ namespace star
 		cudaStream_t stream = 0);
 
 	void createScaledRGBDMap( // RGBD image, D is the inverse of depth
-		const GArray<uchar3> raw_rgb_img,
+		const GArrayView<uchar3> raw_rgb_img,
 		cudaTextureObject_t filtered_depth_img,
 		const unsigned raw_rows, const unsigned raw_cols,
 		const float scale,

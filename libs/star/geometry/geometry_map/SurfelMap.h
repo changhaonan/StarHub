@@ -5,30 +5,26 @@
 
 namespace star
 {
+    class SurfelMapInitializer;
+
     /**
      * \brief Two surfel map, usually from measurement or raycasting
      */
     class SurfelMap : public GeometryMap
     {
     public:
+        friend class SurfelMapInitializer;
+        using Ptr = std::shared_ptr<SurfelMap>;
         SurfelMap(const unsigned width, const unsigned height);
         ~SurfelMap();
         bool IsEmpty() { return false; };
 
-        /**
-         * \brief Generate normal, index from vertex
-         */
-        void InitFromRGBDImage(
-            const GArrayView<uchar3> color_image,
-            const GArrayView<unsigned> depth_image,
-            cudaStream_t stream
-        );
-
     private:
-        CudaTextureSurface vertex_confid;
-        CudaTextureSurface normal_radius;
-        CudaTextureSurface color_time;
-        CudaTextureSurface rgbd; // (R,G,B,D_inv) scaled to -1~1, D_inv is 0~1
-        CudaTextureSurface index;
+        // Surfel-related
+        CudaTextureSurface m_vertex_confid;
+        CudaTextureSurface m_normal_radius;
+        CudaTextureSurface m_color_time;
+        CudaTextureSurface m_rgbd; // (R,G,B,D_inv) scaled to -1~1, D_inv is 0~1
+        CudaTextureSurface m_index;
     };
 }

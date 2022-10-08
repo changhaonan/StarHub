@@ -75,6 +75,12 @@ namespace star
 			  focal_x(0), focal_y(0) {}
 
 		__host__ __device__ Intrinsic(
+			const Intrinsic &intrinsic) : principal_x(intrinsic.principal_x),
+										  principal_y(intrinsic.principal_y),
+										  focal_x(intrinsic.focal_x),
+										  focal_y(intrinsic.focal_y) {}
+
+		__host__ __device__ Intrinsic(
 			const float focal_x_, const float focal_y_,
 			const float principal_x_, const float principal_y_) : principal_x(principal_x_), principal_y(principal_y_),
 																  focal_x(focal_x_), focal_y(focal_y_) {}

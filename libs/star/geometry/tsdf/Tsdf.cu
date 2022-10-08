@@ -33,7 +33,6 @@ void star::Tsdf::createTsdf(
     origin = origin_;
 
     bool interpolationable = true;
-    size_t total_voxel = width * height * depth;
     createUchar3DTextureSurface(width, height, depth, tsdf_weight);
     createFloat3DTextureSurface(width, height, depth, tsdf_val, interpolationable);
 }

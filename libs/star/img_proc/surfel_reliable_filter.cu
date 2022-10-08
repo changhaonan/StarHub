@@ -6,8 +6,8 @@
 namespace star::device
 {
     // constexpr float d_reliable_angle_thresh = 0.2f;  // Strict constraints
-    constexpr float d_reliable_angle_thresh = 0.0f; // Loose constraints
-    constexpr float d_back_ground_depth = 10.f;     // Drag invalid pixel out of range during interpolation
+    // constexpr float d_reliable_angle_thresh = 0.0f; // Loose constraints
+    constexpr float d_back_ground_depth = 10.f; // Drag invalid pixel out of range during interpolation
     constexpr float d_invalid_depth = 0.f;
 
     __device__ __forceinline__

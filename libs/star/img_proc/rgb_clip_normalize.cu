@@ -91,7 +91,7 @@ namespace star::device
 	}
 
 	__global__ void createScaledColorTimeMapKernel(
-		const PtrSz<const uchar3> raw_rgb_img,
+		const uchar3 *__restrict__ raw_rgb_img,
 		const unsigned raw_rows, const unsigned raw_cols,
 		const unsigned scaled_rows, const unsigned scaled_cols,
 		const float window_size, // Average by window size
@@ -118,7 +118,7 @@ namespace star::device
 	}
 
 	__global__ void createScaledRGBDMapKernel(
-		const PtrSz<const uchar3> raw_rgb_img,
+		const uchar3 *__restrict__ raw_rgb_img,
 		cudaTextureObject_t filtered_depth_img,
 		const unsigned raw_rows, const unsigned raw_cols,
 		const unsigned scaled_rows, const unsigned scaled_cols,
@@ -315,7 +315,7 @@ void star::createColorTimeMap(
 }
 
 void star::createScaledColorTimeMap( // Color time map creation, but scaled
-	const GArray<uchar3> raw_rgb_img,
+	const GArrayView<uchar3> raw_rgb_img,
 	const unsigned raw_rows, const unsigned raw_cols,
 	const float scale,
 	const float init_time,
@@ -329,7 +329,7 @@ void star::createScaledColorTimeMap( // Color time map creation, but scaled
 	dim3 blk(16, 16);
 	dim3 grid(divUp(scaled_cols, blk.x), divUp(scaled_rows, blk.y));
 	device::createScaledColorTimeMapKernel<<<grid, blk, 0, stream>>>(
-		raw_rgb_img,
+		raw_rgb_img.Ptr(),
 		raw_rows, raw_cols,
 		scaled_rows, scaled_cols,
 		window_size, // Average by window size
@@ -344,7 +344,7 @@ void star::createScaledColorTimeMap( // Color time map creation, but scaled
 }
 
 void star::createScaledRGBDMap( // RGBD image, D is the inverse of depth
-	const GArray<uchar3> raw_rgb_img,
+	const GArrayView<uchar3> raw_rgb_img,
 	cudaTextureObject_t filtered_depth_img,
 	const unsigned raw_rows, const unsigned raw_cols,
 	const float scale,
@@ -359,7 +359,7 @@ void star::createScaledRGBDMap( // RGBD image, D is the inverse of depth
 	dim3 blk(16, 16);
 	dim3 grid(divUp(scaled_cols, blk.x), divUp(scaled_rows, blk.y));
 	device::createScaledRGBDMapKernel<<<grid, blk, 0, stream>>>(
-		raw_rgb_img,
+		raw_rgb_img.Ptr(),
 		filtered_depth_img,
 		raw_rows, raw_cols,
 		scaled_rows, scaled_cols,

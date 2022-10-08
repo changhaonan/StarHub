@@ -77,7 +77,7 @@ namespace star::device
         cudaTextureObject_t tsdf_val,
         cudaTextureObject_t tsdf_weight,
         const int3 dim_3d,
-        const const int x, const int y, const int z,
+        const int x, const int y, const int z,
         float tsdf[8])
     {
         float weight;
@@ -108,15 +108,8 @@ namespace star::device
             return;
         const auto v_id = x * dim_3d.y * dim_3d.z + y * dim_3d.z + z;
 
-        float tsdf_values[4];
         float weight;
-
         float tsdf = readTsdf(tsdf_val, tsdf_weight, dim_3d, x, y, z, weight);
-        float tsdf_other;
-        tsdf_values[1] =
-            tsdf_values[2] = readTsdf(tsdf_val, tsdf_weight, dim_3d, x, y + 1, z, weight);
-        tsdf_values[3] = readTsdf(tsdf_val, tsdf_weight, dim_3d, x, y, z + 1, weight);
-
         float4 tsdf_center = make_float4(
             origin.x + voxel_size * float(x),
             origin.x + voxel_size * float(y),
@@ -124,7 +117,7 @@ namespace star::device
             1.f);
 
         // Interploation between x & x + 1
-        tsdf_other = readTsdf(tsdf_val, tsdf_weight, dim_3d, x + 1, y, z, weight);
+        float tsdf_other = readTsdf(tsdf_val, tsdf_weight, dim_3d, x + 1, y, z, weight);
         if (tsdf * tsdf_other < 0)
         {
             float4 tsdf_center_other = make_float4(
@@ -271,7 +264,6 @@ namespace star::device
             float tsdf_0, tsdf_1;
             if (itp_vertex_id == 0)
             {
-                vertex_0;
                 vertex_1.x += voxel_size;
                 tsdf_0 = tsdf[0];
                 tsdf_1 = tsdf[1];
@@ -295,7 +287,6 @@ namespace star::device
             else if (itp_vertex_id == 3)
             {
                 vertex_0.y += voxel_size;
-                vertex_1;
                 tsdf_0 = tsdf[3];
                 tsdf_1 = tsdf[0];
             }
@@ -337,7 +328,6 @@ namespace star::device
             }
             else if (itp_vertex_id == 8)
             {
-                vertex_0;
                 vertex_1.z += voxel_size;
                 tsdf_0 = tsdf[0];
                 tsdf_1 = tsdf[4];
