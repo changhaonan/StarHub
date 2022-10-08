@@ -7,4 +7,4 @@ file(GLOB GEOMETRY_SRC
     sampling/*.h sampling/*.hpp sampling/*.cpp sampling/*.cu sampling/*.cuh)
 source_group("src" FILES ${GEOMETRY_SRC})
 add_library(star_geometry_lib SHARED ${GEOMETRY_SRC})
-target_link_libraries(star_geometry_lib star_common_lib star_math_lib)
+target_link_libraries(star_geometry_lib star_common_lib star_math_lib star_img_proc_lib)

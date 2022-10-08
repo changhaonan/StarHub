@@ -11,6 +11,9 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <star/io/VolumeDeformFileFetch.h>
+#include <star/geometry/geometry_map/SurfelMap.h>
+#include <star/geometry/geometry_map/SurfelMapInitializer.h>
+
 using namespace star;
 
 int main(int argc, char **argv)
@@ -26,9 +29,25 @@ int main(int argc, char **argv)
     cv::Mat depth_img;
     file_handler->FetchDepthImage(0, 0, depth_img);
 
-    // 3. Create point cloud from rgb & depth image
-    cv::imshow("test", color_img);
-    cv::waitKey(0);
+    // 3. Parameter
+    unsigned width = 640;
+    unsigned height = 480;
+    float clip_near = 0.1f;
+    float clip_far = 10.f;
+    float surfel_radius_scale = 1.f;
+    float focal_x = 520.f;
+    float focal_y = 520.f;
+    float principal_x = 320.f;
+    float principal_y = 240.f;
+    Intrinsic intrinsic(
+        focal_x, focal_y, principal_x, principal_y
+    );
+
+    // 4. Create initializer
+    auto surfel_map = std::make_shared<SurfelMap>(width, height);
+    SurfelMapInitializer surfel_map_initializer(
+        width, height, clip_near, clip_far, surfel_radius_scale, intrinsic
+    );
 
     return 0;
 }

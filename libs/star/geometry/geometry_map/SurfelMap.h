@@ -17,7 +17,6 @@ namespace star
         using Ptr = std::shared_ptr<SurfelMap>;
         SurfelMap(const unsigned width, const unsigned height);
         ~SurfelMap();
-        bool IsEmpty() { return false; };
 
     private:
         // Surfel-related
