@@ -41,6 +41,11 @@ include_directories(${FLANN_INCLUDE_DIRS})
 find_package(PCL REQUIRED COMPONENTS io visualization)
 include_directories(${PCL_INCLUDE_DIRS})
 
+# Easy3DViewer
+set(Easy3DViewer_ROOT "${CMAKE_SOURCE_DIR}/external/Easy3DViewer")
+set(Easy3DViewer_INCLUDE_DIR "${Easy3DViewer_ROOT}/utils/cpp")
+include_directories(${Easy3DViewer_INCLUDE_DIR})
+
 # Include
 include_directories("${CMAKE_SOURCE_DIR}/libs")
 

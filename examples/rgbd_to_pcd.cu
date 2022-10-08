@@ -14,6 +14,8 @@
 #include <star/geometry/geometry_map/SurfelMap.h>
 #include <star/geometry/geometry_map/SurfelMapInitializer.h>
 #include <star/visualization/Visualizer.h>
+// Viewer
+#include <easy3d_viewer/context.hpp>
 
 using namespace star;
 
@@ -21,6 +23,8 @@ int main(int argc, char **argv)
 {
     // 1. Preparation
     std::string file_root_path = "/home/robot-learning/Projects/StarHub/data/move_dragon";
+    std::string file_output_path = "/home/robot-learning/Projects/StarHub/external/Easy3DViewer/public/test_data";
+
     VolumeDeformFileFetch::Ptr file_handler = std::make_shared<VolumeDeformFileFetch>(file_root_path);
 
     // 2. Load a rgb image && depth image
@@ -62,8 +66,14 @@ int main(int argc, char **argv)
         0);
     cudaSafeCall(cudaDeviceSynchronize());
 
-    // Add Visualizer
-    visualize::DrawPointCloud(surfel_map->VertexConfigReadOnly());
+    // 5. Save to context
+    auto output_path = boost::filesystem::path(file_output_path);
+    auto context = easy3d::Context();
+    context.setDir((output_path / "test").string(), "frame");
+    context.open(0);
+    context.addPointCloud("test");
+    visualize::SavePointCloud(surfel_map->VertexConfigReadOnly(), context.at("test"));
+    context.close();
 
     return 0;
 }
