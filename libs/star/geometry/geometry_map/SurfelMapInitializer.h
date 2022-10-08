@@ -19,7 +19,7 @@ namespace star
         ~SurfelMapInitializer();
 
         void UploadDepthImage(
-            const GArrayView<unsigned> depth_image,
+            const GArrayView<unsigned short> depth_image,
             cudaStream_t stream);
 
         /**
@@ -27,7 +27,7 @@ namespace star
          */
         void InitFromRGBDImage(
             const GArrayView<uchar3> color_image,
-            const GArrayView<unsigned> depth_image,
+            const GArrayView<unsigned short> depth_image,
             const float init_time,
             SurfelMap &surfel_map,
             cudaStream_t stream);

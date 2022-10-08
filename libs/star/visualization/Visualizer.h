@@ -5,6 +5,7 @@
 #include <star/common/ArrayView.h>
 #include <star/common/types/typeX.h>
 #include <star/common/point_cloud_typedefs.h>
+#include <star/visualization/Visualizer.Host.h> // Host visualization functions
 #include <opencv2/opencv.hpp>
 #include <memory>
 
@@ -162,7 +163,6 @@ namespace star::visualize
 
 	/* The point cloud drawing methods
 	 */
-	void DrawPointCloud(const PointCloud3f_Pointer &point_cloud);
 	void DrawPointCloud(const GArray<float4> &point_cloud);
 	void DrawPointCloud(const GArrayView<float4> &point_cloud);
 	void DrawPointCloud(const GArray2D<float4> &vertex_map);

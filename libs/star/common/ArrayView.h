@@ -2,6 +2,7 @@
 #include <vector>
 #include <cuda_runtime_api.h>
 #include <star/common/macro_utils.h>
+#include <star/common/common_types.h>
 
 namespace star
 {
@@ -24,6 +25,7 @@ namespace star
 			m_array = arr + start;
 		}
 		__host__ __device__ GArrayView(const T *arr, size_t size) : m_array(arr), m_array_size(size) {}
+		__host__ __device__ GArrayView(const GArray<T> &array) : m_array(array.ptr()), m_array_size(array.size()) {}
 
 		// Simple interface
 		__host__ __device__ size_t Size() const { return m_array_size; }

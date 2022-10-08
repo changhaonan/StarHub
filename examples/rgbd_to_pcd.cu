@@ -13,6 +13,7 @@
 #include <star/io/VolumeDeformFileFetch.h>
 #include <star/geometry/geometry_map/SurfelMap.h>
 #include <star/geometry/geometry_map/SurfelMapInitializer.h>
+#include <star/visualization/Visualizer.h>
 
 using namespace star;
 
@@ -40,14 +41,29 @@ int main(int argc, char **argv)
     float principal_x = 320.f;
     float principal_y = 240.f;
     Intrinsic intrinsic(
-        focal_x, focal_y, principal_x, principal_y
-    );
+        focal_x, focal_y, principal_x, principal_y);
 
     // 4. Create initializer
     auto surfel_map = std::make_shared<SurfelMap>(width, height);
     SurfelMapInitializer surfel_map_initializer(
-        width, height, clip_near, clip_far, surfel_radius_scale, intrinsic
-    );
+        width, height, clip_near, clip_far, surfel_radius_scale, intrinsic);
+
+    unsigned num_pixel = width * height;
+    GArray<uchar3> g_color_img(num_pixel);
+    GArray<unsigned short> g_depth_img(num_pixel);
+    g_color_img.upload(color_img.ptr<uchar3>(), num_pixel);
+    g_depth_img.upload(depth_img.ptr<unsigned short>(), num_pixel);
+
+    surfel_map_initializer.InitFromRGBDImage(
+        GArrayView(g_color_img),
+        GArrayView(g_depth_img),
+        0,
+        *surfel_map,
+        0);
+    cudaSafeCall(cudaDeviceSynchronize());
+
+    // Add Visualizer
+    visualize::DrawPointCloud(surfel_map->VertexConfigReadOnly());
 
     return 0;
 }

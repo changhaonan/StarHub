@@ -38,7 +38,7 @@ find_package(FLANN REQUIRED)
 include_directories(${FLANN_INCLUDE_DIRS})
 
 # PCL
-find_package(PCL REQUIRED COMPONENTS io)
+find_package(PCL REQUIRED COMPONENTS io visualization)
 include_directories(${PCL_INCLUDE_DIRS})
 
 # Include
@@ -54,7 +54,7 @@ add_subdirectory(libs/star)
 # Read image
 add_executable(rgbd_to_pcd examples/rgbd_to_pcd.cu)
 target_link_libraries(rgbd_to_pcd ${OpenCV_LIBRARIES})
-target_link_libraries(rgbd_to_pcd star_io_lib star_geometry_lib)
+target_link_libraries(rgbd_to_pcd star_io_lib star_geometry_lib star_visualization_lib)
 
 # Compile test
 add_executable(compile_test examples/compile_test.cu)
