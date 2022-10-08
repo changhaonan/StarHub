@@ -1,4 +1,4 @@
-#include <star/data_proc/generate_maps.h>
+#include <star/img_proc/generate_maps.h>
 #include <device_launch_parameters.h>
 
 namespace star::device

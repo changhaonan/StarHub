@@ -1,6 +1,6 @@
 add_subdirectory(common)
 add_subdirectory(io)
-add_subdirectory(data_proc)
+add_subdirectory(img_proc)
 add_subdirectory(math)
 add_subdirectory(visualization)
 add_subdirectory(geometry)

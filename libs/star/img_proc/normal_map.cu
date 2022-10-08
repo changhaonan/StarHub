@@ -1,4 +1,4 @@
-#include <star/data_proc/generate_maps.h>
+#include <star/img_proc/generate_maps.h>
 #include <star/math/vector_ops.hpp>
 #include <star/math/eigen33.h>
 #include <device_launch_parameters.h>

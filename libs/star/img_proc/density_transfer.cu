@@ -1,7 +1,7 @@
 #include <vector_types.h>
 #include <star/common/encode_utils.h>
 #include <star/common/color_transfer.h>
-#include <star/data_proc/density_transfer.h>
+#include <star/img_proc/density_transfer.h>
 #include <device_launch_parameters.h>
 
 namespace star::device

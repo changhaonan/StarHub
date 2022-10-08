@@ -114,6 +114,8 @@ void star::createDepthTextureSurface(
 
 void star::createDepthTextureSurface(const unsigned img_rows, const unsigned img_cols, CudaTextureSurface &collect)
 {
+	STAR_CHECK_NE(img_rows, 0);
+	STAR_CHECK_NE(img_cols, 0);
 	createDepthTextureSurface(
 		img_rows, img_cols,
 		collect.texture, collect.surface, collect.d_array);
@@ -149,6 +151,8 @@ void star::createIndexTextureSurface(
 
 void star::createIndexTextureSurface(const unsigned img_rows, const unsigned img_cols, CudaTextureSurface &collect)
 {
+	STAR_CHECK_NE(img_rows, 0);
+	STAR_CHECK_NE(img_cols, 0);
 	createIndexTextureSurface(
 		img_rows, img_cols,
 		collect.texture, collect.surface, collect.d_array);
@@ -184,6 +188,8 @@ void star::createInt32TextureSurface(
 	const unsigned img_rows, const unsigned img_cols,
 	CudaTextureSurface &collect)
 {
+	STAR_CHECK_NE(img_rows, 0);
+	STAR_CHECK_NE(img_cols, 0);
 	createInt32TextureSurface(
 		img_rows, img_cols,
 		collect.texture, collect.surface, collect.d_array);
@@ -218,6 +224,8 @@ void star::createFloat4TextureSurface(
 
 void star::createFloat4TextureSurface(const unsigned rows, const unsigned cols, CudaTextureSurface &texture_collect)
 {
+	STAR_CHECK_NE(rows, 0);
+	STAR_CHECK_NE(cols, 0);
 	createFloat4TextureSurface(
 		rows, cols,
 		texture_collect.texture,
@@ -256,6 +264,8 @@ void star::createFloat3TextureSurface(
 	const unsigned rows, const unsigned cols,
 	CudaTextureSurface &texture_collect)
 {
+	STAR_CHECK_NE(rows, 0);
+	STAR_CHECK_NE(cols, 0);
 	createFloat3TextureSurface(
 		rows, cols,
 		texture_collect.texture,
@@ -294,6 +304,8 @@ void star::createFloat2TextureSurface(
 	const unsigned rows, const unsigned cols,
 	CudaTextureSurface &texture_collect)
 {
+	STAR_CHECK_NE(rows, 0);
+	STAR_CHECK_NE(cols, 0);
 	createFloat2TextureSurface(
 		rows, cols,
 		texture_collect.texture,
@@ -343,6 +355,8 @@ void star::createFloat1TextureSurface(
 	CudaTextureSurface &texture_collect,
 	const bool interpolationable)
 {
+	STAR_CHECK_NE(rows, 0);
+	STAR_CHECK_NE(cols, 0);
 	createFloat1TextureSurface(
 		rows, cols,
 		texture_collect.texture,
@@ -382,6 +396,8 @@ void star::createUChar1TextureSurface(
 	const unsigned rows, const unsigned cols,
 	CudaTextureSurface &texture_collect)
 {
+	STAR_CHECK_NE(rows, 0);
+	STAR_CHECK_NE(cols, 0);
 	createUChar1TextureSurface(
 		rows, cols,
 		texture_collect.texture,
@@ -453,6 +469,9 @@ void star::createFloat3DTextureSurface(
 	CudaTextureSurface &texture_collect,
 	const bool interpolationable)
 {
+	STAR_CHECK_NE(rows, 0);
+	STAR_CHECK_NE(cols, 0);
+	STAR_CHECK_NE(height, 0);
 	createFloat3DTextureSurface(
 		cols, rows, height,
 		texture_collect.texture,
@@ -492,6 +511,9 @@ void star::createUchar3DTextureSurface(
 	const unsigned cols, const unsigned rows, const unsigned height,
 	CudaTextureSurface &texture_collect)
 {
+	STAR_CHECK_NE(rows, 0);
+	STAR_CHECK_NE(cols, 0);
+	STAR_CHECK_NE(height, 0);
 	createUchar3DTextureSurface(
 		cols, rows, height,
 		texture_collect.texture,

@@ -1,5 +1,5 @@
 #include <star/common/common_types.h>
-#include <star/data_proc/depth_surfel_collect.h>
+#include <star/img_proc/depth_surfel_collect.h>
 #include <device_launch_parameters.h>
 
 namespace star::device

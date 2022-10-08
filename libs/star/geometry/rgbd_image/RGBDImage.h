@@ -11,5 +11,5 @@ namespace star
     private:
         cv::Mat m_rgb_image;
         cv::Mat m_depth_image;
-    }
+    };
 } // namespace star

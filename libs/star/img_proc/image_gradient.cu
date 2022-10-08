@@ -1,5 +1,5 @@
 #include <star/common/common_types.h>
-#include <star/data_proc/image_gradient.h>
+#include <star/img_proc/image_gradient.h>
 #include <device_launch_parameters.h>
 
 namespace star::device

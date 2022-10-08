@@ -1,4 +1,4 @@
-#include <star/data_proc/noise_generator.h>
+#include <star/img_proc/noise_generator.h>
 
 void star::apply_gaussian_noise(
 	const cv::Mat &depth_image,

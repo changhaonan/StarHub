@@ -1,7 +1,7 @@
 #include <device_launch_parameters.h>
 #include <star/math/vector_ops.hpp>
 #include <star/math/eigen33.h>
-#include <star/data_proc/surfel_reliable_filter.h>
+#include <star/img_proc/surfel_reliable_filter.h>
 
 namespace star::device
 {

@@ -1,5 +1,5 @@
 #include <device_launch_parameters.h>
-#include <star/data_proc/generate_maps.h>
+#include <star/img_proc/generate_maps.h>
 
 namespace star::device
 {

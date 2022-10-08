@@ -2,8 +2,8 @@
 #include <star/common/encode_utils.h>
 #include <star/common/color_transfer.h>
 #include <star/common/common_texture_utils.h>
-#include <star/data_proc/generate_maps.h>
-#include <star/data_proc/rgb_clip_normalize.h>
+#include <star/img_proc/generate_maps.h>
+#include <star/img_proc/rgb_clip_normalize.h>
 #include <device_launch_parameters.h>
 
 // Local macro

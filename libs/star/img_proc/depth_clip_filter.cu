@@ -1,5 +1,5 @@
 #include <star/common/common_types.h>
-#include <star/data_proc/depth_clip_filter.h>
+#include <star/img_proc/depth_clip_filter.h>
 #include <star/math/device_mat.h>
 #include <star/math/vector_ops.hpp>
 #include <device_launch_parameters.h>
