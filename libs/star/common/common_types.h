@@ -1,13 +1,3 @@
-/**
- * @file compile_test.cu
- * @author Haonan Chang (chnme40cs@gmail.com)
- * @brief This file is used to provide the declare the widely types
- * @version 0.1
- * @date 2022-10-06
- *
- * @copyright Copyright (c) 2022
- *
- */
 #pragma once
 #include <star/common/containers/device_array.hpp>
 #include <star/common/containers/kernel_containers.hpp>

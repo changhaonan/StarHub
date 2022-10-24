@@ -61,11 +61,4 @@ add_subdirectory(external)
 add_subdirectory(libs/star)
 
 # Examples
-# Read image
-add_executable(rgbd_to_pcd examples/rgbd_to_pcd.cu)
-target_link_libraries(rgbd_to_pcd ${OpenCV_LIBRARIES})
-target_link_libraries(rgbd_to_pcd star_io_lib star_geometry_lib star_visualization_lib)
-
-# Compile test
-add_executable(compile_test examples/compile_test.cu)
-target_link_libraries(compile_test star_common_lib)
+add_subdirectory(examples)

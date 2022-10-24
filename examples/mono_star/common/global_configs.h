@@ -1,0 +1,86 @@
+#pragma once
+
+// Disable cuda on Eigen
+#ifndef EIGEN_NO_CUDA
+#define EIGEN_NO_CUDA
+#endif
+
+// Perform debug sync and check cuda error
+//#define CUDA_DEBUG_SYNC_CHECK
+
+// For pcl access of new in debug mode
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+#define EIGEN_DONT_VECTORIZE
+#define EIGEN_DISABLE_UNALIGNED_ARRAY_ASSERT
+#endif
+
+#define CUDA_CHECKERR_SYNC 1
+
+// The constants need to accessed on device
+constexpr unsigned d_max_num_nodes = 2048;
+
+// The scale of fusion map, will be accessed on device
+#define d_fusion_map_scale 4
+
+// The scale of filter map, will be accessed on device
+#define d_filter_map_scale 4 // The same as d_fusion_map_scale
+
+// Normalize the interpolate weight to 1
+#define USE_INTERPOLATE_WEIGHT_NORMALIZATION
+
+// Fix boost broken issue with cuda compile
+#ifdef __CUDACC__
+#define BOOST_PP_VARIADICS 0
+#endif
+
+// Camera setting
+// constexpr unsigned d_max_cam = 4;
+// constexpr unsigned d_max_cam = 3;
+constexpr unsigned d_max_cam = 1;
+
+// NVTX trace
+//#define OPTIMIZE
+
+// FPS setting
+constexpr unsigned d_fps = 10;
+
+// Global knn setting
+// constexpr unsigned d_node_knn_size = 4;
+constexpr unsigned d_node_knn_size = 8;
+constexpr unsigned d_surfel_knn_size = d_node_knn_size; // TODO: Set as the same for this version
+constexpr unsigned d_surfel_knn_pair_size = d_surfel_knn_size * (d_surfel_knn_size - 1) / 2;
+
+// IO debug
+#define USE_IO_DEBUG
+
+// Debug
+//#define CUDA_DEBUG_SYNC_CHECK
+
+// Solver related
+constexpr unsigned d_transform_dim = 6;
+// constexpr unsigned d_node_variable_dim = (d_transform_dim + d_node_knn_size);
+constexpr unsigned d_node_variable_dim = d_transform_dim; // Only update for transformation now
+constexpr unsigned d_node_variable_dim_square = d_node_variable_dim * d_node_variable_dim;
+constexpr unsigned d_dense_image_residual_dim = 3; // 1 (picp) + 2 (opticalflow)
+
+constexpr unsigned d_bin_size = 32;      // Bin size is fixed to 32 to match warp size
+constexpr unsigned d_max_num_bin = 1024; // Fixed as 32 * 32
+
+constexpr unsigned d_invalid_index = 0xFFFFFFFF;
+constexpr float d_correspondence_normal_dot_threshold = 0.7f;
+constexpr float d_correspondence_distance_threshold = 0.03f;
+constexpr float d_correspondence_distance_threshold_square = (d_correspondence_distance_threshold * d_correspondence_distance_threshold);
+
+// WarpLevel
+constexpr unsigned preconditioner_blk_size = d_node_variable_dim_square;
+// Warpsize is 32, what we defined is thread we used in each block, has to be 2^n
+constexpr unsigned opt_warp_size = 32;
+
+// Maximum number of semantic types
+constexpr unsigned d_max_num_semantic = 19;
+
+// Opt debug
+//#define OPT_DEBUG_CHECK
+
+// Geometry debug
+#define DYNAMIC_GEOMETRY_DEBUG

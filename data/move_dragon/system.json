@@ -1,5 +1,5 @@
 {
-  "model_path": "C:/Users/50367/source/repos/StarCore/Star/test_data/models",
+  "model_path": "/home/robot-learning/Projects/StarHub/data/models",
   "start_frame": 20,
   "num_frames": 30,
   "step_frame": 1,
