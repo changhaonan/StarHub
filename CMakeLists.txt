@@ -13,6 +13,7 @@ project(StarHub VERSION 0.1 LANGUAGES CXX CUDA)
 
 # Cmake path
 LIST(APPEND CMAKE_PREFIX_PATH /usr/lib/x86_64-linux-gnu/cmake)
+LIST(APPEND CMAKE_PREFIX_PATH /home/robot-learning/Software/libtorch/share/cmake)
 
 # Language options
 set(CMAKE_CXX_STANDARD 17)
@@ -40,6 +41,10 @@ include_directories(${FLANN_INCLUDE_DIRS})
 # PCL
 find_package(PCL REQUIRED COMPONENTS io visualization)
 include_directories(${PCL_INCLUDE_DIRS})
+
+# Torch
+find_package(Torch REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 # Easy3DViewer
 set(Easy3DViewer_ROOT "${CMAKE_SOURCE_DIR}/external/Easy3DViewer")
