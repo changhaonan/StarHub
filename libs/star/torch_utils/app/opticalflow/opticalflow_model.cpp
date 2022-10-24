@@ -50,13 +50,11 @@ at::Tensor star::nn::OpticalFlowModel::undoPadding(at::Tensor image)
 
 void star::nn::OpticalFlowModel::SanityCheck()
 {
-	//// Check a value
+	// Check a value
 	std::cout << m_output.slice(0, 0, 1).slice(1, 0, 1) << "\n";
-	// std::cout << m_output.slice(1, 0, 3).slice(0, 0, 1) << "\n";
-	//  Check size
+	// Check size
 	std::cout << "Output shape is:" << std::endl;
 	std::cout << m_output.sizes() << std::endl;
-	////std::cout << m_output.size() << "," << m_output.size(1) << "," << m_output.size(2) << std::endl;
 }
 
 #ifdef ENABLE_VIS_DEBUG

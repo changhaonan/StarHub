@@ -12,12 +12,12 @@ A unified library shared by all Star-related projects.
 
 ### Oct.26th
 
-- [x] Processor structure and etc.
+- [ ] Processor structure and etc.
 
 ### Oct.27th
 
-- [x] Optimization structure.
+- [ ] Optimization structure.
 
 ### Oct.29th
 
-- [x] Joint testing.
+- [ ] Joint testing.
