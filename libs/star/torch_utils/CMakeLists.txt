@@ -1,5 +1,5 @@
 file(GLOB TORCH_SRC *.h *.hpp *.cuh *.cpp *.cu app/opticalflow/* app/segmentation/*)
 source_group("src" FILES ${TORCH_SRC})
-add_library(star_torch_lib SHARED ${TORCH_SRC})
-set_target_properties(star_torch_lib PROPERTIES LINKER_LANGUAGE CUDA)
-target_link_libraries(star_torch_lib star_common_lib ${TORCH_LIBRARIES})
+add_library(torch_utils_lib SHARED ${TORCH_SRC})
+set_target_properties(torch_utils_lib PROPERTIES LINKER_LANGUAGE CUDA)
+target_link_libraries(torch_utils_lib common_lib ${TORCH_LIBRARIES})

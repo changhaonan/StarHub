@@ -6,5 +6,5 @@ file(GLOB GEOMETRY_SRC
     rgbd_image/*.h rgbd_image/*.hpp rgbd_imagel/*.cpp rgbd_image/*.cu rgbd_image/*.cuh
     sampling/*.h sampling/*.hpp sampling/*.cpp sampling/*.cu sampling/*.cuh)
 source_group("src" FILES ${GEOMETRY_SRC})
-add_library(star_geometry_lib SHARED ${GEOMETRY_SRC})
-target_link_libraries(star_geometry_lib star_common_lib star_math_lib star_img_proc_lib)
+add_library(geometry_lib SHARED ${GEOMETRY_SRC})
+target_link_libraries(geometry_lib common_lib math_lib img_proc_lib)
