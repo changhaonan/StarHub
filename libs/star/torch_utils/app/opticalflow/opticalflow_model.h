@@ -1,5 +1,5 @@
 #pragma once
-#include "torch_cpp/torch_model.h"
+#include <star/torch_utils/torch_model.h>
 #include <torch/script.h> // One-stop header.
 #include <torch/torch.h>
 
@@ -9,27 +9,30 @@
 
 #define ENABLE_VIS_DEBUG
 #ifdef ENABLE_VIS_DEBUG
-#include "context.hpp"
-#include "graph_visualizer.hpp"
+// Viewer
+#include <easy3d_viewer/context.hpp>
+#include <easy3d_viewer/graph_visualizer.hpp>
 #endif
 
-namespace star { namespace nn {
+namespace star::nn
+{
 
-	class OpticalFlowModel : public TorchModel {
+	class OpticalFlowModel : public TorchModel
+	{
 	public:
 		using Ptr = std::shared_ptr<OpticalFlowModel>;
 		STAR_NO_COPY_ASSIGN_MOVE(OpticalFlowModel);
 		OpticalFlowModel() : m_use_undo_pad(false) { m_model_device = ""; }
-		~OpticalFlowModel() {};
+		~OpticalFlowModel(){};
 
-		void Load(const std::string& model_path) override;
+		void Load(const std::string &model_path) override;
 		void Run() override;
 		torch::Tensor Output() override { return m_output; }
 		// Check
 		void SanityCheck() override;
 
 #ifdef ENABLE_VIS_DEBUG
-		void Visualization(const torch::Tensor& gt_motion);
+		void Visualization(const torch::Tensor &gt_motion);
 #endif
 
 	private:
@@ -42,5 +45,4 @@ namespace star { namespace nn {
 		bool m_use_undo_pad;
 	};
 
-}
 }
