@@ -16,8 +16,8 @@
 
 #define CUDA_CHECKERR_SYNC 1
 
-// The constants need to accessed on device
-constexpr unsigned d_max_num_nodes = 2048;
+// Geometry-related
+#include <star/geometry/constants.h>
 
 // The scale of fusion map, will be accessed on device
 #define d_fusion_map_scale 4
@@ -33,9 +33,7 @@ constexpr unsigned d_max_num_nodes = 2048;
 #define BOOST_PP_VARIADICS 0
 #endif
 
-// Camera setting
-// constexpr unsigned d_max_cam = 4;
-// constexpr unsigned d_max_cam = 3;
+// Camera-related
 constexpr unsigned d_max_cam = 1;
 
 // NVTX trace
@@ -44,21 +42,14 @@ constexpr unsigned d_max_cam = 1;
 // FPS setting
 constexpr unsigned d_fps = 10;
 
-// Global knn setting
-// constexpr unsigned d_node_knn_size = 4;
-constexpr unsigned d_node_knn_size = 8;
-constexpr unsigned d_surfel_knn_size = d_node_knn_size; // TODO: Set as the same for this version
-constexpr unsigned d_surfel_knn_pair_size = d_surfel_knn_size * (d_surfel_knn_size - 1) / 2;
-
 // IO debug
 #define USE_IO_DEBUG
 
 // Debug
 //#define CUDA_DEBUG_SYNC_CHECK
 
-// Solver related
+// Solver-related
 constexpr unsigned d_transform_dim = 6;
-// constexpr unsigned d_node_variable_dim = (d_transform_dim + d_node_knn_size);
 constexpr unsigned d_node_variable_dim = d_transform_dim; // Only update for transformation now
 constexpr unsigned d_node_variable_dim_square = d_node_variable_dim * d_node_variable_dim;
 constexpr unsigned d_dense_image_residual_dim = 3; // 1 (picp) + 2 (opticalflow)
