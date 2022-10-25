@@ -1,70 +1,61 @@
 #pragma once
 #include <cuda_fp16.h>
-#include "common/common_types.h"
-#include "common/ArrayView.h"
-#include "common/ArraySlice.h"
-#include "common/SyncArray.h"
-#include "star/common/global_configs.h"
-#include "star/geometry/node_graph/NodeGraph.h"
+#include <star/common/common_types.h>
+#include <star/common/ArrayView.h>
+#include <star/common/ArraySlice.h>
+#include <star/common/SyncArray.h>
+#include <star/geometry/constants.h>
+#include <star/geometry/node_graph/NodeGraph.h>
 
-namespace star {
+namespace star
+{
 	/** \brief Provide high-level manipulation towards node graph
-	*/
-	class NodeGraphManipulator {
+	 */
+	class NodeGraphManipulator
+	{
 	public:
 		// Given new vertex, compute new head
 		static void CheckSurfelCandidateSupportStatus(
-			const GArrayView<float4>& vertex_confid_candidate,
-			const GArrayView<float4>& node_coord,
-			const GArrayView<uint2>& node_status,
-			GArraySlice<unsigned>& candidate_validity_indicator,
-			GArraySlice<unsigned>& candidate_unsupported_indicator,
-			GArraySlice<ushortX<d_surfel_knn_size>>& candidate_knn,
+			const GArrayView<float4> &vertex_confid_candidate,
+			const GArrayView<float4> &node_coord,
+			const GArrayView<uint2> &node_status,
+			GArraySlice<unsigned> &candidate_validity_indicator,
+			GArraySlice<unsigned> &candidate_unsupported_indicator,
+			GArraySlice<ushortX<d_surfel_knn_size>> &candidate_knn,
 			cudaStream_t stream,
-			const float node_radius_square
-		);
-
-		// A host method
-		static void ExtractSupportNodeFromSurfel(
-			GArraySlice<ushort>& candidate_knn_head,
-			SyncArray<float4>& node_coord
-		);
+			const float node_radius_square);
 
 		// Remove those node that are out of track
 		static void UpdateCounterNodeOutTrack(
-			const GArrayView<unsigned>& surfel_validity,
-			const GArrayView<ushortX<d_surfel_knn_size>>& surfel_knn,
-			GArraySlice<unsigned>& counter_node_outtrack,
-			cudaStream_t stream
-		);
+			const GArrayView<unsigned> &surfel_validity,
+			const GArrayView<ushortX<d_surfel_knn_size>> &surfel_knn,
+			GArraySlice<unsigned> &counter_node_outtrack,
+			cudaStream_t stream);
 		static void RemoveNodeOutTrackSync(
-			const GArrayView<ushortX<d_surfel_knn_size>>& node_knn,
-			const GArrayView<unsigned>& counter_node_outtrack,
-			GArraySlice<uint2>& node_status,
-			GArraySlice<half>& node_distance,
-			unsigned& num_node_remove_count,
+			const GArrayView<ushortX<d_surfel_knn_size>> &node_knn,
+			const GArrayView<unsigned> &counter_node_outtrack,
+			GArraySlice<uint2> &node_status,
+			GArraySlice<half> &node_distance,
+			unsigned &num_node_remove_count,
 			const float counter_node_outtrack_threshold,
 			const unsigned frozen_time,
-			cudaStream_t stream
-		);
+			cudaStream_t stream);
 
 		// Update the semantic state for node
 		static void UpdateNodeSemanticProb(
-			const GArrayView<ushortX<d_surfel_knn_size>>& surfel_knn,
-			const GArrayView<ucharX<d_max_num_semantic>>& surfel_semantic_prob,
-			GArraySlice<ucharX<d_max_num_semantic>>& node_semantic_prob,
-			GArraySlice<float>& node_semantic_prob_vote_buffer,
-			cudaStream_t stream
-		);
+			const GArrayView<ushortX<d_surfel_knn_size>> &surfel_knn,
+			const GArrayView<ucharX<d_max_num_semantic>> &surfel_semantic_prob,
+			GArraySlice<ucharX<d_max_num_semantic>> &node_semantic_prob,
+			GArraySlice<float> &node_semantic_prob_vote_buffer,
+			cudaStream_t stream);
 
 		// Update the new semantic state for node
 		static void UpdateIncNodeSemanticProb(
-			const GArrayView<ushortX<d_surfel_knn_size>>& surfel_knn,
-			const GArrayView<ucharX<d_max_num_semantic>>& surfel_semantic_prob,
-			GArraySlice<ucharX<d_max_num_semantic>>& node_semantic_prob,
-			GArraySlice<float>& node_semantic_prob_vote_buffer,
+			const GArrayView<ushortX<d_surfel_knn_size>> &surfel_knn,
+			const GArrayView<ucharX<d_max_num_semantic>> &surfel_semantic_prob,
+			GArraySlice<ucharX<d_max_num_semantic>> &node_semantic_prob,
+			GArraySlice<float> &node_semantic_prob_vote_buffer,
 			unsigned num_prev_node,
-			cudaStream_t stream
-		);
+			cudaStream_t stream);
 	};
 }

@@ -29,6 +29,7 @@ namespace star
 			m_array_size = end - start;
 			m_array = arr + start;
 		}
+		__host__ __device__ GArraySlice(GArray<T> &array) : m_array(array.ptr()), m_array_size(array.size()) {}
 
 		// Simple interface
 		__host__ __device__ __forceinline__ size_t Size() const { return m_array_size; }

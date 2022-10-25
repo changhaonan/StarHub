@@ -1,24 +1,21 @@
 #include <star/common/common_types.h>
-#include <star/common/sanity_check.cuh>
+#include <star/common/sanity_check.h>
 #include <star/common/algorithm_types.cuh>
 #include <assert.h>
 #include <device_launch_parameters.h>
 
-namespace star
+namespace star::device
 {
-	namespace device
+	void checkCudaIndexTexture(
+		cudaTextureObject_t vertex,
+		cudaTextureObject_t normal,
+		cudaTextureObject_t index,
+		const GArray<float4> &vertex_array,
+		const GArray<float4> &normal_array)
 	{
-		void checkCudaIndexTexture(
-			cudaTextureObject_t vertex,
-			cudaTextureObject_t normal,
-			cudaTextureObject_t index,
-			const GArray<float4> &vertex_array,
-			const GArray<float4> &normal_array)
-		{
-		}
+	}
 
-	} /*End of device*/
-};	  /*End of star*/
+}
 
 void star::checkPrefixSum()
 {
@@ -189,7 +186,7 @@ void star::checkUniqueSelection()
 	}
 }
 
-#include <star/common/sanity_check.cuh>
+#include <star/common/sanity_check.h>
 #include <star/common/common_utils.h>
 #include <star/common/encode_utils.h>
 #include <random>

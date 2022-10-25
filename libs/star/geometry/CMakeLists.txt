@@ -4,7 +4,8 @@ file(GLOB GEOMETRY_SRC
     surfel/*.h surfel/*.hpp surfel/*.cpp surfel/*.cu surfel/*.cuh
     tsdf/*.h tsdf/*.hpp tsdf/*.cpp tsdf/*.cu tsdf/*.cuh
     rgbd_image/*.h rgbd_image/*.hpp rgbd_imagel/*.cpp rgbd_image/*.cu rgbd_image/*.cuh
-    sampling/*.h sampling/*.hpp sampling/*.cpp sampling/*.cu sampling/*.cuh)
+    sampling/*.h sampling/*.hpp sampling/*.cpp sampling/*.cu sampling/*.cuh
+    node_graph/*.h node_graph/*.hpp node_graph/*.cpp node_graph/*.cu node_graph/*.cuh)
 source_group("src" FILES ${GEOMETRY_SRC})
 add_library(geometry_lib SHARED ${GEOMETRY_SRC})
 target_link_libraries(geometry_lib common_lib math_lib img_proc_lib)

@@ -37,7 +37,7 @@ namespace star
         void loadCameraConfigFromJson(const void *json_ptr);
 
     public:
-        const unsigned num_cam() const { return m_num_cam; }
+        unsigned num_cam() const { return m_num_cam; }
         const Eigen::Matrix4f *extrinsic() const { return m_cam2world; }
         Intrinsic depth_intrinsic_raw(size_t cam_idx) const { return raw_depth_intrinsic[cam_idx]; }
         Intrinsic rgb_intrinsic_raw(size_t cam_idx) const { return raw_rgb_intrinsic[cam_idx]; }

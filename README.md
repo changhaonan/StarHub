@@ -13,7 +13,7 @@ A unified library shared by all Star-related projects.
 ### Oct.26th
 
 - [ ] Processor structure and etc.
-    - [ ] Add general structure for 
+    - [ ] Adapt NodeGraph to the system.
 
 ### Oct.27th
 

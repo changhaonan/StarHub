@@ -1,5 +1,5 @@
 #pragma once
-#include <star/common/sanity_check.cuh>
+#include <star/common/sanity_check.h>
 #include <iostream>
 
 template <typename T>
