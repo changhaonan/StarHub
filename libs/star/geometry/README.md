@@ -1,0 +1,1 @@
+Geometry module provides some basic geometry operations and functions, including sampling, rendering.

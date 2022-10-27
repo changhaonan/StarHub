@@ -14,7 +14,7 @@ A unified library shared by all Star-related projects.
 
 - [ ] Processor structure and etc.
     - [x] Adapt NodeGraph to the system.
-    - [ ] Move Renderer
+    - [x] Move Renderer
     - [ ] Finish the Measurement pipeline
 
 ### Oct.27th
@@ -30,3 +30,7 @@ A unified library shared by all Star-related projects.
 ## Problem
 
 Can not be statically determinted. What is the problem??
+
+## Philosophy
+
+I want to seperate the star lib and star app. The star app should have shareable structure. For example, I can have different apps but share the same lib.

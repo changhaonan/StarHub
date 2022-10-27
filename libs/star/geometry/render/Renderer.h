@@ -19,9 +19,7 @@
 #include <star/common/logging.h>
 #include <star/common/common_types.h>
 #include <star/geometry/constants.h>
-#include <star/geometry/types/fusion_types.h>
-#include <star/geometry/types/solver_types.h>
-#include <star/geometry/types/measure_types.h>
+#include <star/geometry/geometry_types.h>
 #include <star/geometry/render/GLSurfelGeometryVBO.h>
 #include <star/geometry/render/GLLiveSurfelGeometryVBO.h>
 #include <star/geometry/render/GLRenderedMaps.h>
