@@ -26,6 +26,9 @@ set(EIGEN_ROOT "${CMAKE_SOURCE_DIR}/external/eigen")
 set(EIGEN_INCLUDE_DIR ${EIGEN_ROOT})
 include_directories(${EIGEN_INCLUDE_DIR})
 
+# GLFW package
+find_package(glfw3 REQUIRED)
+
 # OpenCV
 find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
 include_directories(${OpenCV_INCLUDE_DIR})
