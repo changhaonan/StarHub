@@ -39,9 +39,9 @@ namespace star
     public:
         unsigned num_cam() const { return m_num_cam; }
         const Eigen::Matrix4f *extrinsic() const { return m_cam2world; }
-        Intrinsic depth_intrinsic_raw(size_t cam_idx) const { return raw_depth_intrinsic[cam_idx]; }
-        Intrinsic rgb_intrinsic_raw(size_t cam_idx) const { return raw_rgb_intrinsic[cam_idx]; }
-        Intrinsic rgb_intrinsic_downsample(size_t cam_idx) const { return downsample_rgb_intrinsic[cam_idx]; }
+        Intrinsic depth_intrinsic_raw(size_t cam_idx=0) const { return raw_depth_intrinsic[cam_idx]; }
+        Intrinsic rgb_intrinsic_raw(size_t cam_idx=0) const { return raw_rgb_intrinsic[cam_idx]; }
+        Intrinsic rgb_intrinsic_downsample(size_t cam_idx=0) const { return downsample_rgb_intrinsic[cam_idx]; }
 
         unsigned raw_img_rows(const size_t cam_idx = 0) const { return m_raw_img_rows[cam_idx]; }
         unsigned raw_img_cols(const size_t cam_idx = 0) const { return m_raw_img_cols[cam_idx]; }

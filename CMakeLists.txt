@@ -56,6 +56,7 @@ include_directories(${Easy3DViewer_INCLUDE_DIR})
 
 # Include
 include_directories("${CMAKE_SOURCE_DIR}/libs")
+include_directories("${CMAKE_SOURCE_DIR}/examples")
 
 # subdirectories
 add_subdirectory(external)

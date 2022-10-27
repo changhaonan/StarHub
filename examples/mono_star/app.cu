@@ -1,4 +1,5 @@
 #include "common/ConfigParser.h"
+#include "measure/MeasureProcessorOffline.h"
 
 int main()
 {
@@ -15,4 +16,14 @@ int main()
     auto vis_config_path = config_path_prefix / "visualize.json";
     auto &config = ConfigParser::Instance();
     config.ParseConfig(sys_config_path.string(), context_config_path.string(), vis_config_path.string(), output_path.string());
+
+    // Build the Measure system (Use serial not parallel)
+    // Generate the geometry, node graph, and render in continous time
+
+    auto measure_processor = std::make_shared<MeasureProcessorOffline>();
+
+    for (int i = 0; i < 100; i++)
+    {
+        measure_processor->processFrame(i, 0);
+    }
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <star/common/common_texture_utils.h>
 #include <star/geometry/surfel/SurfelGeometry.h>
-#include "star/geometry/node_graph/NodeGraph.h"
+#include <star/geometry/node_graph/NodeGraph.h>
 #include "solver_types.h"
 #include "fusion_types.h"
 #include "frame_buffer.h"
@@ -71,18 +71,6 @@ namespace star
 				render4solver.index_map[cam_idx] = solver_maps->index_map[cam_idx];
 			}
 			return render4solver;
-		}
-		Geometry4Solver GenerateGeometry4Solver() const
-		{
-			return surfel_geometry->GenerateGeometry4Solver();
-		}
-		NodeGraph4Solver GenerateNodeGraph4Solver() const
-		{
-			return node_graph->GenerateNodeGraph4Solver();
-		}
-		Geometry4Fusion GenerateGeometry4Fusion()
-		{
-			return surfel_geometry->GenerateGeometry4Fusion();
 		}
 
 		// Shared

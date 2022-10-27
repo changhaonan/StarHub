@@ -12,6 +12,8 @@ namespace star
     class SurfelMapInitializer
     {
     public:
+        using Ptr = std::shared_ptr<SurfelMapInitializer>;
+
         SurfelMapInitializer(
             const unsigned width, const unsigned height,
             const float clip_near, const float clip_far,
