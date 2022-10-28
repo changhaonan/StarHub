@@ -29,6 +29,9 @@ include_directories(${EIGEN_INCLUDE_DIR})
 # GLFW package
 find_package(glfw3 REQUIRED)
 
+# OpenGL package
+# find_package(OpenGL REQUIRED)
+
 # OpenCV
 find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui)
 include_directories(${OpenCV_INCLUDE_DIR})

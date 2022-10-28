@@ -5,10 +5,19 @@ file(GLOB GEOMETRY_SRC
     tsdf/*.h tsdf/*.hpp tsdf/*.cpp tsdf/*.cu tsdf/*.cuh
     rgbd_image/*.h rgbd_image/*.hpp rgbd_imagel/*.cpp rgbd_image/*.cu rgbd_image/*.cuh
     sampling/*.h sampling/*.hpp sampling/*.cpp sampling/*.cu sampling/*.cuh
-    node_graph/*.h node_graph/*.hpp node_graph/*.cpp node_graph/*.cu node_graph/*.cuh
-    render/*.h render/*.hpp render/*.cpp render/*.cu render/*.cuh render/glad/glad.h)
+    node_graph/*.h node_graph/*.hpp node_graph/*.cpp node_graph/*.cu node_graph/*.cuh)
+
+file(GLOB RENDER_SRC render/*.h render/*.cu)
+file(GLOB GLAD_SRC render/glad.c render/glad/glad.h)
+
 source_group("src" FILES ${GEOMETRY_SRC})
-# add_library(geometry_lib SHARED ${GEOMETRY_SRC})
-add_library(geometry_lib ${GEOMETRY_SRC})  # static library because glfw onlys has static library
-target_link_libraries(geometry_lib common_lib math_lib img_proc_lib)
-target_link_libraries(geometry_lib glfw)
+source_group("render" FILES ${RENDER_SRC})
+source_group("glad" FILES ${GLAD_SRC})
+
+add_library(glad ${GLAD_SRC})
+set_target_properties(glad PROPERTIES LINKER_LANGUAGE CXX)
+
+add_library(geometry_lib ${GEOMETRY_SRC} ${RENDER_SRC})
+set_property(TARGET geometry_lib PROPERTY POSITION_INDEPENDENT_CODE ON)
+# This library onlys works when it static
+target_link_libraries(geometry_lib common_lib math_lib img_proc_lib glfw glad)
