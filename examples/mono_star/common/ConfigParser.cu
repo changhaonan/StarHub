@@ -63,9 +63,9 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
     m_model_path = config_json.at("model_path");
     // Frame-related
     STAR_CHECK(config_json.find("start_frame") != config_json.end());
-    STAR_CHECK(config_json.find("num_frame") != config_json.end());
+    STAR_CHECK(config_json.find("num_frames") != config_json.end());
     m_start_frame_idx = config_json.at("start_frame");
-    m_num_frames = config_json.at("num_frame");
+    m_num_frames = config_json.at("num_frames");
     m_step_frame = config_json.at("step_frame");
     // Lambda function
     const auto check_and_load = [&](bool &assign_value, const std::string &key, bool default_value) -> void

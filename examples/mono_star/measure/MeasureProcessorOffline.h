@@ -31,11 +31,15 @@ namespace star
 		void processFrame(
 			const unsigned frame_idx,
 			cudaStream_t stream);
+		void saveContext(
+			const unsigned frame_idx,
+			cudaStream_t stream);
+
 	private:
 		unsigned m_start_frame_idx;
 		unsigned m_step_frame;
 		VolumeDeformFileFetch::Ptr m_fetcher;
-		
+
 		// Buffer data
 		cv::Mat m_depth_img;
 		cv::Mat m_color_img;

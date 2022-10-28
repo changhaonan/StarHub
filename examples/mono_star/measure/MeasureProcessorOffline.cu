@@ -54,4 +54,18 @@ void star::MeasureProcessorOffline::processFrame(
 		*m_surfel_map,
 		stream);
 	cudaSafeCall(cudaStreamSynchronize(stream));
+
+	// 3. Visualize
+	saveContext(frame_idx, stream);
+}
+
+void star::MeasureProcessorOffline::saveContext(
+	const unsigned frame_idx,
+	cudaStream_t stream)
+{
+	auto& context = easy3d::Context::Instance();
+	context.open(frame_idx);
+	context.addPointCloud("measure");
+	visualize::SavePointCloud(m_surfel_map->VertexConfigReadOnly(), context.at("measure"));
+	context.close();
 }
