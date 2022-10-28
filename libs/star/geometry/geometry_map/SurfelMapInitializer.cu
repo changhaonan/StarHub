@@ -104,21 +104,24 @@ namespace star::device
         surf2Dwrite(measure_p, measurement_vertex_confid, x * sizeof(float4), y);
     }
 
-    __global__ void filterInvalidPixelKernel(
-        cudaTextureObject_t depth_map,
-        cudaTextureObject_t vertex_confid_map,
+    __global__ void filterAndScaleVertexKernel(
+        cudaTextureObject_t raw_depth_map,
+        cudaTextureObject_t raw_vertex_confid_map,
         cudaSurfaceObject_t filtered_vertex_confid_map,
-        const unsigned img_cols,
-        const unsigned img_rows,
+        const unsigned scaled_img_cols,
+        const unsigned scaled_img_rows,
+        const float downsample_scale_inv,
         const float clip_near,
         const float clip_far)
     {
         const int x = threadIdx.x + blockDim.x * blockIdx.x;
         const int y = threadIdx.y + blockDim.y * blockIdx.y;
-        if (x >= img_cols || y >= img_rows)
+        if (x >= scaled_img_cols || y >= scaled_img_rows)
             return;
+        const int raw_x = x * downsample_scale_inv;
+        const int raw_y = y * downsample_scale_inv;
 
-        const auto depth = tex2D<float>(depth_map, x, y); // depth should be in clamp mode
+        const auto depth = tex2D<float>(raw_depth_map, raw_x, raw_y); // depth should be in clamp mode
         float4 vertex_confid;
         if (abs(depth) > clip_far || abs(depth) < clip_near)
         { // Invalid pixel
@@ -126,7 +129,7 @@ namespace star::device
         }
         else
         {
-            vertex_confid = tex2D<float4>(vertex_confid_map, x, y);
+            vertex_confid = tex2D<float4>(raw_vertex_confid_map, raw_x, raw_y);
         }
 
         // Write: allow for local replacing
@@ -163,11 +166,10 @@ namespace star::device
 star::SurfelMapInitializer::SurfelMapInitializer(
     const unsigned width, const unsigned height,
     const float clip_near, const float clip_far,
-    const float surfel_radius_scale, const Intrinsic& intrinsic) :
-    m_width(width), m_height(height),
-    m_clip_near(clip_near), m_clip_far(clip_far),
-    m_surfel_radius_scale(surfel_radius_scale),
-    m_intrinsic(intrinsic)
+    const float surfel_radius_scale, const Intrinsic &intrinsic) : m_width(width), m_height(height),
+                                                                   m_clip_near(clip_near), m_clip_far(clip_far),
+                                                                   m_surfel_radius_scale(surfel_radius_scale),
+                                                                   m_intrinsic(intrinsic)
 {
     createDepthTextureSurface(height, width, m_raw_depth_img_collect);
     createFloat1TextureSurface(height, width, m_filtered_depth_img_collect);
@@ -185,16 +187,16 @@ void star::SurfelMapInitializer::UploadDepthImage(
     const GArrayView<unsigned short> depth_image,
     cudaStream_t stream)
 {
-    // 1. Upload depth
+    // 1. Upload depth (Raw size)
     cudaSafeCall(cudaMemcpy2DToArrayAsync(
-        m_raw_depth_img_collect.d_array, 
-        0, 0, 
-        depth_image.Ptr(), 
-        m_width * sizeof(unsigned short), 
-        m_width * sizeof(unsigned short), 
-        m_height, cudaMemcpyDeviceToDevice,
-        stream)
-    );
+        m_raw_depth_img_collect.d_array,
+        0, 0,
+        depth_image.Ptr(),
+        m_width * sizeof(unsigned short),
+        m_width * sizeof(unsigned short),
+        m_height,
+        cudaMemcpyDeviceToDevice,
+        stream));
     // 2. Filter depth
     filterUnreliableDepth(
         m_raw_depth_img_collect.texture,
@@ -212,22 +214,24 @@ void star::SurfelMapInitializer::InitFromRGBDImage(
     SurfelMap &surfel_map,
     cudaStream_t stream)
 {
-    // 0. Checking
-    STAR_CHECK_EQ(color_image.Size(), surfel_map.NumPixel());
-    STAR_CHECK_EQ(depth_image.Size(), surfel_map.NumPixel());
+    // 0. Check the scale
+    STAR_CHECK_EQ(color_image.Size(), m_width * m_height);
+    STAR_CHECK_EQ(depth_image.Size(), m_width * m_height);
+    const float scale = float(surfel_map.Width()) / float(m_width);
+    STAR_CHECK_EQ(scale, float(surfel_map.Height()) / float(m_height));
 
     // 1. Upload Depth image
     UploadDepthImage(depth_image, stream);
 
     // 2. Create vertex from depth
-    InitFromVertexNormalDepth(surfel_map, stream);
+    InitFromVertexNormalDepth(surfel_map, scale, stream);
 
     // 3. Compute color time
     createScaledColorTimeMap(
         color_image,
         m_height,
         m_width,
-        1.f, // No-scale here
+        scale,
         init_time,
         surfel_map.m_color_time.surface,
         stream);
@@ -238,7 +242,7 @@ void star::SurfelMapInitializer::InitFromRGBDImage(
         m_filtered_depth_img_collect.texture,
         m_height,
         m_width,
-        1.f, // No-scale here
+        scale,
         m_clip_near, m_clip_far,
         surfel_map.m_rgbd.surface,
         stream);
@@ -246,20 +250,22 @@ void star::SurfelMapInitializer::InitFromRGBDImage(
 
 void star::SurfelMapInitializer::InitFromVertexNormalDepth(
     SurfelMap &surfel_map,
+    const float scale,
     cudaStream_t stream)
 {
-    // 1. Create vertex
-    computeScaledVertexFromDepth(
+    // 1. Create vertex on raw scale
+    computeRawVertexFromDepth(
         m_raw_vertex_confid.surface,
         m_intrinsic,
         stream);
 
-    // 2. Filter out invalid pixel
+    // 2. Filter out invalid pixel & rescale
     // For this operation, we allow for in-place texture-surface operation
-    filterInvalidPixel(
+    filterAndScaleVertex(
         m_filtered_depth_img_collect.texture,
         m_raw_vertex_confid.texture,
         surfel_map.m_vertex_confid.surface,
+        scale,
         m_clip_near,
         m_clip_far,
         stream);
@@ -267,14 +273,14 @@ void star::SurfelMapInitializer::InitFromVertexNormalDepth(
     // 3. Compute normal
     createNormalRadiusMap(
         surfel_map.m_vertex_confid.texture,
-        m_height,
-        m_width,
+        surfel_map.Height(),
+        surfel_map.Width(),
         surfel_map.m_normal_radius.surface,
         m_surfel_radius_scale,
         stream);
 }
 
-void star::SurfelMapInitializer::computeScaledVertexFromDepth(
+void star::SurfelMapInitializer::computeRawVertexFromDepth(
     cudaSurfaceObject_t vertex_confid_buffer,
     const Intrinsic &intrinsic,
     cudaStream_t stream)
@@ -290,22 +296,28 @@ void star::SurfelMapInitializer::computeScaledVertexFromDepth(
         1.f); // No re-scale here
 }
 
-void star::SurfelMapInitializer::filterInvalidPixel(
-    cudaTextureObject_t depth_map,
-    cudaTextureObject_t vertex_confid_map,
+void star::SurfelMapInitializer::filterAndScaleVertex(
+    cudaTextureObject_t raw_depth_map,
+    cudaTextureObject_t raw_vertex_confid_map,
     cudaSurfaceObject_t filtered_vertex_confid_map,
+    const float scale,
     const float clip_near,
     const float clip_far,
     cudaStream_t stream)
 {
+    float scale_inv = 1.f / scale;
+    unsigned scaled_height = m_height * scale;
+    unsigned scaled_width = m_width * scale;
+
     dim3 blk(16, 16);
-    dim3 grid(divUp(m_width, blk.x), divUp(m_height, blk.y));
-    device::filterInvalidPixelKernel<<<grid, blk, 0, stream>>>(
-        depth_map,
-        vertex_confid_map,
+    dim3 grid(divUp(scaled_width, blk.x), divUp(scaled_height, blk.y));
+    device::filterAndScaleVertexKernel<<<grid, blk, 0, stream>>>(
+        raw_depth_map,
+        raw_vertex_confid_map,
         filtered_vertex_confid_map,
-        m_width,
-        m_height,
+        scaled_width,
+        scaled_height,
+        scale_inv,
         clip_near,
         clip_far);
 

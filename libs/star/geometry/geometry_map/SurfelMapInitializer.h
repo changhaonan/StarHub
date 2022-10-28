@@ -17,7 +17,7 @@ namespace star
         SurfelMapInitializer(
             const unsigned width, const unsigned height,
             const float clip_near, const float clip_far,
-            const float surfel_radius_scale, const Intrinsic& intrinsic);
+            const float surfel_radius_scale, const Intrinsic &intrinsic);
         ~SurfelMapInitializer();
 
         void UploadDepthImage(
@@ -39,19 +39,21 @@ namespace star
          */
         void InitFromVertexNormalDepth(
             SurfelMap &surfel_map,
+            const float scale,
             cudaStream_t stream);
 
     private:
-        void filterInvalidPixel(
-            cudaTextureObject_t depth_map,
-            cudaTextureObject_t vertex_confid_map,
-            cudaSurfaceObject_t filtered_vertex_confid_map,
-            const float clip_near,
-            const float clip_far,
-            cudaStream_t stream);
-        void computeScaledVertexFromDepth(
+        void computeRawVertexFromDepth(
             cudaSurfaceObject_t vertex_confid_buffer,
             const Intrinsic &intrinsic,
+            cudaStream_t stream);
+        void filterAndScaleVertex(
+            cudaTextureObject_t raw_depth_map,
+            cudaTextureObject_t raw_vertex_confid_map,
+            cudaSurfaceObject_t filtered_vertex_confid_map,
+            const float scale,
+            const float clip_near,
+            const float clip_far,
             cudaStream_t stream);
 
         // Parameter

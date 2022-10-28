@@ -15,7 +15,7 @@ A unified library shared by all Star-related projects.
 - [ ] Processor structure and etc.
     - [x] Adapt NodeGraph to the system.
     - [x] Move Renderer
-    - [ ] Finish the Measurement pipeline
+    - [x] Finish the Measurement pipeline
 
 ### Oct.27th
 

@@ -5,12 +5,12 @@
   "step_frame": 1,
   "use_gaussian_filter": false,
   "tsdf_width": 200,
-  "tsdf_height": 400,
-  "tsdf_depth": 500,
+  "tsdf_height": 200,
+  "tsdf_depth": 200,
   "tsdf_voxel_size": 0.005,
   "tsdf_origin": [
-    -0.5,
-    -1.2,
+    0,
+    0,
     0
   ],
   "node_radius": 0.030,

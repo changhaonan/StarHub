@@ -21,8 +21,7 @@ namespace star
 		using Ptr = std::shared_ptr<MeasureProcessorOffline>;
 		STAR_NO_COPY_ASSIGN_MOVE(MeasureProcessorOffline);
 		MeasureProcessorOffline();
-		~MeasureProcessorOffline(){};
-
+		~MeasureProcessorOffline();
 		void Process(
 			StarStageBuffer &star_stage_buffer_this,
 			const StarStageBuffer &star_stage_buffer_prev,
@@ -36,6 +35,8 @@ namespace star
 			cudaStream_t stream);
 
 	private:
+		void drawOrigin();
+
 		unsigned m_start_frame_idx;
 		unsigned m_step_frame;
 		VolumeDeformFileFetch::Ptr m_fetcher;
@@ -43,15 +44,16 @@ namespace star
 		// Buffer data
 		cv::Mat m_raw_depth_img;
 		cv::Mat m_raw_color_img;
-		cv::Mat m_depth_img;
-		cv::Mat m_color_img;
-		GArray<uchar3> m_g_color_img;
-		GArray<unsigned short> m_g_depth_img;
+		void* m_raw_depth_img_buff;
+		void* m_raw_color_img_buff;
+
+		GArray<uchar3> m_g_raw_color_img;
+		GArray<unsigned short> m_g_raw_depth_img;
 		SurfelMap::Ptr m_surfel_map;
 		SurfelMapInitializer::Ptr m_surfel_map_initializer;
 
 		// Camera-related
-		Intrinsic m_intrinsic;
+		float m_downsample_scale;
 	};
 
 }

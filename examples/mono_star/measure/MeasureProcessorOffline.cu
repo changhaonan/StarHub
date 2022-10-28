@@ -1,4 +1,5 @@
 #include "MeasureProcessorOffline.h"
+#include <star/img_proc/image_resize.cuh>
 
 star::MeasureProcessorOffline::MeasureProcessorOffline()
 {
@@ -7,20 +8,35 @@ star::MeasureProcessorOffline::MeasureProcessorOffline()
 	m_fetcher = std::make_shared<VolumeDeformFileFetch>(config.data_path());
 	m_surfel_map = std::make_shared<SurfelMap>(config.downsample_img_cols(), config.downsample_img_rows());
 	m_surfel_map_initializer = std::make_shared<SurfelMapInitializer>(
-		config.downsample_img_cols(),
-		config.downsample_img_rows(),
+		config.raw_img_cols(),
+		config.raw_img_rows(),
 		config.clip_near(),
 		config.clip_far(),
 		config.surfel_radius_scale(),
-		config.rgb_intrinsic_downsample());
+		config.depth_intrinsic_raw());
 
 	m_start_frame_idx = config.start_frame_idx();
 	m_step_frame = config.step_frame();
 
+	// Camera-related
+	m_downsample_scale = config.downsample_scale();
+
 	// Allocate buffer
-	size_t num_pixel = config.downsample_img_cols() * config.downsample_img_rows();
-	m_g_color_img.create(num_pixel);
-	m_g_depth_img.create(num_pixel);
+	size_t num_pixel = config.raw_img_cols() * config.raw_img_rows();
+	m_g_raw_color_img.create(num_pixel);
+	m_g_raw_depth_img.create(num_pixel);
+
+	cudaSafeCall(cudaMallocHost((void **)&m_raw_depth_img_buff, num_pixel * sizeof(unsigned short)));
+	cudaSafeCall(cudaMallocHost((void **)&m_raw_color_img_buff, num_pixel * sizeof(uchar3)));
+}
+
+star::MeasureProcessorOffline::~MeasureProcessorOffline()
+{
+	m_g_raw_color_img.release();
+	m_g_raw_depth_img.release();
+
+	cudaSafeCall(cudaFreeHost(m_raw_depth_img_buff));
+	cudaSafeCall(cudaFreeHost(m_raw_color_img_buff));
 }
 
 void star::MeasureProcessorOffline::Process(
@@ -41,18 +57,33 @@ void star::MeasureProcessorOffline::processFrame(
 	const auto image_idx = size_t(frame_idx) * m_step_frame + m_start_frame_idx;
 	m_fetcher->FetchRGBImage(0, image_idx, m_raw_color_img);
 	m_fetcher->FetchDepthImage(0, image_idx, m_raw_depth_img);
-	// Resize
-	// TODO: understand why the interpolation is not correct
-	cv::resize(m_raw_color_img, m_color_img, cv::Size(m_surfel_map->Width(), m_surfel_map->Height()), cv::INTER_NEAREST);
-	cv::resize(m_raw_depth_img, m_depth_img, cv::Size(m_surfel_map->Width(), m_surfel_map->Height()), cv::INTER_NEAREST);
-	// Synced
-	m_g_color_img.upload(m_color_img.ptr<uchar3>(), m_g_color_img.size());
-	m_g_depth_img.upload(m_depth_img.ptr<unsigned short>(), m_g_depth_img.size());
+	
+	// CPU copy
+	memcpy(m_raw_color_img_buff, m_raw_color_img.data,
+        sizeof(uchar3) * m_raw_color_img.total()
+    );
+	memcpy(m_raw_depth_img_buff, m_raw_depth_img.data,
+        sizeof(unsigned short) * m_raw_depth_img.total()
+    );
+	
+	// Copy to GPU
+	cudaSafeCall(cudaMemcpyAsync(
+		m_g_raw_color_img.ptr(),
+		m_raw_color_img_buff,
+		m_raw_color_img.total() * sizeof(uchar3),
+		cudaMemcpyHostToDevice,
+		stream));
+	cudaSafeCall(cudaMemcpyAsync(
+		m_g_raw_depth_img.ptr(),
+		m_raw_depth_img_buff,
+		m_raw_depth_img.total() * sizeof(unsigned short),
+		cudaMemcpyHostToDevice,
+		stream));
 
 	// 2. Initialize surfel map
 	m_surfel_map_initializer->InitFromRGBDImage(
-		GArrayView(m_g_color_img),
-		GArrayView(m_g_depth_img),
+		GArrayView(m_g_raw_color_img),
+		GArrayView(m_g_raw_depth_img),
 		frame_idx,
 		*m_surfel_map,
 		stream);
@@ -66,9 +97,37 @@ void star::MeasureProcessorOffline::saveContext(
 	const unsigned frame_idx,
 	cudaStream_t stream)
 {
+	// Prepare
 	auto &context = easy3d::Context::Instance();
 	context.open(frame_idx);
+
+	// Draw origin
+	drawOrigin();
+
+	// Draw measurement
 	context.addPointCloud("measure");
 	visualize::SavePointCloud(m_surfel_map->VertexConfigReadOnly(), context.at("measure"));
 	context.close();
+}
+
+void star::MeasureProcessorOffline::drawOrigin()
+{
+	auto &config = ConfigParser::Instance();
+	auto &context = easy3d::Context::Instance();
+
+	// Draw Tsdf area
+	Eigen::Matrix4f bb_center = Eigen::Matrix4f::Identity();
+	float3 origin = config.tsdf_origin();
+	float voxel_size = config.tsdf_voxel_size();
+	float box_width = voxel_size * float(config.tsdf_width());
+	float box_height = voxel_size * float(config.tsdf_height());
+	float box_depth = voxel_size * float(config.tsdf_depth());
+	bb_center(0, 3) = origin.x + box_width / 2.f;
+	bb_center(1, 3) = origin.y + box_height / 2.f;
+	bb_center(2, 3) = origin.z + box_depth / 2.f;
+	context.addBoundingBox("bounding_box", "helper", bb_center, box_width, box_height, box_depth);
+	context.addCoord("origin", "helper", Eigen::Matrix4f::Identity(), 1.f);
+
+	std::string cam_name = "cam_0";
+	context.addCamera(cam_name, cam_name, config.extrinsic()[0]);
 }
