@@ -41,6 +41,8 @@ namespace star
 		VolumeDeformFileFetch::Ptr m_fetcher;
 
 		// Buffer data
+		cv::Mat m_raw_depth_img;
+		cv::Mat m_raw_color_img;
 		cv::Mat m_depth_img;
 		cv::Mat m_color_img;
 		GArray<uchar3> m_g_color_img;
