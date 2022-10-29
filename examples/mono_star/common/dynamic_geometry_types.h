@@ -2,9 +2,7 @@
 #include <star/common/common_texture_utils.h>
 #include <star/geometry/surfel/SurfelGeometry.h>
 #include <star/geometry/node_graph/NodeGraph.h>
-#include "solver_types.h"
-#include "fusion_types.h"
-#include "frame_buffer.h"
+#include <star/geometry/geometry_types.h>
 
 namespace star
 {

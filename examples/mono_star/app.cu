@@ -1,5 +1,6 @@
 #include "common/ConfigParser.h"
 #include "measure/MeasureProcessorOffline.h"
+#include "geometry/DynamicGeometryProcessor.h"
 // Viewer
 #include <easy3d_viewer/context.hpp>
 
@@ -32,6 +33,7 @@ int main()
     // Build the Measure system (Use serial not parallel)
     // Generate the geometry, node graph, and render in continous time
     auto measure_processor = std::make_shared<MeasureProcessorOffline>();
+    auto dynamic_geometry_processor = std::make_shared<DynamicGeometryProcessor>();
 
     for (int frame_idx = 0; frame_idx < config.num_frames(); frame_idx++)
     {

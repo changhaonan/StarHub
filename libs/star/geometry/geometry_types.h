@@ -3,6 +3,7 @@
 #include <star/common/common_texture_utils.h>
 #include <star/common/ArrayView.h>
 #include <star/common/ArraySlice.h>
+#include <star/common/constants.h>
 #include <star/geometry/constants.h>
 
 namespace star

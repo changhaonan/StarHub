@@ -1,10 +1,9 @@
 #pragma once
 #include <star/common/common_types.h>
 #include <star/common/common_texture_utils.h>
+#include <star/geometry/geometry_types.h>
 #include "ConfigParser.h"
 #include "frame_buffer.h"
-#include "solver_types.h"
-#include "fusion_types.h"
 
 namespace star {
 
@@ -141,14 +140,4 @@ namespace star {
         }
 	};
 
-
-    /** \brief Observation is different from measurement.
-    * Measure is measured from environment.
-    * Observation comes from geometry
-    */
-    struct ObservationMaps {
-        using Ptr = std::shared_ptr<ObservationMaps>;
-        cudaTextureObject_t rgbd_map[d_max_cam];
-        cudaTextureObject_t index_map[d_max_cam];
-    };
 }
