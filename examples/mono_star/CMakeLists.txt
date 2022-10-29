@@ -12,4 +12,5 @@ target_link_libraries(mono_star
     common_lib 
     geometry_lib 
     io_lib
-    visualization_lib)
+    visualization_lib
+    glfw)

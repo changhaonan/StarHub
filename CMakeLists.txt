@@ -9,7 +9,7 @@ endif()
 set(CUDA_RUNTIME_LIBRARY Shared)
 
 # Project language
-project(StarHub VERSION 0.1 LANGUAGES CXX CUDA)
+project(StarHub VERSION 0.1 LANGUAGES C CXX CUDA)
 
 # Cmake path
 LIST(APPEND CMAKE_PREFIX_PATH /usr/lib/x86_64-linux-gnu/cmake)
