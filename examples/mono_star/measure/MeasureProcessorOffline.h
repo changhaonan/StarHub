@@ -58,6 +58,10 @@ namespace star
 
 		// Camera-related
 		float m_downsample_scale;
+		Eigen::Matrix4f m_cam2world;  // Camera position
+
+		// Visualize-related
+		float m_pcd_size;
 	};
 
 }

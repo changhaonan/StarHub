@@ -48,8 +48,9 @@ int main()
         geometry_processor->initGeometry(
             *measure_processor->SurfelMapReadOnly(),
             config.extrinsic()[0],
+            frame_idx,
             0);
-
+        geometry_processor->saveContext(frame_idx, 0);
         // Clean
         context.close();
     }

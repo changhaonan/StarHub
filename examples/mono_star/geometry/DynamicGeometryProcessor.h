@@ -3,6 +3,7 @@
 #include <star/geometry/surfel/SurfelGeometry.h>
 #include <star/geometry/surfel/SurfelGeometryInitializer.h>
 #include <star/geometry/render/Renderer.h>
+#include <star/geometry/node_graph/NodeGraph.h>
 #include <mono_star/common/ThreadProcessor.h>
 #include <mono_star/common/StarStageBuffer.h>
 
@@ -30,6 +31,7 @@ namespace star
         void initGeometry(
             const SurfelMap &surfel_map,
             const Eigen::Matrix4f &cam2world,
+            const unsigned frame_idx,
             cudaStream_t stream);
 
         // Access API
@@ -38,12 +40,16 @@ namespace star
             return m_model_geometry[frame_idx];
         };
 
+        // Visualize
+        void saveContext(const unsigned frame_idx, cudaStream_t stream);
     private:
         unsigned m_buffer_idx = 0;
         SurfelGeometry::Ptr m_data_geometry;     // Double buffer
         SurfelGeometry::Ptr m_model_geometry[2]; // Double buffer
+        NodeGraph::Ptr m_node_graph[2];
         Renderer::Ptr m_renderer;
 
-        // Flag
+        // Camera-related
+        Eigen::Matrix4f m_cam2world;
     };
 }
