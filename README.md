@@ -17,15 +17,17 @@ A unified library shared by all Star-related projects.
     - [x] Move Renderer
     - [x] Finish the Measurement pipeline
 
-### Oct.27th
-
-- [ ] Optimization structure.
-    - [ ] Move Geometry Initialization structure.
-    - [ ] Add Visualization structure.
-
 ### Oct.29th
 
-- [ ] Joint testing.
+- [ ] Initialization.
+    - [x] Move Geometry Initialization structure.
+    - [x] Add Visualization structure.
+
+### Oct.31th
+
+- [ ] Make opticalflow working
+- [ ] Make SurperPoint or R2D2 working.
+
 
 ## Problem
 
