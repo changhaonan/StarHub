@@ -19,7 +19,6 @@
 #include <star/common/logging.h>
 #include <star/common/common_types.h>
 #include <star/geometry/constants.h>
-#include <star/geometry/geometry_types.h>
 #include <star/geometry/render/GLSurfelGeometryVBO.h>
 #include <star/geometry/render/GLLiveSurfelGeometryVBO.h>
 #include <star/geometry/render/GLRenderedMaps.h>
@@ -28,7 +27,6 @@
 
 namespace star
 {
-
 	class Renderer
 	{
 	private:
@@ -152,6 +150,13 @@ namespace star
 		/* The access of fusion map
 		 */
 	public:
+		struct FusionMaps {
+			cudaTextureObject_t vertex_confid_map[d_max_cam] = {0};
+			cudaTextureObject_t normal_radius_map[d_max_cam] = {0};
+			cudaTextureObject_t index_map[d_max_cam] = {0};
+			cudaTextureObject_t color_time_map[d_max_cam] = {0};
+			unsigned num_valid_surfel = 0;
+		};
 		void MapFusionMapsToCuda(FusionMaps &maps, cudaStream_t stream = 0);
 		void MapFusionMapsToCuda(cudaStream_t stream = 0); // Re-connect
 		void UnmapFusionMapsFromCuda(cudaStream_t stream = 0);
@@ -159,6 +164,13 @@ namespace star
 		/* The access of solver maps
 		 */
 	public:
+	    struct SolverMaps
+		{
+			cudaTextureObject_t vertex_confid_map[d_max_cam] = {0};
+			cudaTextureObject_t normal_radius_map[d_max_cam] = {0};
+			cudaTextureObject_t index_map[d_max_cam] = {0};
+			cudaTextureObject_t normalized_rgbd_map[d_max_cam] = {0};
+		};
 		void MapSolverMapsToCuda(SolverMaps &maps, cudaStream_t stream = 0);
 		void MapSolverMapsToCuda(cudaStream_t stream = 0);
 		void UnmapSolverMapsFromCuda(cudaStream_t stream = 0);
@@ -174,6 +186,15 @@ namespace star
 		GLFusionMapsFrameRenderBufferObjects m_filter_map_buffers[d_max_cam];
 
 	public:
+		/** \brief Observation is different from measurement.
+		 * Measure is measured from environment.
+		 * Observation comes from geometry
+		 */
+		struct ObservationMaps
+		{
+			cudaTextureObject_t rgbd_map[d_max_cam];
+			cudaTextureObject_t index_map[d_max_cam];
+		};
 		// Observation is measure but from geometry
 		void MapObservationMapsToCuda(ObservationMaps &maps, cudaStream_t stream = 0);
 		void MapObservationMapsToCuda(cudaStream_t stream = 0);
@@ -186,8 +207,8 @@ namespace star
 	public:
 		struct FilterMaps
 		{
-			cudaTextureObject_t warp_vertex_confid_map;
-			cudaTextureObject_t warp_normal_radius_map;
+			cudaTextureObject_t vertex_confid_map;
+			cudaTextureObject_t normal_radius_map;
 			cudaTextureObject_t index_map;
 			cudaTextureObject_t color_time_map;
 		};

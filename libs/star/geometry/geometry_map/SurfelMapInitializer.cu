@@ -174,6 +174,7 @@ star::SurfelMapInitializer::SurfelMapInitializer(
     createDepthTextureSurface(height, width, m_raw_depth_img_collect);
     createFloat1TextureSurface(height, width, m_filtered_depth_img_collect);
     createFloat4TextureSurface(height, width, m_raw_vertex_confid);
+    cudaSafeCall(cudaMalloc((void **)&m_valid_count, sizeof(unsigned)));
 }
 
 star::SurfelMapInitializer::~SurfelMapInitializer()
@@ -181,6 +182,7 @@ star::SurfelMapInitializer::~SurfelMapInitializer()
     releaseTextureCollect(m_raw_depth_img_collect);
     releaseTextureCollect(m_filtered_depth_img_collect);
     releaseTextureCollect(m_raw_vertex_confid);
+    cudaSafeCall(cudaFree(m_valid_count));
 }
 
 void star::SurfelMapInitializer::UploadDepthImage(
@@ -246,6 +248,18 @@ void star::SurfelMapInitializer::InitFromRGBDImage(
         m_clip_near, m_clip_far,
         surfel_map.m_rgbd.surface,
         stream);
+
+    // 5. Compute index map
+    unsigned num_valid_surfel = 0;
+    computeIndexMap(
+        surfel_map.m_vertex_confid.texture,
+        surfel_map.m_index.surface,
+        num_valid_surfel,
+        0,
+        stream);
+
+    cudaSafeCall(cudaStreamSynchronize(stream));
+    surfel_map.m_num_valid_surfel = num_valid_surfel;
 }
 
 void star::SurfelMapInitializer::InitFromVertexNormalDepth(
@@ -326,4 +340,30 @@ void star::SurfelMapInitializer::filterAndScaleVertex(
     cudaSafeCall(cudaStreamSynchronize(stream));
     cudaSafeCall(cudaGetLastError());
 #endif
+}
+
+void star::SurfelMapInitializer::computeIndexMap(
+    cudaTextureObject_t vertex_confid_map,
+    cudaSurfaceObject_t index_map,
+    unsigned &valid_surfel_num,
+    const unsigned index_offset,
+    cudaStream_t stream)
+{
+    cudaSafeCall(cudaMemsetAsync(m_valid_count, 0, sizeof(unsigned), stream));
+
+    unsigned img_width;
+    unsigned img_height;
+    query2DTextureExtent(vertex_confid_map, img_width, img_height);
+
+    dim3 blk(16, 16);
+    dim3 grid(divUp(img_width, blk.x), divUp(img_height, blk.y));
+    device::ComputeIndexMapKernel<<<grid, blk, 0, stream>>>(
+        vertex_confid_map,
+        index_map,
+        m_valid_count,
+        index_offset,
+        img_width,
+        img_height);
+
+    cudaSafeCall(cudaMemcpyAsync(&valid_surfel_num, m_valid_count, sizeof(unsigned), cudaMemcpyDeviceToHost, stream));
 }

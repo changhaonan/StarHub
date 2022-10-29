@@ -2,8 +2,6 @@
 #include <star/common/common_texture_utils.h>
 #include <star/geometry/surfel/SurfelGeometry.h>
 #include <star/geometry/node_graph/NodeGraph.h>
-#include "solver_types.h"
-#include "fusion_types.h"
 #include "frame_buffer.h"
 
 namespace star
@@ -16,6 +14,14 @@ namespace star
 		GArrayView<float4> removed_vertex_confid;
 		GArrayView<float4> unsupported_candidate;
 	};
+
+	struct Render4Solver
+    {
+        cudaTextureObject_t reference_vertex_map[d_max_cam];
+        cudaTextureObject_t reference_normal_map[d_max_cam];
+        cudaTextureObject_t index_map[d_max_cam];
+        unsigned num_cam;
+    };
 
 	struct DynamicGeometryBuffer : FrameBuffer
 	{
@@ -63,22 +69,19 @@ namespace star
 		Render4Solver GenerateRender4Solver(const unsigned num_cam) const
 		{
 			Render4Solver render4solver;
-			render4solver.num_cam = num_cam;
-			for (auto cam_idx = 0; cam_idx < num_cam; ++cam_idx)
-			{
-				render4solver.reference_vertex_map[cam_idx] = solver_maps->reference_vertex_map[cam_idx];
-				render4solver.reference_normal_map[cam_idx] = solver_maps->reference_normal_map[cam_idx];
-				render4solver.index_map[cam_idx] = solver_maps->index_map[cam_idx];
-			}
+			// render4solver.num_cam = num_cam;
+			// for (auto cam_idx = 0; cam_idx < num_cam; ++cam_idx)
+			// {
+			// 	render4solver.reference_vertex_map[cam_idx] = solver_maps.reference_vertex_map[cam_idx];
+			// 	render4solver.reference_normal_map[cam_idx] = solver_maps.reference_normal_map[cam_idx];
+			// 	render4solver.index_map[cam_idx] = solver_maps.index_map[cam_idx];
+			// }
 			return render4solver;
 		}
 
 		// Shared
 		SurfelGeometry::Ptr surfel_geometry;   // Shared with the processor
 		NodeGraph::Ptr node_graph;			   // Shared with the processor
-		SolverMaps::Ptr solver_maps;		   // Shared the only one between thread
-		FusionMaps::Ptr fusion_maps;		   // Shared the only one between thread
-		ObservationMaps::Ptr observation_maps; // Shared the only one between thread
 
 		// Shared for debug
 		GArrayView<float4> append_candidate;

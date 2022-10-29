@@ -32,16 +32,16 @@ void star::GLFusionMapsFrameRenderBufferObjects::initialize(
 	glGenFramebuffers(1, &fusion_map_fbo);
 
 	// The render buffer for this frame
-	glGenRenderbuffers(1, &warp_vertex_confid_map);
-	glGenRenderbuffers(1, &warp_normal_radius_map);
+	glGenRenderbuffers(1, &vertex_confid_map);
+	glGenRenderbuffers(1, &normal_radius_map);
 	glGenRenderbuffers(1, &color_time_map);
 	glGenRenderbuffers(1, &index_map);
 	glGenRenderbuffers(1, &depth_buffer);
 
 	// Allocate data storage for render buffer
-	glBindRenderbuffer(GL_RENDERBUFFER, warp_vertex_confid_map);
+	glBindRenderbuffer(GL_RENDERBUFFER, vertex_confid_map);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, scaled_width, scaled_height);
-	glBindRenderbuffer(GL_RENDERBUFFER, warp_normal_radius_map);
+	glBindRenderbuffer(GL_RENDERBUFFER, normal_radius_map);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, scaled_width, scaled_height);
 	glBindRenderbuffer(GL_RENDERBUFFER, color_time_map);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA32F, scaled_width, scaled_height);
@@ -54,8 +54,8 @@ void star::GLFusionMapsFrameRenderBufferObjects::initialize(
 
 	// Attach the render buffer to framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, fusion_map_fbo);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, warp_vertex_confid_map);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER, warp_normal_radius_map);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, vertex_confid_map);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_RENDERBUFFER, normal_radius_map);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_RENDERBUFFER, index_map);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_RENDERBUFFER, color_time_map);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
@@ -78,8 +78,8 @@ void star::GLFusionMapsFrameRenderBufferObjects::initialize(
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Initialize the cuda access to render buffer object
-	cudaSafeCall(cudaGraphicsGLRegisterImage(&cuda_rbo_resources[0], warp_vertex_confid_map, GL_RENDERBUFFER, cudaGraphicsRegisterFlagsReadOnly));
-	cudaSafeCall(cudaGraphicsGLRegisterImage(&cuda_rbo_resources[1], warp_normal_radius_map, GL_RENDERBUFFER, cudaGraphicsRegisterFlagsReadOnly));
+	cudaSafeCall(cudaGraphicsGLRegisterImage(&cuda_rbo_resources[0], vertex_confid_map, GL_RENDERBUFFER, cudaGraphicsRegisterFlagsReadOnly));
+	cudaSafeCall(cudaGraphicsGLRegisterImage(&cuda_rbo_resources[1], normal_radius_map, GL_RENDERBUFFER, cudaGraphicsRegisterFlagsReadOnly));
 	cudaSafeCall(cudaGraphicsGLRegisterImage(&cuda_rbo_resources[2], index_map, GL_RENDERBUFFER, cudaGraphicsRegisterFlagsReadOnly));
 	cudaSafeCall(cudaGraphicsGLRegisterImage(&cuda_rbo_resources[3], color_time_map, GL_RENDERBUFFER, cudaGraphicsRegisterFlagsReadOnly));
 	cudaSafeCall(cudaGetLastError());
@@ -94,8 +94,8 @@ void star::GLFusionMapsFrameRenderBufferObjects::release()
 	cudaSafeCall(cudaGraphicsUnregisterResource(cuda_rbo_resources[3]));
 
 	// Release the render buffer objects and frame buffer objects
-	glDeleteRenderbuffers(1, &warp_vertex_confid_map);
-	glDeleteRenderbuffers(1, &warp_normal_radius_map);
+	glDeleteRenderbuffers(1, &vertex_confid_map);
+	glDeleteRenderbuffers(1, &normal_radius_map);
 	glDeleteRenderbuffers(1, &color_time_map);
 	glDeleteRenderbuffers(1, &index_map);
 	glDeleteRenderbuffers(1, &depth_buffer);

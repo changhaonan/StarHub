@@ -14,8 +14,8 @@ namespace star
 		GLuint fusion_map_fbo;
 
 		// These are render buffer objects
-		GLuint warp_vertex_confid_map;
-		GLuint warp_normal_radius_map;
+		GLuint vertex_confid_map;
+		GLuint normal_radius_map;
 		GLuint index_map;
 		GLuint color_time_map;
 		GLuint depth_buffer;
