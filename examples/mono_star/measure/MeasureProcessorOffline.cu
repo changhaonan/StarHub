@@ -18,7 +18,11 @@ star::MeasureProcessorOffline::MeasureProcessorOffline()
 	m_step_frame = config_parser.step_frame();
 
 	// Camera-related
-	m_downsample_scale = config_parser.downsample_scale();
+	m_downsample_scale = config.downsample_scale();
+	m_cam2world = config.extrinsic()[0];
+
+	// Visualize-related
+	m_pcd_size = config.pcd_size();
 
 	// Allocate buffer
 	size_t num_pixel = config_parser.raw_img_cols() * config_parser.raw_img_rows();
@@ -103,16 +107,16 @@ void star::MeasureProcessorOffline::saveContext(
 	drawOrigin();
 
 	// Draw point cloud
-	context.addPointCloud("point_cloud");
+	context.addPointCloud("point_cloud", "", Eigen::Matrix4f::Identity(), m_pcd_size);
 	visualize::SavePointCloud(m_surfel_map->VertexConfidReadOnly(), context.at("point_cloud"));
 
-	context.addPointCloud("color_cloud");
+	context.addPointCloud("color_cloud", "", Eigen::Matrix4f::Identity(), m_pcd_size);
 	visualize::SaveColoredPointCloud(
 		m_surfel_map->VertexConfidReadOnly(),
 		m_surfel_map->ColorTimeReadOnly(),
 		context.at("color_cloud"));
 
-	context.addPointCloud("normal_cloud", "", Eigen::Matrix4f::Identity(), 0.5f, "shadow");
+	context.addPointCloud("normal_cloud", "", Eigen::Matrix4f::Identity(), m_pcd_size, "shadow");
 	visualize::SavePointCloudWithNormal(
 		m_surfel_map->VertexConfidReadOnly(),
 		m_surfel_map->NormalRadiusReadOnly(),
@@ -121,22 +125,15 @@ void star::MeasureProcessorOffline::saveContext(
 
 void star::MeasureProcessorOffline::drawOrigin()
 {
-	auto &config_parser = ConfigParser::Instance();
 	auto &context = easy3d::Context::Instance();
 
 	// Draw Tsdf area
 	Eigen::Matrix4f bb_center = Eigen::Matrix4f::Identity();
-	float3 origin = config_parser.tsdf_origin();
-	float voxel_size = config_parser.tsdf_voxel_size();
-	float box_width = voxel_size * float(config_parser.tsdf_width());
-	float box_height = voxel_size * float(config_parser.tsdf_height());
-	float box_depth = voxel_size * float(config_parser.tsdf_depth());
-	bb_center(0, 3) = origin.x + box_width / 2.f;
-	bb_center(1, 3) = origin.y + box_height / 2.f;
-	bb_center(2, 3) = origin.z + box_depth / 2.f;
-	context.addBoundingBox("bounding_box", "helper", bb_center, box_width, box_height, box_depth);
+	float3 origin = make_float3(0.f, 0.f, 0.f);
+	float3 box_size = make_float3(1.f, 1.f, 1.f);
+	bb_center(0, 3) = origin.x + box_size.x / 2.f;
+	bb_center(1, 3) = origin.y + box_size.y / 2.f;
+	bb_center(2, 3) = origin.z + box_size.z / 2.f;
+	context.addBoundingBox("bounding_box", "helper", bb_center, box_size.x, box_size.y, box_size.z);
 	context.addCoord("origin", "helper", Eigen::Matrix4f::Identity(), 1.f);
-
-	std::string cam_name = "cam_0";
-	context.addCamera(cam_name, cam_name, config_parser.extrinsic()[0]);
 }

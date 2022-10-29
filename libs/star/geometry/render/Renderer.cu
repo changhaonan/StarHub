@@ -132,8 +132,8 @@ void star::Renderer::MapFusionMapsToCuda(FusionMaps &maps, cudaStream_t stream)
 	for (auto cam_idx = 0; cam_idx < m_num_cam; ++cam_idx)
 	{
 		m_fusion_map_buffers[cam_idx].mapToCuda(
-			maps.warp_vertex_confid_map[cam_idx],
-			maps.warp_normal_radius_map[cam_idx],
+			maps.vertex_confid_map[cam_idx],
+			maps.normal_radius_map[cam_idx],
 			maps.index_map[cam_idx],
 			maps.color_time_map[cam_idx],
 			stream);
@@ -158,13 +158,13 @@ void star::Renderer::UnmapFusionMapsFromCuda(cudaStream_t stream)
 
 /* The texture access of solver maps
  */
-void star::Renderer::MapSolverMapsToCuda(star::SolverMaps &maps, cudaStream_t stream)
+void star::Renderer::MapSolverMapsToCuda(SolverMaps &maps, cudaStream_t stream)
 {
 	for (auto cam_idx = 0; cam_idx < m_num_cam; ++cam_idx)
 	{
 		m_solver_map_buffers[cam_idx].mapToCuda(
-			maps.reference_vertex_map[cam_idx],
-			maps.reference_normal_map[cam_idx],
+			maps.vertex_confid_map[cam_idx],
+			maps.normal_radius_map[cam_idx],
 			maps.index_map[cam_idx],
 			maps.normalized_rgbd_map[cam_idx],
 			stream);
@@ -219,8 +219,8 @@ void star::Renderer::MapFilterMapsToCuda(FilterMaps *maps, cudaStream_t stream)
 	for (auto cam_idx = 0; cam_idx < m_num_cam; ++cam_idx)
 	{
 		m_filter_map_buffers[cam_idx].mapToCuda(
-			maps[cam_idx].warp_vertex_confid_map,
-			maps[cam_idx].warp_normal_radius_map,
+			maps[cam_idx].vertex_confid_map,
+			maps[cam_idx].normal_radius_map,
 			maps[cam_idx].index_map,
 			maps[cam_idx].color_time_map,
 			stream);

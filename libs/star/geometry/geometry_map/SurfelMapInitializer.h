@@ -58,10 +58,9 @@ namespace star
         void computeIndexMap(
             cudaTextureObject_t vertex_confid_map,
             cudaSurfaceObject_t index_map,
-            unsigned& valid_surfel_num,
+            unsigned &valid_surfel_num,
             const unsigned index_offset,
-            cudaStream_t stream
-        );
+            cudaStream_t stream);
 
         // Parameter
         unsigned m_width;
@@ -77,6 +76,6 @@ namespace star
         CudaTextureSurface m_filtered_depth_img_collect; // (m) float
         CudaTextureSurface m_raw_vertex_confid;
 
-        unsigned* m_valid_count;
+        unsigned *m_valid_count;
     };
 }

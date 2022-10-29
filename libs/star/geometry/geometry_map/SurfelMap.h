@@ -38,7 +38,6 @@ namespace star
         CudaTextureSurface m_color_time;
         CudaTextureSurface m_rgbd; // (R,G,B,D_inv) scaled to -1~1, D_inv is 0~1
         CudaTextureSurface m_index;
-
         unsigned m_num_valid_surfel;
     };
 }

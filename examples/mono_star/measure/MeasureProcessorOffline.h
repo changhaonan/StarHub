@@ -33,8 +33,11 @@ namespace star
 		void saveContext(
 			const unsigned frame_idx,
 			cudaStream_t stream);
-		// Acess API
-		SurfelMap::Ptr SurfelMapReadOnly() const { return m_surfel_map; };
+
+		// Fetch-API
+		SurfelMap::Ptr SurfelMapReadOnly() const {
+			return m_surfel_map;
+		}
 	private:
 		void drawOrigin();
 
@@ -55,6 +58,10 @@ namespace star
 
 		// Camera-related
 		float m_downsample_scale;
+		Eigen::Matrix4f m_cam2world;  // Camera position
+
+		// Visualize-related
+		float m_pcd_size;
 	};
 
 }

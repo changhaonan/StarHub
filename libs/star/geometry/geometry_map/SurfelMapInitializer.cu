@@ -174,7 +174,6 @@ star::SurfelMapInitializer::SurfelMapInitializer(
     createDepthTextureSurface(height, width, m_raw_depth_img_collect);
     createFloat1TextureSurface(height, width, m_filtered_depth_img_collect);
     createFloat4TextureSurface(height, width, m_raw_vertex_confid);
-
     cudaSafeCall(cudaMalloc((void **)&m_valid_count, sizeof(unsigned)));
 }
 
@@ -183,7 +182,6 @@ star::SurfelMapInitializer::~SurfelMapInitializer()
     releaseTextureCollect(m_raw_depth_img_collect);
     releaseTextureCollect(m_filtered_depth_img_collect);
     releaseTextureCollect(m_raw_vertex_confid);
-
     cudaSafeCall(cudaFree(m_valid_count));
 }
 

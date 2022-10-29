@@ -12,7 +12,9 @@ file(GLOB RENDER_SRC render/*.h render/*.cu)
 source_group("src" FILES ${GEOMETRY_SRC})
 source_group("render" FILES ${RENDER_SRC})
 
-add_library(glad SHARED render/glad/glad.h render/glad.c)
+add_library(glad SHARED ${GLAD_SRC})
 
 add_library(geometry_lib SHARED ${GEOMETRY_SRC} ${RENDER_SRC})
+set_property(TARGET geometry_lib PROPERTY POSITION_INDEPENDENT_CODE ON)
+# This library onlys works when it static
 target_link_libraries(geometry_lib common_lib math_lib img_proc_lib glfw glad)
