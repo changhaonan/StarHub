@@ -20,25 +20,28 @@ namespace star
         ~DynamicGeometryProcessor();
 
         void Process(
-			StarStageBuffer &star_stage_buffer_this,
-			const StarStageBuffer &star_stage_buffer_prev,
-			cudaStream_t stream,
-			const unsigned frame_idx) override;
+            StarStageBuffer &star_stage_buffer_this,
+            const StarStageBuffer &star_stage_buffer_prev,
+            cudaStream_t stream,
+            const unsigned frame_idx) override;
         void processFrame(
             const unsigned frame_idx,
-            cudaStream_t stream
-        );
+            cudaStream_t stream);
+        void initGeometry(
+            const SurfelMap &surfel_map,
+            const Eigen::Matrix4f &cam2world,
+            cudaStream_t stream);
 
         // Access API
-        SurfelGeometry::Ptr Geometry(const unsigned frame_idx) const {
+        SurfelGeometry::Ptr Geometry(const unsigned frame_idx) const
+        {
             return m_model_geometry[frame_idx];
         };
-    private:
-        void initGeometry(const GeometryMap& geometry_map);
 
+    private:
         unsigned m_buffer_idx = 0;
-        SurfelGeometry::Ptr m_data_geometry;  // Double buffer
-        SurfelGeometry::Ptr m_model_geometry[2];  // Double buffer
+        SurfelGeometry::Ptr m_data_geometry;     // Double buffer
+        SurfelGeometry::Ptr m_model_geometry[2]; // Double buffer
         Renderer::Ptr m_renderer;
 
         // Flag

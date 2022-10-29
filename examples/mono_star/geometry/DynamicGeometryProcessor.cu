@@ -15,19 +15,18 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
         config.downsample_img_cols(),
         config.downsample_img_rows(),
         config.rgb_intrinsic_downsample(),
-        config.max_rendering_depth()
-    );
-    
+        config.max_rendering_depth());
+
     m_renderer->MapDataSurfelGeometryToCuda(0, *m_data_geometry);
     m_renderer->MapModelSurfelGeometryToCuda(0, *m_model_geometry[0]);
-	m_renderer->MapModelSurfelGeometryToCuda(1, *m_model_geometry[1]);
+    m_renderer->MapModelSurfelGeometryToCuda(1, *m_model_geometry[1]);
 }
 
 star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
 {
     m_renderer->UnmapDataSurfelGeometryFromCuda(0);
-	m_renderer->UnmapModelSurfelGeometryFromCuda(0);
-	m_renderer->UnmapModelSurfelGeometryFromCuda(1);
+    m_renderer->UnmapModelSurfelGeometryFromCuda(0);
+    m_renderer->UnmapModelSurfelGeometryFromCuda(1);
 }
 
 void star::DynamicGeometryProcessor::Process(
@@ -44,8 +43,13 @@ void star::DynamicGeometryProcessor::processFrame(
 {
 }
 
-void star::DynamicGeometryProcessor::initGeometry(const GeometryMap &geometry_map)
+void star::DynamicGeometryProcessor::initGeometry(
+    const SurfelMap& surfel_map, const Eigen::Matrix4f &cam2world, cudaStream_t stream)
 {
     // Init data geometry
-
+    SurfelGeometryInitializer::InitFromGeometryMap(
+        *m_data_geometry,
+        surfel_map,
+        cam2world,
+        stream);
 }

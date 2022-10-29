@@ -29,6 +29,7 @@ namespace star
         cudaSurfaceObject_t ColorTime() { return m_color_time.surface; }
         cudaSurfaceObject_t RGBD() { return m_rgbd.surface; }
         cudaSurfaceObject_t Index() { return m_index.surface; }
+        unsigned NumValidSurfels() const { return m_num_valid_surfel; }
 
     private:
         // Surfel-related
@@ -37,5 +38,7 @@ namespace star
         CudaTextureSurface m_color_time;
         CudaTextureSurface m_rgbd; // (R,G,B,D_inv) scaled to -1~1, D_inv is 0~1
         CudaTextureSurface m_index;
+
+        unsigned m_num_valid_surfel;
     };
 }

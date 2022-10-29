@@ -10,6 +10,12 @@ using json = nlohmann::json;
 
 star::ConfigParser::ConfigParser() : m_num_cam(d_max_cam)
 {
+    std::cout << "Config Parser Constructed." << std::endl;
+}
+
+star::ConfigParser::~ConfigParser()
+{
+    std::cout << "Config Parser Destructed." << std::endl;
 }
 
 // Access interface
@@ -29,7 +35,8 @@ void star::ConfigParser::ParseConfig(
 {
     // Path setting
     // Context config should be put at the root of data dir
-    m_data_prefix = boost::filesystem::path(context_config_path).parent_path().string();
+    // m_data_prefix = std::string(boost::filesystem::path(context_config_path).parent_path().string());
+    m_data_prefix = "something";
     m_output_path = output_path;
 
     // System setting

@@ -4,6 +4,7 @@
 #include <star/common/surfel_types.h>
 #include <star/geometry/constants.h>
 #include <star/geometry/surfel/SurfelGeometry.h>
+#include <star/geometry/geometry_map/SurfelMap.h>
 #include <memory>
 
 namespace star
@@ -33,6 +34,12 @@ namespace star
 			SurfelGeometry &data_geometry,
 			const bool use_semantic,
 			cudaStream_t stream = 0);
+		// Bridge from SurfelMap
+		static void InitFromGeometryMap(
+			SurfelGeometry &geometry,
+			const SurfelMap &surfel_map,
+			const Eigen::Matrix4f &cam2world,
+			cudaStream_t stream = 0);
 
 		// The members from other classes
 		using GeometryAttributes = SurfelGeometry::GeometryAttributes;
@@ -41,6 +48,13 @@ namespace star
 		/* Collect the compacted valid surfel array into geometry
 		 */
 	private:
+		// 	Single-map
+		static void initSurfelGeometry(
+			GeometryAttributes geometry,
+			const SurfelMap &surfel_map,
+			const Eigen::Matrix4f &cam2world,
+			cudaStream_t stream = 0);
+		// Multi-map
 		static void initSurfelGeometry(
 			GeometryAttributes geometry,
 			const GArrayView<DepthSurfel> &surfel_array,

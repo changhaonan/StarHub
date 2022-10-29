@@ -14,7 +14,8 @@ namespace star
     private:
         // Do not allow user-contruct
         explicit ConfigParser();
-
+        ~ConfigParser();
+        // STAR_NO_COPY_ASSIGN_MOVE(ConfigParser);
     public:
         static ConfigParser &Instance();
         void ParseConfig(
@@ -74,10 +75,11 @@ namespace star
         void loadSysConfigFromJson(const void *json_ptr);
 
     private:
-        std::string m_data_prefix = "";
+        std::string m_data_prefix = "Strange";
 
     public:
         const boost::filesystem::path data_path() const { return boost::filesystem::path(m_data_prefix); }
+        const std::string data_prefix() const { return m_data_prefix; }
         // Frame-related
     private:
         int m_start_frame_idx = 0;

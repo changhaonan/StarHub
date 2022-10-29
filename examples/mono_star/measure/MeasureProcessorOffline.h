@@ -33,7 +33,8 @@ namespace star
 		void saveContext(
 			const unsigned frame_idx,
 			cudaStream_t stream);
-
+		// Acess API
+		SurfelMap::Ptr SurfelMapReadOnly() const { return m_surfel_map; };
 	private:
 		void drawOrigin();
 

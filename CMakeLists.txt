@@ -16,6 +16,7 @@ LIST(APPEND CMAKE_PREFIX_PATH /usr/lib/x86_64-linux-gnu/cmake)
 LIST(APPEND CMAKE_PREFIX_PATH /home/robot-learning/Software/libtorch/share/cmake)
 
 # Language options
+set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

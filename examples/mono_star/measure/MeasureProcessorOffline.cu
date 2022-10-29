@@ -1,28 +1,27 @@
 #include "MeasureProcessorOffline.h"
-#include <star/img_proc/image_resize.cuh>
 
 star::MeasureProcessorOffline::MeasureProcessorOffline()
 {
-	auto &config = ConfigParser::Instance();
-
-	m_fetcher = std::make_shared<VolumeDeformFileFetch>(config.data_path());
-	m_surfel_map = std::make_shared<SurfelMap>(config.downsample_img_cols(), config.downsample_img_rows());
+	ConfigParser &config_parser = ConfigParser::Instance();
+	std::cout << config_parser.data_prefix() << std::endl;
+	m_fetcher = std::make_shared<VolumeDeformFileFetch>(config_parser.data_path());
+	m_surfel_map = std::make_shared<SurfelMap>(config_parser.downsample_img_cols(), config_parser.downsample_img_rows());
 	m_surfel_map_initializer = std::make_shared<SurfelMapInitializer>(
-		config.raw_img_cols(),
-		config.raw_img_rows(),
-		config.clip_near(),
-		config.clip_far(),
-		config.surfel_radius_scale(),
-		config.depth_intrinsic_raw());
+		config_parser.raw_img_cols(),
+		config_parser.raw_img_rows(),
+		config_parser.clip_near(),
+		config_parser.clip_far(),
+		config_parser.surfel_radius_scale(),
+		config_parser.depth_intrinsic_raw());
 
-	m_start_frame_idx = config.start_frame_idx();
-	m_step_frame = config.step_frame();
+	m_start_frame_idx = config_parser.start_frame_idx();
+	m_step_frame = config_parser.step_frame();
 
 	// Camera-related
-	m_downsample_scale = config.downsample_scale();
+	m_downsample_scale = config_parser.downsample_scale();
 
 	// Allocate buffer
-	size_t num_pixel = config.raw_img_cols() * config.raw_img_rows();
+	size_t num_pixel = config_parser.raw_img_cols() * config_parser.raw_img_rows();
 	m_g_raw_color_img.create(num_pixel);
 	m_g_raw_depth_img.create(num_pixel);
 
@@ -122,16 +121,16 @@ void star::MeasureProcessorOffline::saveContext(
 
 void star::MeasureProcessorOffline::drawOrigin()
 {
-	auto &config = ConfigParser::Instance();
+	auto &config_parser = ConfigParser::Instance();
 	auto &context = easy3d::Context::Instance();
 
 	// Draw Tsdf area
 	Eigen::Matrix4f bb_center = Eigen::Matrix4f::Identity();
-	float3 origin = config.tsdf_origin();
-	float voxel_size = config.tsdf_voxel_size();
-	float box_width = voxel_size * float(config.tsdf_width());
-	float box_height = voxel_size * float(config.tsdf_height());
-	float box_depth = voxel_size * float(config.tsdf_depth());
+	float3 origin = config_parser.tsdf_origin();
+	float voxel_size = config_parser.tsdf_voxel_size();
+	float box_width = voxel_size * float(config_parser.tsdf_width());
+	float box_height = voxel_size * float(config_parser.tsdf_height());
+	float box_depth = voxel_size * float(config_parser.tsdf_depth());
 	bb_center(0, 3) = origin.x + box_width / 2.f;
 	bb_center(1, 3) = origin.y + box_height / 2.f;
 	bb_center(2, 3) = origin.z + box_depth / 2.f;
@@ -139,5 +138,5 @@ void star::MeasureProcessorOffline::drawOrigin()
 	context.addCoord("origin", "helper", Eigen::Matrix4f::Identity(), 1.f);
 
 	std::string cam_name = "cam_0";
-	context.addCamera(cam_name, cam_name, config.extrinsic()[0]);
+	context.addCamera(cam_name, cam_name, config_parser.extrinsic()[0]);
 }

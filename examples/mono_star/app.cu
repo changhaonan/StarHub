@@ -27,23 +27,29 @@ int main()
     config.ParseConfig(sys_config_path.string(), context_config_path.string(), vis_config_path.string(), output_path.string());
 
     // Prepare context
-    auto& context = easy3d::Context::Instance();
+    auto &context = easy3d::Context::Instance();
     context.setDir(output_path.string(), "frame");
 
     // Build the Measure system (Use serial not parallel)
     // Generate the geometry, node graph, and render in continous time
     auto measure_processor = std::make_shared<MeasureProcessorOffline>();
-    auto dynamic_geometry_processor = std::make_shared<DynamicGeometryProcessor>();
+    // auto dynamic_geometry_processor = std::make_shared<DynamicGeometryProcessor>();
 
     for (int frame_idx = 0; frame_idx < config.num_frames(); frame_idx++)
     {
         // Prepare context
         auto &context = easy3d::Context::Instance();
-	    context.open(frame_idx);
+        context.open(frame_idx);
 
         // Measure process
         measure_processor->processFrame(frame_idx, 0);
-        
+
+        // Dynamic geometry process
+        // dynamic_geometry_processor->initGeometry(
+        //     *measure_processor->SurfelMapReadOnly(),
+        //     config.extrinsic()[0],
+        //     0);
+
         // Clean
         context.close();
     }
