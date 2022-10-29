@@ -14,10 +14,9 @@ source_group("src" FILES ${GEOMETRY_SRC})
 source_group("render" FILES ${RENDER_SRC})
 source_group("glad" FILES ${GLAD_SRC})
 
-add_library(glad ${GLAD_SRC})
-set_target_properties(glad PROPERTIES LINKER_LANGUAGE CXX)
+add_library(glad SHARED ${GLAD_SRC})
 
-add_library(geometry_lib ${GEOMETRY_SRC} ${RENDER_SRC})
+add_library(geometry_lib SHARED ${GEOMETRY_SRC} ${RENDER_SRC})
 set_property(TARGET geometry_lib PROPERTY POSITION_INDEPENDENT_CODE ON)
 # This library onlys works when it static
 target_link_libraries(geometry_lib common_lib math_lib img_proc_lib glfw glad)
