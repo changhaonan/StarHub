@@ -194,6 +194,7 @@ namespace star::visualize
 	void DrawPointCloudWithNormal(cudaTextureObject_t vertex_map, cudaTextureObject_t normal_map);
 	void DrawPointCloudWithNormal(const GArray<DepthSurfel> &surfel_array);
 	void SavePointCloudWithNormal(cudaTextureObject_t vertex_map, cudaTextureObject_t normal_map); // Save in ofstream
+	void SavePointCloudWithNormal(cudaTextureObject_t vertex_map, cudaTextureObject_t normal_map, const std::string &path); // Save in ofstream
 	void SavePointCloudWithNormal(const GArrayView<float4> &vertex, const GArrayView<float4> &normal, const std::string &path);
 
 	/* The colored point cloud

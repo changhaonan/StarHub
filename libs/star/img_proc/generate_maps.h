@@ -4,7 +4,7 @@
 
 namespace star
 {
-	void createVertexConfigMap(
+	void createVertexConfidMap(
 		cudaTextureObject_t depth_img,
 		const unsigned rows, const unsigned cols,
 		const IntrinsicInverse intrinsic_inv,

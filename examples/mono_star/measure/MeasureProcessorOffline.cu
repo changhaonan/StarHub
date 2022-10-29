@@ -99,15 +99,25 @@ void star::MeasureProcessorOffline::saveContext(
 {
 	// Prepare
 	auto &context = easy3d::Context::Instance();
-	context.open(frame_idx);
 
 	// Draw origin
 	drawOrigin();
 
-	// Draw measurement
-	context.addPointCloud("measure");
-	visualize::SavePointCloud(m_surfel_map->VertexConfigReadOnly(), context.at("measure"));
-	context.close();
+	// Draw point cloud
+	context.addPointCloud("point_cloud");
+	visualize::SavePointCloud(m_surfel_map->VertexConfidReadOnly(), context.at("point_cloud"));
+
+	context.addPointCloud("color_cloud");
+	visualize::SaveColoredPointCloud(
+		m_surfel_map->VertexConfidReadOnly(),
+		m_surfel_map->ColorTimeReadOnly(),
+		context.at("color_cloud"));
+
+	context.addPointCloud("normal_cloud", "", Eigen::Matrix4f::Identity(), 0.5f, "shadow");
+	visualize::SavePointCloudWithNormal(
+		m_surfel_map->VertexConfidReadOnly(),
+		m_surfel_map->NormalRadiusReadOnly(),
+		context.at("normal_cloud"));
 }
 
 void star::MeasureProcessorOffline::drawOrigin()

@@ -173,6 +173,21 @@ void star::visualize::SavePointCloudWithNormal(cudaTextureObject_t vertex_map, c
     output_fstream.SerializeWrite<std::vector<float4>>(save_vec);
 }
 
+void star::visualize::SavePointCloudWithNormal(cudaTextureObject_t vertex_map, cudaTextureObject_t normal_map, const std::string &path)
+{
+    // Download it
+    const auto point_cloud = downloadPointCloud(vertex_map);
+    const auto normal_cloud = downloadNormalCloud(normal_map);
+
+    // Concate point and normal
+    PointNormalCloud3f_Pointer point_normal_cloud = boost::make_shared<PointNormalCloud3f>();
+    pcl::concatenateFields(*point_cloud, *normal_cloud, *point_normal_cloud);
+    // redefine pcd size
+    point_normal_cloud->width = 1;
+    point_normal_cloud->height = point_normal_cloud->points.size();
+    pcl::io::savePCDFileASCII(path, *point_normal_cloud);
+}
+
 void star::visualize::SavePointCloudWithNormal(
     const GArrayView<float4> &vertex,
     const GArrayView<float4> &normal,

@@ -33,8 +33,16 @@ int main()
     // Generate the geometry, node graph, and render in continous time
     auto measure_processor = std::make_shared<MeasureProcessorOffline>();
 
-    for (int i = 0; i < config.num_frames(); i++)
+    for (int frame_idx = 0; frame_idx < config.num_frames(); frame_idx++)
     {
-        measure_processor->processFrame(i, 0);
+        // Prepare context
+        auto &context = easy3d::Context::Instance();
+	    context.open(frame_idx);
+
+        // Measure process
+        measure_processor->processFrame(frame_idx, 0);
+        
+        // Clean
+        context.close();
     }
 }

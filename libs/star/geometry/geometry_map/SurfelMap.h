@@ -19,12 +19,12 @@ namespace star
         ~SurfelMap();
 
         // Public API
-        cudaTextureObject_t VertexConfigReadOnly() const { return m_vertex_confid.texture; }
+        cudaTextureObject_t VertexConfidReadOnly() const { return m_vertex_confid.texture; }
         cudaTextureObject_t NormalRadiusReadOnly() const { return m_normal_radius.texture; }
         cudaTextureObject_t ColorTimeReadOnly() const { return m_color_time.texture; }
         cudaTextureObject_t RGBDReadOnly() const { return m_rgbd.texture; }
         cudaTextureObject_t IndexReadOnly() const { return m_index.texture; }
-        cudaSurfaceObject_t VertexConfig() { return m_vertex_confid.surface; }
+        cudaSurfaceObject_t VertexConfid() { return m_vertex_confid.surface; }
         cudaSurfaceObject_t NormalRadius() { return m_normal_radius.surface; }
         cudaSurfaceObject_t ColorTime() { return m_color_time.surface; }
         cudaSurfaceObject_t RGBD() { return m_rgbd.surface; }

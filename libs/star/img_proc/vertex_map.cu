@@ -35,7 +35,7 @@ namespace star::device
 	}
 };
 
-void star::createVertexConfigMap(
+void star::createVertexConfidMap(
 	cudaTextureObject_t depth_img,
 	const unsigned rows, const unsigned cols,
 	const IntrinsicInverse intrinsic_inv,
