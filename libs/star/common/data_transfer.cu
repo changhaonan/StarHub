@@ -10,6 +10,24 @@
 #include <Eigen/Eigen>
 #include <device_launch_parameters.h>
 
+namespace star::device
+{
+
+	template <typename T>
+	__global__ void textureToMap2DKernel(
+		cudaTextureObject_t texture,
+		PtrStepSz<T> map)
+	{
+		const auto x = threadIdx.x + blockDim.x * blockIdx.x;
+		const auto y = threadIdx.y + blockDim.y * blockIdx.y;
+		if (x >= map.cols || y >= map.rows)
+			return;
+		T element = tex2D<T>(texture, x, y);
+		map.ptr(y)[x] = element;
+	}
+
+};
+
 cv::Mat star::downloadDepthImage(const GArray2D<unsigned short> &image_gpu)
 {
 	const auto num_rows = image_gpu.rows();
@@ -931,3 +949,17 @@ void star::queryIndexMapFromPixels(
 	dim3 grid(pixel_array.Size(), blk.x);
 	device::queryIndexMapFromPixelKernel<<<grid, blk>>>(index_map, pixel_array, index_array);
 }
+
+template <typename T>
+void star::textureToMap2D(
+	cudaTextureObject_t texture,
+	GArray2D<T> &map,
+	cudaStream_t stream)
+{
+	dim3 blk(16, 16);
+	dim3 grid(divUp(map.cols(), blk.x), divUp(map.rows(), blk.y));
+	device::textureToMap2DKernel<T><<<grid, blk, 0, stream>>>(texture, map);
+}
+
+// Template instantiation
+template void star::textureToMap2D<float4>(cudaTextureObject_t, GArray2D<float4> &, cudaStream_t);

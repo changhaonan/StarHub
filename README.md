@@ -19,15 +19,21 @@ A unified library shared by all Star-related projects.
 
 ### Oct.29th
 
-- [ ] Initialization.
+- [x] Initialization.
     - [x] Move Geometry Initialization structure.
     - [x] Add Visualization structure.
 
-### Oct.31th
+### Nov.15th
 
-- [ ] Make opticalflow working
-- [ ] Make SurperPoint or R2D2 working.
+- [ ] Make opticalflow working.
 
+### Nov. 16th ~ 17th
+
+- [ ] Make the optimization working.
+
+### Nov. 18th
+
+- [ ] Combined optimization.
 
 ## Problem
 
