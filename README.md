@@ -30,7 +30,8 @@ A unified library shared by all Star-related projects.
 ### Nov. 16th ~ 17th
 
 - [ ] Make the optimization working.
-
+- [ ] Unify SolverMaps & ObservationMaps into SurfelMapTex
+ 
 ### Nov. 18th
 
 - [ ] Combined optimization.

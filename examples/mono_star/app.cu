@@ -50,7 +50,7 @@ int main()
         // Optical flow process
         if (frame_idx > 0)
         {
-            auto surfel_map_this = measure_processor->SurfelMapReadOnly()->Texture();
+            auto surfel_map_this = measure_processor->GetSurfelMapTex();
             auto surfel_map_prev = geometry_processor->GetSurfelMapTex();
             opticalflow_processor->ProcessFrame(surfel_map_this, surfel_map_prev, frame_idx, 0);
 
@@ -61,6 +61,9 @@ int main()
                 geometry_processor->ActiveGeometry()->LiveVertexConfidenceReadOnly(),
                 opticalflow_processor->GetSurfelMotion(),
                 context.at(surfelmotion_name));
+
+            // Start the optimization process
+
         }
 
         // Dynamic geometry process

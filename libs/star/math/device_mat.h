@@ -6,7 +6,6 @@
 
 namespace star
 {
-
     // Simple matrix for access on device (and host)
     struct mat33
     {

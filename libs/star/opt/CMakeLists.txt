@@ -1,0 +1,5 @@
+file(GLOB OPT_SRC *.h *.hpp *.cuh *.cpp *.cu)
+source_group("src" FILES ${OPT_SRC})
+add_library(opt_lib SHARED ${OPT_SRC})
+set_target_properties(opt_lib PROPERTIES LINKER_LANGUAGE CUDA)
+target_link_libraries(opt_lib common_lib math_lib)
