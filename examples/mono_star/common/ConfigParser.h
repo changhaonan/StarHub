@@ -185,10 +185,12 @@ namespace star
         void loadVisConfigFromJson(const void *json_ptr);
 
     public:
+        bool enable_vis() const { return m_enable_vis; }
         float pcd_size() const { return m_pcd_size; }
         float graph_node_size() const { return m_graph_node_size; }
 
     private:
+        bool  m_enable_vis = false;
         float m_pcd_size = 0.f;
         float m_graph_node_size = 0.f;
 

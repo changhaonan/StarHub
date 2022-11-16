@@ -6,6 +6,15 @@
 namespace star
 {
     class SurfelMapInitializer;
+    struct SurfelMapTex
+    {
+        cudaTextureObject_t vertex_confid;
+        cudaTextureObject_t normal_radius;
+        cudaTextureObject_t color_time;
+        cudaTextureObject_t rgbd; // (R,G,B,D_inv) scaled to -1~1, D_inv is 0~1
+        cudaTextureObject_t index;
+        unsigned num_valid_surfel;
+    };
 
     /**
      * \brief Two surfel map, usually from measurement or raycasting
@@ -30,6 +39,7 @@ namespace star
         cudaSurfaceObject_t RGBD() { return m_rgbd.surface; }
         cudaSurfaceObject_t Index() { return m_index.surface; }
         unsigned NumValidSurfels() const { return m_num_valid_surfel; }
+        SurfelMapTex Texture() const { return {m_vertex_confid.texture, m_normal_radius.texture, m_color_time.texture, m_rgbd.texture, m_index.texture, m_num_valid_surfel}; }
 
     private:
         // Surfel-related

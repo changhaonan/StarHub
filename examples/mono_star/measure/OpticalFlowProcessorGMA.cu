@@ -76,12 +76,17 @@ star::OpticalFlowProcessorGMA::OpticalFlowProcessorGMA()
     m_model->Load(model_path);
     m_model->SetDevice(device_string); // or "cuda:0"
 
+    // Vis
+    m_enable_vis = config.enable_vis();
+    m_pcd_size = config.pcd_size();
+
     // Camera setting
     m_num_cam = config.num_cam();
     STAR_CHECK_EQ(m_num_cam, 1); // Asset mono camera
-
     m_downsample_img_col = config.downsample_img_cols();
     m_downsample_img_row = config.downsample_img_rows();
+    m_cam2world = config.extrinsic()[0];
+
     unsigned num_pixel = m_downsample_img_col * m_downsample_img_row;
     // AllocateBuffer
     m_rgbd_prev.AllocateBuffer(num_pixel);
@@ -128,15 +133,15 @@ void star::OpticalFlowProcessorGMA::Process(StarStageBuffer &star_stage_buffer_t
 }
 
 void star::OpticalFlowProcessorGMA::ProcessFrame(
-    cudaTextureObject_t &rgbd_tex_this,
-    cudaTextureObject_t &rgbd_tex_prev,
+    SurfelMapTex& surfel_map_this,
+    SurfelMapTex& surfel_map_prev,
     const unsigned frame_idx,
     cudaStream_t stream)
 {
     if (frame_idx > 0)
     { // OpticalFlow from frame-1
         // 1. Load RBGD
-        loadRGBD(rgbd_tex_this, rgbd_tex_prev, stream);
+        loadRGBD(surfel_map_this.rgbd, surfel_map_prev.rgbd, stream);
 
         // 2. Run the model
         auto img_prev = nn::asTensor(m_rgbd_prev.Ptr(), m_downsample_img_col, m_downsample_img_row);
@@ -172,6 +177,9 @@ void star::OpticalFlowProcessorGMA::ProcessFrame(
         {
             std::cout << e.what() << std::endl;
         }
+
+        if (m_enable_vis)
+            saveContext(frame_idx, stream);
     }
 }
 
@@ -312,12 +320,21 @@ void star::OpticalFlowProcessorGMA::saveOpticalFlowWithFilter(
     cudaSafeCall(cudaStreamSynchronize(stream));
 }
 
-void star::OpticalFlowProcessorGMA::saveContext(const unsigned frame_idx, cudaStream_t stream) {
-    auto& context = easy3d::Context::Instance();
-    std::string optical_name = "of_0";
+void star::OpticalFlowProcessorGMA::saveContext(const unsigned frame_idx, cudaStream_t stream)
+{
+    auto &context = easy3d::Context::Instance();
+    std::string optical_name = "of";
+    // Save images
     context.addImage(optical_name, optical_name);
     visualize::SaveOpticalFlowMap(
         m_opticalflow.texture,
-        context.at(optical_name)
-    );
+        context.at(optical_name));
+    // Save pcd
+    // std::string of_pcd_name = "surfel_motion";
+    // context.addPointCloud(of_pcd_name, of_pcd_name, m_cam2world.inverse(), m_pcd_size * 0.5);
+    // visualize::SavePointCloudWithNormal(
+    //     star_stage_buffer_this.GetDynamicGeometryBufferReadOnly()->reference_vertex_confid_array.View(),
+    //     star_stage_buffer_this.GetNodeFlowBufferReadOnly()->SurfelFlowReadOnly(),
+    //     context.at("surfel_motion")
+    // );
 }

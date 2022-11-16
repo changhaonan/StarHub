@@ -6,6 +6,7 @@
 #include <star/common/common_types.h>
 #include <star/common/GBufferArray.h>
 #include <star/common/algorithm_types.h>
+#include <star/geometry/geometry_map/SurfelMap.h>
 #include <star/torch_utils/torch_model.h>
 #include <star/torch_utils/app/opticalflow/opticalflow_model.h>
 #include <star/torch_utils/tensor_transfer.h>
@@ -33,8 +34,8 @@ namespace star
             cudaStream_t stream,
             const unsigned frame_idx) override;
         void ProcessFrame(
-            cudaTextureObject_t& rgbd_tex_this,
-            cudaTextureObject_t& rgbd_tex_prev,
+            SurfelMapTex& surfel_map_this,
+            SurfelMapTex& surfel_map_prev,
             const unsigned frame_idx,
             cudaStream_t stream
         );
@@ -57,6 +58,12 @@ namespace star
             cudaTextureObject_t& rgbd_tex_this,
             cudaTextureObject_t& rgbd_tex_prev,
             cudaStream_t stream);
+        // Compute surfel motion
+        void computeSurfelFlowVisible(
+            SurfelMap& surfel_map_prev,
+            SurfelMap& surfel_map_this,
+            cudaStream_t stream
+        );
         void saveOpticalFlow(
             CudaTextureSurface& opticalflow_texsurf,
             cudaStream_t stream);
@@ -75,11 +82,17 @@ namespace star
         unsigned m_num_cam;
         unsigned m_downsample_img_col;
         unsigned m_downsample_img_row;
+        Eigen::Matrix4f m_cam2world;
+
         float m_opticalflow_suppress_threshold;
         GBufferArray<float4> m_rgbd_prev;
         GBufferArray<float4> m_rgbd_this;
 
         CudaTextureSurface m_opticalflow;
+
+        // Vis
+        bool m_enable_vis;
+        float m_pcd_size;
     };
 
 }

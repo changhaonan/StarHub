@@ -49,9 +49,9 @@ int main()
         // Optical flow process
         if (frame_idx > 0)
         {
-            auto rgbd_tex_this = measure_processor->SurfelMapReadOnly()->RGBDReadOnly();
-            auto rgbd_tex_prev = geometry_processor->GetObservationMaps().rgbd_map[0];
-            opticalflow_processor->ProcessFrame(rgbd_tex_this, rgbd_tex_prev, frame_idx, 0);
+            auto surfel_map_this = measure_processor->SurfelMapReadOnly()->Texture();
+            auto surfel_map_prev = geometry_processor->GetSurfelMapTex();
+            opticalflow_processor->ProcessFrame(surfel_map_this, surfel_map_prev, frame_idx, 0);
         }
 
         // Dynamic geometry process
@@ -61,8 +61,6 @@ int main()
             frame_idx,
             0);
         geometry_processor->processFrame(frame_idx, 0);
-
-        geometry_processor->saveContext(frame_idx, 0);
         // Clean
         context.close();
     }

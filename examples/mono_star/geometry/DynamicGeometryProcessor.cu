@@ -24,6 +24,9 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     m_renderer->MapModelSurfelGeometryToCuda(0, *m_model_geometry[0]);
     m_renderer->MapModelSurfelGeometryToCuda(1, *m_model_geometry[1]);
 
+    // Vis
+    m_enable_vis = config.enable_vis();
+
     // Camera-related
     m_cam2world = config.extrinsic()[0];
 }
@@ -52,6 +55,11 @@ void star::DynamicGeometryProcessor::processFrame(
 {
     // Generate map from geometry
     drawRenderMaps(frame_idx, stream);
+    computeSurfelMapTex();
+
+    // Vis
+    if (m_enable_vis)
+        saveContext(frame_idx, stream);
 
     // Update buffer_idx
     m_buffer_idx = (m_buffer_idx + 1) % 2;
@@ -70,6 +78,20 @@ void star::DynamicGeometryProcessor::initGeometry(
     // Init NodeGraph
     m_node_graph[m_buffer_idx]->InitializeNodeGraphFromVertex(
         m_model_geometry[m_buffer_idx]->LiveVertexConfidenceReadOnly(), frame_idx, false, stream);
+}
+
+void star::DynamicGeometryProcessor::computeSurfelMapTex() {
+    // Get solver-map
+    m_surfel_map_tex.vertex_confid = m_solver_maps.vertex_confid_map[0];
+    m_surfel_map_tex.normal_radius = m_solver_maps.normal_radius_map[0];
+
+    // Get observation-map
+    m_surfel_map_tex.rgbd = m_observation_maps.rgbd_map[0];
+    m_surfel_map_tex.index = m_observation_maps.index_map[0];
+    m_surfel_map_tex.color_time = 0;
+
+    // Num
+    m_surfel_map_tex.num_valid_surfel = m_model_geometry[m_buffer_idx]->NumValidSurfels();
 }
 
 void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaStream_t stream)

@@ -1,5 +1,6 @@
 #pragma once
 #include <star/geometry/geometry_map/GeometryMap.h>
+#include <star/geometry/geometry_map/SurfelMap.h>
 #include <star/geometry/surfel/SurfelGeometry.h>
 #include <star/geometry/surfel/SurfelGeometryInitializer.h>
 #include <star/geometry/render/Renderer.h>
@@ -33,6 +34,7 @@ namespace star
             const Eigen::Matrix4f &cam2world,
             const unsigned frame_idx,
             cudaStream_t stream);
+        void computeSurfelMapTex();
 
         // Access API
         SurfelGeometry::Ptr Geometry(const unsigned frame_idx) const
@@ -45,6 +47,8 @@ namespace star
         Renderer::ObservationMaps GetObservationMaps() const {
             return m_observation_maps;
         }
+        SurfelMapTex GetSurfelMapTex() const { return m_surfel_map_tex; };
+
         // Visualize
         void saveContext(const unsigned frame_idx, cudaStream_t stream);
         // Render-related
@@ -71,6 +75,9 @@ namespace star
         NodeGraph::Ptr m_node_graph[2];
         Renderer::Ptr m_renderer;
 
+        // Vis
+        bool m_enable_vis;
+
         // Camera-related
         Eigen::Matrix4f m_cam2world;
 
@@ -80,5 +87,6 @@ namespace star
         // Map
         Renderer::SolverMaps m_solver_maps;
         Renderer::ObservationMaps m_observation_maps;
+        SurfelMapTex m_surfel_map_tex;
     };
 }

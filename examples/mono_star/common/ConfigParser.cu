@@ -251,6 +251,7 @@ void star::ConfigParser::loadVisConfigFromJson(const void *json_ptr)
 {
     const auto &config_json = *((const json *)json_ptr);
 
+    m_enable_vis = config_json.at("enable_vis");
     m_pcd_size = config_json.at("pcd_size");
     m_graph_node_size = config_json.at("graph_node_size");
 }
