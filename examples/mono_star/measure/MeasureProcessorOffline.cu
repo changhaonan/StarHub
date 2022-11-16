@@ -23,6 +23,7 @@ star::MeasureProcessorOffline::MeasureProcessorOffline()
 	m_cam2world = config.extrinsic()[0];
 
 	// Visualize-related
+	m_enable_vis = config.enable_vis();
 	m_pcd_size = config.pcd_size();
 
 	// Allocate buffer
@@ -94,7 +95,8 @@ void star::MeasureProcessorOffline::processFrame(
 	cudaSafeCall(cudaStreamSynchronize(stream));
 
 	// 3. Visualize
-	saveContext(frame_idx, stream);
+	if (m_enable_vis)
+		saveContext(frame_idx, stream);
 }
 
 void star::MeasureProcessorOffline::saveContext(
@@ -108,20 +110,17 @@ void star::MeasureProcessorOffline::saveContext(
 	drawOrigin();
 
 	// Draw point cloud
-	context.addPointCloud("point_cloud", "", Eigen::Matrix4f::Identity(), m_pcd_size);
-	visualize::SavePointCloud(m_surfel_map->VertexConfidReadOnly(), context.at("point_cloud"));
-
-	context.addPointCloud("color_cloud", "", Eigen::Matrix4f::Identity(), m_pcd_size);
+	context.addPointCloud("m_color", "", Eigen::Matrix4f::Identity(), m_pcd_size);
 	visualize::SaveColoredPointCloud(
 		m_surfel_map->VertexConfidReadOnly(),
 		m_surfel_map->ColorTimeReadOnly(),
-		context.at("color_cloud"));
+		context.at("m_color"));
 
-	context.addPointCloud("normal_cloud", "", Eigen::Matrix4f::Identity(), m_pcd_size, "shadow");
+	context.addPointCloud("m_normal", "", Eigen::Matrix4f::Identity(), m_pcd_size, "shadow");
 	visualize::SavePointCloudWithNormal(
 		m_surfel_map->VertexConfidReadOnly(),
 		m_surfel_map->NormalRadiusReadOnly(),
-		context.at("normal_cloud"));
+		context.at("m_normal"));
 
 	// Save images
     context.addImage("measure-rgb");

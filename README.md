@@ -25,7 +25,7 @@ A unified library shared by all Star-related projects.
 
 ### Nov.15th
 
-- [ ] Make opticalflow working.
+- [x] Make opticalflow working.
 
 ### Nov. 16th ~ 17th
 

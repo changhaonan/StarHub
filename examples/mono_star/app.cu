@@ -56,9 +56,9 @@ int main()
 
             // Save the surfelmotion
             std::string surfelmotion_name = "surfel_motion";
-            context.addPointCloud(surfelmotion_name, surfelmotion_name, config.extrinsic()[0].inverse());
+            context.addPointCloud(surfelmotion_name, surfelmotion_name, config.extrinsic()[0].inverse(), config.pcd_size() * 0.1);
             visualize::SavePointCloudWithNormal(
-                geometry_processor->ActiveGeometry()->LiveVertexConfidenceReadOnly(), 
+                geometry_processor->ActiveGeometry()->LiveVertexConfidenceReadOnly(),
                 opticalflow_processor->GetSurfelMotion(),
                 context.at(surfelmotion_name));
         }

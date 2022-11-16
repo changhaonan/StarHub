@@ -62,6 +62,7 @@ namespace star
 		Eigen::Matrix4f m_cam2world;  // Camera position
 
 		// Visualize-related
+		bool m_enable_vis;
 		float m_pcd_size;
 	};
 

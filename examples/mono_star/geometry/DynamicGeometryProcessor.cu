@@ -37,8 +37,10 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
     m_renderer->UnmapModelSurfelGeometryFromCuda(0);
     m_renderer->UnmapModelSurfelGeometryFromCuda(1);
 
-    if (m_solver_maps_mapped) m_renderer->UnmapSolverMapsFromCuda();
-	if (m_observation_maps_mapped) m_renderer->UnmapObservationMapsFromCuda();
+    if (m_solver_maps_mapped)
+        m_renderer->UnmapSolverMapsFromCuda();
+    if (m_observation_maps_mapped)
+        m_renderer->UnmapObservationMapsFromCuda();
 }
 
 void star::DynamicGeometryProcessor::Process(
@@ -64,9 +66,9 @@ void star::DynamicGeometryProcessor::processFrame(
 
 void star::DynamicGeometryProcessor::initGeometry(
     const SurfelMap &surfel_map, const Eigen::Matrix4f &cam2world, const unsigned frame_idx, cudaStream_t stream)
-{    
+{
     // Update buffer_idx
-    m_buffer_idx = (m_buffer_idx + 1) % 2;   
+    m_buffer_idx = (m_buffer_idx + 1) % 2;
 
     // Init Surfel geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
@@ -80,7 +82,8 @@ void star::DynamicGeometryProcessor::initGeometry(
         m_model_geometry[m_buffer_idx]->LiveVertexConfidenceReadOnly(), frame_idx, false, stream);
 }
 
-void star::DynamicGeometryProcessor::computeSurfelMapTex() {
+void star::DynamicGeometryProcessor::computeSurfelMapTex()
+{
     // Get solver-map
     m_surfel_map_tex.vertex_confid = m_solver_maps.vertex_confid_map[0];
     m_surfel_map_tex.normal_radius = m_solver_maps.normal_radius_map[0];
@@ -98,13 +101,23 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
 {
     auto &context = easy3d::Context::Instance();
 
+    // Save Geometry
+    unsigned last_buffer_idx = (m_buffer_idx + 1) % 2;
+    std::string last_geo_name = "last_vertex";
+    if (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0) {  // Exist valid last geo
+        context.addPointCloud(last_geo_name, last_geo_name, m_cam2world.inverse());
+        visualize::SavePointCloud(
+            m_model_geometry[last_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
+            context.at(last_geo_name));
+    }
+
     // Save node graph
     context.addGraph("live_graph", "", m_cam2world.inverse());
     visualize::SaveGraph(
         m_node_graph[m_buffer_idx]->GetLiveNodeCoordinate(),
         m_node_graph[m_buffer_idx]->GetNodeKnn(),
         context.at("live_graph"));
-    
+
     // Save images
     context.addImage("ref-rgb");
     context.addImage("ref-depth");
@@ -116,15 +129,15 @@ void star::DynamicGeometryProcessor::drawRenderMaps(
     cudaStream_t stream)
 {
     // Generate new solver map (reference map inside)
-	drawSolverMaps(
-		frame_idx,
-		m_buffer_idx,
-		stream);
-	// Generate new observation map (reference map inside)
-	drawObservationMaps(
-		frame_idx,
-		m_buffer_idx,
-		stream);
+    drawSolverMaps(
+        frame_idx,
+        m_buffer_idx,
+        stream);
+    // Generate new observation map (reference map inside)
+    drawObservationMaps(
+        frame_idx,
+        m_buffer_idx,
+        stream);
 }
 
 void star::DynamicGeometryProcessor::drawSolverMaps(
