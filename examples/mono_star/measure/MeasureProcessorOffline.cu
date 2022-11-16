@@ -122,6 +122,11 @@ void star::MeasureProcessorOffline::saveContext(
 		m_surfel_map->VertexConfidReadOnly(),
 		m_surfel_map->NormalRadiusReadOnly(),
 		context.at("normal_cloud"));
+
+	// Save images
+    context.addImage("measure-rgb");
+    context.addImage("measure-depth");
+    visualize::SaveNormalizeRGBDImage(m_surfel_map->Texture().rgbd, context.at("measure-rgb"), context.at("measure-depth"));
 }
 
 void star::MeasureProcessorOffline::drawOrigin()

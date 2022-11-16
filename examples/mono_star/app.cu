@@ -2,6 +2,7 @@
 #include "measure/MeasureProcessorOffline.h"
 #include "measure/OpticalFlowProcessorGMA.h"
 #include "geometry/DynamicGeometryProcessor.h"
+#include "star/visualization/Visualizer.h"
 // Viewer
 #include <easy3d_viewer/context.hpp>
 
@@ -52,6 +53,14 @@ int main()
             auto surfel_map_this = measure_processor->SurfelMapReadOnly()->Texture();
             auto surfel_map_prev = geometry_processor->GetSurfelMapTex();
             opticalflow_processor->ProcessFrame(surfel_map_this, surfel_map_prev, frame_idx, 0);
+
+            // Save the surfelmotion
+            std::string surfelmotion_name = "surfel_motion";
+            context.addPointCloud(surfelmotion_name, surfelmotion_name, config.extrinsic()[0].inverse());
+            visualize::SavePointCloudWithNormal(
+                geometry_processor->ActiveGeometry()->LiveVertexConfidenceReadOnly(), 
+                opticalflow_processor->GetSurfelMotion(),
+                context.at(surfelmotion_name));
         }
 
         // Dynamic geometry process

@@ -1,4 +1,5 @@
 #include <mono_star/measure/OpticalFlowProcessorGMA.h>
+#include <star/geometry/node_graph/node_graph_opticalflow.h>
 #include <star/common/data_transfer.h>
 #include <device_launch_parameters.h>
 
@@ -86,6 +87,7 @@ star::OpticalFlowProcessorGMA::OpticalFlowProcessorGMA()
     m_downsample_img_col = config.downsample_img_cols();
     m_downsample_img_row = config.downsample_img_rows();
     m_cam2world = config.extrinsic()[0];
+    m_intrinsic = config.rgb_intrinsic_downsample();
 
     unsigned num_pixel = m_downsample_img_col * m_downsample_img_row;
     // AllocateBuffer
@@ -93,6 +95,7 @@ star::OpticalFlowProcessorGMA::OpticalFlowProcessorGMA()
     m_rgbd_this.AllocateBuffer(num_pixel);
     m_rgbd_prev.ResizeArrayOrException(num_pixel);
     m_rgbd_this.ResizeArrayOrException(num_pixel);
+    m_surfel_motion.AllocateBuffer(d_max_num_surfels);
 
     m_opticalflow_suppress_threshold = config.opticalflow_suppress_threshold();
 
@@ -119,7 +122,7 @@ star::OpticalFlowProcessorGMA::~OpticalFlowProcessorGMA()
 {
     m_rgbd_prev.ReleaseBuffer();
     m_rgbd_this.ReleaseBuffer();
-
+    m_surfel_motion.ReleaseBuffer();
     releaseTextureCollect(m_opticalflow);
 }
 
@@ -133,17 +136,17 @@ void star::OpticalFlowProcessorGMA::Process(StarStageBuffer &star_stage_buffer_t
 }
 
 void star::OpticalFlowProcessorGMA::ProcessFrame(
-    SurfelMapTex& surfel_map_this,
-    SurfelMapTex& surfel_map_prev,
+    SurfelMapTex &surfel_map_this,
+    SurfelMapTex &surfel_map_prev,
     const unsigned frame_idx,
     cudaStream_t stream)
 {
     if (frame_idx > 0)
     { // OpticalFlow from frame-1
-        // 1. Load RBGD
+        // Load RBGD
         loadRGBD(surfel_map_this.rgbd, surfel_map_prev.rgbd, stream);
 
-        // 2. Run the model
+        // Compute opticalflow
         auto img_prev = nn::asTensor(m_rgbd_prev.Ptr(), m_downsample_img_col, m_downsample_img_row);
         auto img_this = nn::asTensor(m_rgbd_this.Ptr(), m_downsample_img_col, m_downsample_img_row);
         auto img_prev_permu = img_prev.permute({2, 0, 1}).unsqueeze(0).to(m_model->GetDevice());
@@ -178,8 +181,13 @@ void star::OpticalFlowProcessorGMA::ProcessFrame(
             std::cout << e.what() << std::endl;
         }
 
+        // Compute surfel motion
+        computeSurfelFlowVisible(surfel_map_prev, surfel_map_this, stream);
+
         if (m_enable_vis)
+        {
             saveContext(frame_idx, stream);
+        }
     }
 }
 
@@ -329,12 +337,27 @@ void star::OpticalFlowProcessorGMA::saveContext(const unsigned frame_idx, cudaSt
     visualize::SaveOpticalFlowMap(
         m_opticalflow.texture,
         context.at(optical_name));
-    // Save pcd
-    // std::string of_pcd_name = "surfel_motion";
-    // context.addPointCloud(of_pcd_name, of_pcd_name, m_cam2world.inverse(), m_pcd_size * 0.5);
-    // visualize::SavePointCloudWithNormal(
-    //     star_stage_buffer_this.GetDynamicGeometryBufferReadOnly()->reference_vertex_confid_array.View(),
-    //     star_stage_buffer_this.GetNodeFlowBufferReadOnly()->SurfelFlowReadOnly(),
-    //     context.at("surfel_motion")
-    // );
+}
+
+void star::OpticalFlowProcessorGMA::computeSurfelFlowVisible(
+    SurfelMapTex &surfel_map_prev,
+    SurfelMapTex &surfel_map_this,
+    cudaStream_t stream)
+{
+    // Reset surfel motion
+    cudaSafeCall(cudaMemsetAsync(m_surfel_motion.Ptr(), 0, sizeof(float4) * m_surfel_motion.ArraySize(), stream));
+    m_surfel_motion.ResizeArrayOrException(surfel_map_prev.num_valid_surfel);
+
+    // Compute surfel motion
+    EstimateSurfelMotionFromOpticalFlow(
+        surfel_map_prev.vertex_confid,
+        surfel_map_this.vertex_confid,
+        surfel_map_prev.rgbd,
+        surfel_map_this.rgbd,
+        m_opticalflow.texture,
+        surfel_map_prev.index,
+        m_surfel_motion.Slice(),
+        m_cam2world,
+        m_intrinsic,
+        stream);
 }

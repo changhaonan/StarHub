@@ -35,16 +35,23 @@ namespace star
             const unsigned frame_idx,
             cudaStream_t stream);
         void computeSurfelMapTex();
+        void computeSurfelMotion(cudaStream_t stream);
 
         // Access API
         SurfelGeometry::Ptr Geometry(const unsigned frame_idx) const
         {
             return m_model_geometry[frame_idx];
         };
-        Renderer::SolverMaps GetSolverMaps() const {
+        SurfelGeometry::Ptr ActiveGeometry() const
+        {
+            return m_model_geometry[m_buffer_idx];
+        }
+        Renderer::SolverMaps GetSolverMaps() const
+        {
             return m_solver_maps;
         }
-        Renderer::ObservationMaps GetObservationMaps() const {
+        Renderer::ObservationMaps GetObservationMaps() const
+        {
             return m_observation_maps;
         }
         SurfelMapTex GetSurfelMapTex() const { return m_surfel_map_tex; };
@@ -54,20 +61,18 @@ namespace star
         // Render-related
         void drawRenderMaps(
             const unsigned frame_idx,
-            cudaStream_t stream
-        );
+            cudaStream_t stream);
+
     private:
         // Render-related
         void drawSolverMaps(
             const unsigned frame_idx,
             const unsigned geometry_idx,
-            cudaStream_t stream
-        );
+            cudaStream_t stream);
         void drawObservationMaps(
             const unsigned frame_idx,
             const unsigned geometry_idx,
-            cudaStream_t stream
-        );
+            cudaStream_t stream);
 
         unsigned m_buffer_idx = 0;
         SurfelGeometry::Ptr m_data_geometry;     // Double buffer

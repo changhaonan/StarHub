@@ -38,6 +38,7 @@ namespace star
 		SurfelMap::Ptr SurfelMapReadOnly() const {
 			return m_surfel_map;
 		}
+		SurfelMapTex GetSurfelMapTex() const { return m_surfel_map->Texture(); };
 	private:
 		void drawOrigin();
 

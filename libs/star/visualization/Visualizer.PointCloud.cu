@@ -193,6 +193,9 @@ void star::visualize::SavePointCloudWithNormal(
     const GArrayView<float4> &normal,
     const std::string &path)
 {
+    STAR_CHECK_NE(vertex.Size(), 0);
+    STAR_CHECK_EQ(vertex.Size(), normal.Size());
+    
     GArray<float4> vertex_array((float4 *)vertex.Ptr(), vertex.Size());
     GArray<float4> normal_array((float4 *)normal.Ptr(), normal.Size());
     const auto point_cloud = downloadPointCloud(vertex_array);

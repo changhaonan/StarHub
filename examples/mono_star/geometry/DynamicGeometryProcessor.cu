@@ -60,14 +60,14 @@ void star::DynamicGeometryProcessor::processFrame(
     // Vis
     if (m_enable_vis)
         saveContext(frame_idx, stream);
-
-    // Update buffer_idx
-    m_buffer_idx = (m_buffer_idx + 1) % 2;
 }
 
 void star::DynamicGeometryProcessor::initGeometry(
     const SurfelMap &surfel_map, const Eigen::Matrix4f &cam2world, const unsigned frame_idx, cudaStream_t stream)
-{
+{    
+    // Update buffer_idx
+    m_buffer_idx = (m_buffer_idx + 1) % 2;   
+
     // Init Surfel geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
         *m_model_geometry[m_buffer_idx],
@@ -104,6 +104,11 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_node_graph[m_buffer_idx]->GetLiveNodeCoordinate(),
         m_node_graph[m_buffer_idx]->GetNodeKnn(),
         context.at("live_graph"));
+    
+    // Save images
+    context.addImage("ref-rgb");
+    context.addImage("ref-depth");
+    visualize::SaveNormalizeRGBDImage(m_observation_maps.rgbd_map[0], context.at("ref-rgb"), context.at("ref-depth"));
 }
 
 void star::DynamicGeometryProcessor::drawRenderMaps(
