@@ -35,11 +35,13 @@ namespace star
         void ProcessFrame(
             cudaTextureObject_t& rgbd_tex_this,
             cudaTextureObject_t& rgbd_tex_prev,
-            CudaTextureSurface& opticalflow_texsurf,
             const unsigned frame_idx,
             cudaStream_t stream
         );
-
+        // Public-API
+        cudaTextureObject_t GetOpticalFlow() const {
+            return m_opticalflow.texture;
+        }
     private:
         void loadRGBD(
             cudaTextureObject_t& rgbd_tex_this,
@@ -63,6 +65,7 @@ namespace star
             CudaTextureSurface& opticalflow_texsurf,
             cudaStream_t stream);
         void coldStart(); // We need to run 3 times to make the JIT fully compiled
+        void saveContext(const unsigned frame_idx, cudaStream_t stream);
 
         // Model
         nn::TorchModel::Ptr m_model;
@@ -75,6 +78,8 @@ namespace star
         float m_opticalflow_suppress_threshold;
         GBufferArray<float4> m_rgbd_prev;
         GBufferArray<float4> m_rgbd_this;
+
+        CudaTextureSurface m_opticalflow;
     };
 
 }

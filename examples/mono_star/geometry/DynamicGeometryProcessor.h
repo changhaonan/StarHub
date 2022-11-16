@@ -39,10 +39,32 @@ namespace star
         {
             return m_model_geometry[frame_idx];
         };
-
+        Renderer::SolverMaps GetSolverMaps() const {
+            return m_solver_maps;
+        }
+        Renderer::ObservationMaps GetObservationMaps() const {
+            return m_observation_maps;
+        }
         // Visualize
         void saveContext(const unsigned frame_idx, cudaStream_t stream);
+        // Render-related
+        void drawRenderMaps(
+            const unsigned frame_idx,
+            cudaStream_t stream
+        );
     private:
+        // Render-related
+        void drawSolverMaps(
+            const unsigned frame_idx,
+            const unsigned geometry_idx,
+            cudaStream_t stream
+        );
+        void drawObservationMaps(
+            const unsigned frame_idx,
+            const unsigned geometry_idx,
+            cudaStream_t stream
+        );
+
         unsigned m_buffer_idx = 0;
         SurfelGeometry::Ptr m_data_geometry;     // Double buffer
         SurfelGeometry::Ptr m_model_geometry[2]; // Double buffer
@@ -51,5 +73,12 @@ namespace star
 
         // Camera-related
         Eigen::Matrix4f m_cam2world;
+
+        // Flag
+        bool m_solver_maps_mapped = false;
+        bool m_observation_maps_mapped = false;
+        // Map
+        Renderer::SolverMaps m_solver_maps;
+        Renderer::ObservationMaps m_observation_maps;
     };
 }

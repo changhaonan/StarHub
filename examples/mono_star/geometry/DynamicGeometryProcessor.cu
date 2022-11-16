@@ -33,6 +33,9 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
     m_renderer->UnmapDataSurfelGeometryFromCuda(0);
     m_renderer->UnmapModelSurfelGeometryFromCuda(0);
     m_renderer->UnmapModelSurfelGeometryFromCuda(1);
+
+    if (m_solver_maps_mapped) m_renderer->UnmapSolverMapsFromCuda();
+	if (m_observation_maps_mapped) m_renderer->UnmapObservationMapsFromCuda();
 }
 
 void star::DynamicGeometryProcessor::Process(
@@ -47,6 +50,11 @@ void star::DynamicGeometryProcessor::processFrame(
     const unsigned frame_idx,
     cudaStream_t stream)
 {
+    // Generate map from geometry
+    drawRenderMaps(frame_idx, stream);
+
+    // Update buffer_idx
+    m_buffer_idx = (m_buffer_idx + 1) % 2;
 }
 
 void star::DynamicGeometryProcessor::initGeometry(
@@ -64,14 +72,77 @@ void star::DynamicGeometryProcessor::initGeometry(
         m_model_geometry[m_buffer_idx]->LiveVertexConfidenceReadOnly(), frame_idx, false, stream);
 }
 
-void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaStream_t stream) {
-    auto& context = easy3d::Context::Instance();
+void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaStream_t stream)
+{
+    auto &context = easy3d::Context::Instance();
 
     // Save node graph
     context.addGraph("live_graph", "", m_cam2world.inverse());
     visualize::SaveGraph(
         m_node_graph[m_buffer_idx]->GetLiveNodeCoordinate(),
         m_node_graph[m_buffer_idx]->GetNodeKnn(),
-        context.at("live_graph")
-    );
+        context.at("live_graph"));
+}
+
+void star::DynamicGeometryProcessor::drawRenderMaps(
+    const unsigned frame_idx,
+    cudaStream_t stream)
+{
+    // Generate new solver map (reference map inside)
+	drawSolverMaps(
+		frame_idx,
+		m_buffer_idx,
+		stream);
+	// Generate new observation map (reference map inside)
+	drawObservationMaps(
+		frame_idx,
+		m_buffer_idx,
+		stream);
+}
+
+void star::DynamicGeometryProcessor::drawSolverMaps(
+    const unsigned frame_idx,
+    const unsigned geometry_idx,
+    cudaStream_t stream)
+{
+    // Generate new reference map
+    m_renderer->UnmapModelSurfelGeometryFromCuda(geometry_idx, stream);
+    cudaSafeCall(cudaStreamSynchronize(stream));
+    m_renderer->DrawSolverMapsWithRecentObservation(
+        m_model_geometry[geometry_idx]->NumValidSurfels(),
+        geometry_idx,
+        0,
+        frame_idx,
+        m_cam2world.inverse());
+
+    if (!m_solver_maps_mapped)
+    {
+        m_renderer->MapSolverMapsToCuda(m_solver_maps, stream);
+        m_solver_maps_mapped = true;
+    }
+    m_renderer->MapModelSurfelGeometryToCuda(geometry_idx, stream);
+    cudaSafeCall(cudaStreamSynchronize(stream));
+}
+
+void star::DynamicGeometryProcessor::drawObservationMaps(
+    const unsigned frame_idx,
+    const unsigned geometry_idx,
+    cudaStream_t stream)
+{
+    // Generate new reference map
+    m_renderer->UnmapModelSurfelGeometryFromCuda(geometry_idx, stream);
+    cudaSafeCall(cudaStreamSynchronize(stream));
+    m_renderer->DrawObservationMaps(
+        m_model_geometry[geometry_idx]->NumValidSurfels(),
+        geometry_idx, 0, frame_idx,
+        m_cam2world.inverse(),
+        true);
+
+    if (!m_observation_maps_mapped)
+    {
+        m_renderer->MapObservationMapsToCuda(m_observation_maps, stream);
+        m_observation_maps_mapped = true;
+    }
+    m_renderer->MapModelSurfelGeometryToCuda(geometry_idx, stream);
+    cudaSafeCall(cudaStreamSynchronize(stream));
 }

@@ -1,5 +1,6 @@
 #include "common/ConfigParser.h"
 #include "measure/MeasureProcessorOffline.h"
+#include "measure/OpticalFlowProcessorGMA.h"
 #include "geometry/DynamicGeometryProcessor.h"
 // Viewer
 #include <easy3d_viewer/context.hpp>
@@ -27,29 +28,40 @@ int main()
     config.ParseConfig(sys_config_path.string(), context_config_path.string(), vis_config_path.string(), output_path.string());
 
     // Prepare context
-    auto& context = easy3d::Context::Instance();
+    auto &context = easy3d::Context::Instance();
     context.setDir(output_path.string(), "frame");
 
     // Build the Measure system (Use serial not parallel)
     // Generate the geometry, node graph, and render in continous time
     auto measure_processor = std::make_shared<MeasureProcessorOffline>();
     auto geometry_processor = std::make_shared<DynamicGeometryProcessor>();
+    auto opticalflow_processor = std::make_shared<OpticalFlowProcessorGMA>();
 
     for (int frame_idx = 0; frame_idx < config.num_frames(); frame_idx++)
     {
         // Prepare context
         auto &context = easy3d::Context::Instance();
-	    context.open(frame_idx);
+        context.open(frame_idx);
 
         // Measure process
         measure_processor->processFrame(frame_idx, 0);
-        
+
+        // Optical flow process
+        if (frame_idx > 0)
+        {
+            auto rgbd_tex_this = measure_processor->SurfelMapReadOnly()->RGBDReadOnly();
+            auto rgbd_tex_prev = geometry_processor->GetObservationMaps().rgbd_map[0];
+            opticalflow_processor->ProcessFrame(rgbd_tex_this, rgbd_tex_prev, frame_idx, 0);
+        }
+
         // Dynamic geometry process
         geometry_processor->initGeometry(
             *measure_processor->SurfelMapReadOnly(),
             config.extrinsic()[0],
             frame_idx,
             0);
+        geometry_processor->processFrame(frame_idx, 0);
+
         geometry_processor->saveContext(frame_idx, 0);
         // Clean
         context.close();

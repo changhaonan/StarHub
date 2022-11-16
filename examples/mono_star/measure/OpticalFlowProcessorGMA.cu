@@ -4,7 +4,6 @@
 
 namespace star::device
 {
-
     __global__ void loadRGBWithBackgroundKernel(
         cudaTextureObject_t texture_rgbd,
         float4 *__restrict__ img_rgbd,
@@ -103,6 +102,9 @@ star::OpticalFlowProcessorGMA::OpticalFlowProcessorGMA()
     cudaSafeCall(cudaMemcpy(
         (void *)m_background_img.ptr(), (void *)img_bg_resize.data, sizeof(uchar3) * num_pixel, cudaMemcpyHostToDevice));
 
+    // Create texture/surface
+    createFloat2TextureSurface(m_downsample_img_row, m_downsample_img_col, m_opticalflow);
+
     // Start with 3 load running if the device is not "cpu"
     if (m_model->GetDevice() != "cpu")
         coldStart();
@@ -112,6 +114,8 @@ star::OpticalFlowProcessorGMA::~OpticalFlowProcessorGMA()
 {
     m_rgbd_prev.ReleaseBuffer();
     m_rgbd_this.ReleaseBuffer();
+
+    releaseTextureCollect(m_opticalflow);
 }
 
 void star::OpticalFlowProcessorGMA::Process(StarStageBuffer &star_stage_buffer_this,
@@ -126,7 +130,6 @@ void star::OpticalFlowProcessorGMA::Process(StarStageBuffer &star_stage_buffer_t
 void star::OpticalFlowProcessorGMA::ProcessFrame(
     cudaTextureObject_t &rgbd_tex_this,
     cudaTextureObject_t &rgbd_tex_prev,
-    CudaTextureSurface &opticalflow_texsurf,
     const unsigned frame_idx,
     cudaStream_t stream)
 {
@@ -154,11 +157,11 @@ void star::OpticalFlowProcessorGMA::ProcessFrame(
             // Writing to texture
             if (m_opticalflow_suppress_threshold == 0.f)
             {
-                saveOpticalFlow(opticalflow_texsurf, stream);
+                saveOpticalFlow(m_opticalflow, stream);
             }
             else
             {
-                saveOpticalFlowWithFilter(opticalflow_texsurf, stream);
+                saveOpticalFlowWithFilter(m_opticalflow, stream);
             }
         }
         catch (c10::Error &e)
@@ -218,15 +221,15 @@ void star::OpticalFlowProcessorGMA::loadRGBDDirectly(
 
     // This: from measurement
     GArray2D<float4> rgbd_this_2d = GArray2D<float4>(
-            m_downsample_img_row,
-            m_downsample_img_col,
-            m_rgbd_this.Ptr(),
-            sizeof(float4) * m_downsample_img_col);
+        m_downsample_img_row,
+        m_downsample_img_col,
+        m_rgbd_this.Ptr(),
+        sizeof(float4) * m_downsample_img_col);
     GArray2D<float4> rgbd_prev_2d = GArray2D<float4>(
-            m_downsample_img_row,
-            m_downsample_img_col,
-            m_rgbd_prev.Ptr(),
-            sizeof(float4) * m_downsample_img_col);
+        m_downsample_img_row,
+        m_downsample_img_col,
+        m_rgbd_prev.Ptr(),
+        sizeof(float4) * m_downsample_img_col);
 
     textureToMap2D(rgbd_tex_this, rgbd_this_2d, stream);
     textureToMap2D(rgbd_tex_prev, rgbd_prev_2d, stream);
@@ -307,4 +310,14 @@ void star::OpticalFlowProcessorGMA::saveOpticalFlowWithFilter(
         img_cols,
         img_rows);
     cudaSafeCall(cudaStreamSynchronize(stream));
+}
+
+void star::OpticalFlowProcessorGMA::saveContext(const unsigned frame_idx, cudaStream_t stream) {
+    auto& context = easy3d::Context::Instance();
+    std::string optical_name = "of_0";
+    context.addImage(optical_name, optical_name);
+    visualize::SaveOpticalFlowMap(
+        m_opticalflow.texture,
+        context.at(optical_name)
+    );
 }
