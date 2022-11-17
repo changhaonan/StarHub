@@ -225,10 +225,10 @@ void star::WarpSolver::SetNode2TermIndexInput()
 	unsigned num_nodes = m_node_graph4solver.num_node;
 	// Log
 	printf("Set: Dense size: %d, node list size: %d, graph size: %d, feature size: %d\n",
-		   image_term_pixel_knn.surfel_knn_patch_all.Size(),
-		   num_nodes,
-		   m_node_graph4solver.node_graph.Size(),
-		   sparse_feature_knn_patch.Size());
+		   int(image_term_pixel_knn.surfel_knn_patch_all.Size()),
+		   int(num_nodes),
+		   int(m_node_graph4solver.node_graph.Size()),
+		   int(sparse_feature_knn_patch.Size()));
 
 	m_node2term_index->SetInputs(
 		image_term_pixel_knn.surfel_knn_patch_all,

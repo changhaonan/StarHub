@@ -13,26 +13,19 @@
 #include <star/visualization/Visualizer.h>
 #include <star/common/common_texture_utils.h>
 #include <mono_star/common/ConfigParser.h>
-#include <mono_star/common/ThreadProcessor.h>
 
 namespace star
 {
 
     /* Use a GMA-rgbd model to predict the opticalflow motion
      */
-    class OpticalFlowProcessorGMA : public ThreadProcessor
+    class OpticalFlowProcessorGMA
     {
     public:
         using Ptr = std::shared_ptr<OpticalFlowProcessorGMA>;
         STAR_NO_COPY_ASSIGN_MOVE(OpticalFlowProcessorGMA);
         OpticalFlowProcessorGMA();
         ~OpticalFlowProcessorGMA();
-
-        void Process(
-            StarStageBuffer &star_stage_buffer_this,
-            const StarStageBuffer &star_stage_buffer_prev,
-            cudaStream_t stream,
-            const unsigned frame_idx) override;
         void ProcessFrame(
             SurfelMapTex &surfel_map_this,
             SurfelMapTex &surfel_map_prev,
@@ -43,7 +36,8 @@ namespace star
         {
             return m_opticalflow.texture;
         }
-        GArrayView<float4> GetSurfelMotion() const {
+        GArrayView<float4> GetSurfelMotion() const
+        {
             return m_surfel_motion.View();
         }
 
@@ -89,7 +83,7 @@ namespace star
         Intrinsic m_intrinsic;
 
         float m_opticalflow_suppress_threshold;
-        
+
         // Buffer
         GBufferArray<float4> m_rgbd_prev;
         GBufferArray<float4> m_rgbd_this;

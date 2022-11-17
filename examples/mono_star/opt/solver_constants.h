@@ -1,10 +1,3 @@
-/**
- * @author Haonan Chang
- * @email chnme40cs@gmail.com
- * @create date 2022-04-20
- * @modify date 2022-04-30
- * @desc Constants
- */
 #pragma once
 
 ////Use materialized jtj?

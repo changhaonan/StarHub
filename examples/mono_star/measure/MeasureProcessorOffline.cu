@@ -1,5 +1,6 @@
 #include "MeasureProcessorOffline.h"
 #include <star/img_proc/image_resize.cuh>
+#include <star/visualization/Visualizer.h>
 
 star::MeasureProcessorOffline::MeasureProcessorOffline()
 {
@@ -44,16 +45,6 @@ star::MeasureProcessorOffline::~MeasureProcessorOffline()
 	cudaSafeCall(cudaFreeHost(m_raw_color_img_buff));
 }
 
-void star::MeasureProcessorOffline::Process(
-	StarStageBuffer &star_stage_buffer_this,
-	const StarStageBuffer &star_stage_buffer_prev,
-	cudaStream_t stream,
-	const unsigned frame_idx)
-{
-
-	// Do nothing now
-}
-
 void star::MeasureProcessorOffline::processFrame(
 	const unsigned frame_idx,
 	cudaStream_t stream)
@@ -62,15 +53,13 @@ void star::MeasureProcessorOffline::processFrame(
 	const auto image_idx = size_t(frame_idx) * m_step_frame + m_start_frame_idx;
 	m_fetcher->FetchRGBImage(0, image_idx, m_raw_color_img);
 	m_fetcher->FetchDepthImage(0, image_idx, m_raw_depth_img);
-	
+
 	// CPU copy
 	memcpy(m_raw_color_img_buff, m_raw_color_img.data,
-        sizeof(uchar3) * m_raw_color_img.total()
-    );
+		   sizeof(uchar3) * m_raw_color_img.total());
 	memcpy(m_raw_depth_img_buff, m_raw_depth_img.data,
-        sizeof(unsigned short) * m_raw_depth_img.total()
-    );
-	
+		   sizeof(unsigned short) * m_raw_depth_img.total());
+
 	// Copy to GPU
 	cudaSafeCall(cudaMemcpyAsync(
 		m_g_raw_color_img.ptr(),
@@ -123,9 +112,9 @@ void star::MeasureProcessorOffline::saveContext(
 		context.at("m_normal"));
 
 	// Save images
-    context.addImage("measure-rgb");
-    context.addImage("measure-depth");
-    visualize::SaveNormalizeRGBDImage(m_surfel_map->Texture().rgbd, context.at("measure-rgb"), context.at("measure-depth"));
+	context.addImage("measure-rgb");
+	context.addImage("measure-depth");
+	visualize::SaveNormalizeRGBDImage(m_surfel_map->Texture().rgbd, context.at("measure-rgb"), context.at("measure-depth"));
 }
 
 void star::MeasureProcessorOffline::drawOrigin()

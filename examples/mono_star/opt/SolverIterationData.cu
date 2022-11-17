@@ -3,28 +3,30 @@
 #include <mono_star/opt/SolverIterationData.h>
 #include <device_launch_parameters.h>
 
-namespace star { namespace device {
-
+namespace star::device
+{
 	__global__ void InitalizeAsIndentityKernel(
-		DualQuaternion* __restrict__ node_se3,
-		const unsigned num_nodes
-	) {
+		DualQuaternion *__restrict__ node_se3,
+		const unsigned num_nodes)
+	{
 		const auto tidx = threadIdx.x + blockDim.x * blockIdx.x;
-		if (tidx >= num_nodes) return;
+		if (tidx >= num_nodes)
+			return;
 
 		node_se3[tidx].set_identity();
 	}
 
 	__global__ void ApplyWarpFieldUpdateKernel(
-		const DualQuaternion* __restrict__ node_se3,
-		const float* __restrict__ warpfield_update,
-		DualQuaternion* __restrict__ updated_node_se3,
+		const DualQuaternion *__restrict__ node_se3,
+		const float *__restrict__ warpfield_update,
+		DualQuaternion *__restrict__ updated_node_se3,
 		const float twist_coef,
 		const unsigned node_size,
-		const unsigned patch_size
-	) {
+		const unsigned patch_size)
+	{
 		const auto tidx = threadIdx.x + blockDim.x * blockIdx.x;
-		if (tidx >= node_size) return;
+		if (tidx >= node_size)
+			return;
 		// Update se3
 		float3 twist_rot;
 		twist_rot.x = twist_coef * warpfield_update[d_node_variable_dim * tidx];
@@ -37,10 +39,12 @@ namespace star { namespace device {
 		twist_trans.z = twist_coef * warpfield_update[d_node_variable_dim * tidx + 5];
 
 		mat34 SE3;
-		if (fabsf_sum(twist_rot) < 1e-4f) {
+		if (fabsf_sum(twist_rot) < 1e-4f)
+		{
 			SE3.rot = mat33::identity();
 		}
-		else {
+		else
+		{
 			const float angle = norm(twist_rot);
 			const float3 axis = 1.0f / angle * twist_rot;
 
@@ -67,13 +71,12 @@ namespace star { namespace device {
 		SE3_prev = SE3 * SE3_prev;
 		updated_node_se3[tidx] = SE3_prev;
 	}
-
-} // namespace device
-} // namespace star
+}
 
 /* The method for construction/destruction, buffer management
  */
-star::SolverIterationData::SolverIterationData() : m_is_global_iteration(false) {
+star::SolverIterationData::SolverIterationData() : m_is_global_iteration(false)
+{
 	m_updated_warpfield = IterationInputFrom::WarpFieldInit;
 	m_newton_iters = 0;
 	allocateBuffer();
@@ -81,21 +84,24 @@ star::SolverIterationData::SolverIterationData() : m_is_global_iteration(false) 
 	// Initialize init as Id
 	InitializedAsIdentity(m_node_se3_init.BufferSize());
 	// Use config to update correspondingly
-	const auto& config = ConfigParser::Instance();
+	const auto &config = ConfigParser::Instance();
 }
 
-star::SolverIterationData::~SolverIterationData() {
+star::SolverIterationData::~SolverIterationData()
+{
 	releaseBuffer();
 }
 
-void star::SolverIterationData::allocateBuffer() {
+void star::SolverIterationData::allocateBuffer()
+{
 	m_node_se3_init.AllocateBuffer(Constants::kMaxNumNodes);
 	m_node_se3_0.AllocateBuffer(Constants::kMaxNumNodes);
 	m_node_se3_1.AllocateBuffer(Constants::kMaxNumNodes);
 	m_warpfield_update.AllocateBuffer(d_node_variable_dim * Constants::kMaxNumNodes);
 }
 
-void star::SolverIterationData::releaseBuffer() {
+void star::SolverIterationData::releaseBuffer()
+{
 	m_node_se3_0.ReleaseBuffer();
 	m_node_se3_1.ReleaseBuffer();
 	m_warpfield_update.ReleaseBuffer();
@@ -103,7 +109,8 @@ void star::SolverIterationData::releaseBuffer() {
 
 /* The processing interface
  */
-void star::SolverIterationData::SetWarpFieldInitialValue(const unsigned num_nodes) {
+void star::SolverIterationData::SetWarpFieldInitialValue(const unsigned num_nodes)
+{
 	m_updated_warpfield = IterationInputFrom::WarpFieldInit;
 	m_newton_iters = 0;
 
@@ -117,8 +124,10 @@ void star::SolverIterationData::SetWarpFieldInitialValue(const unsigned num_node
 	setElasticPenaltyValue(0, m_penalty_constants);
 }
 
-star::GArrayView<star::DualQuaternion> star::SolverIterationData::CurrentNodeSE3Input() const {
-	switch (m_updated_warpfield) {
+star::GArrayView<star::DualQuaternion> star::SolverIterationData::CurrentNodeSE3Input() const
+{
+	switch (m_updated_warpfield)
+	{
 	case IterationInputFrom::WarpFieldInit:
 		return m_node_se3_init.View();
 	case IterationInputFrom::Buffer_0:
@@ -130,19 +139,23 @@ star::GArrayView<star::DualQuaternion> star::SolverIterationData::CurrentNodeSE3
 	}
 }
 
-void star::SolverIterationData::SanityCheck() const {
+void star::SolverIterationData::SanityCheck() const
+{
 	const auto num_nodes = m_node_se3_init.ArraySize();
 	STAR_CHECK_EQ(num_nodes, m_node_se3_0.ArraySize());
 	STAR_CHECK_EQ(num_nodes, m_node_se3_1.ArraySize());
 	STAR_CHECK_EQ(num_nodes * d_node_variable_dim, m_warpfield_update.ArraySize());
 }
 
-void star::SolverIterationData::updateIterationFlags() {
+void star::SolverIterationData::updateIterationFlags()
+{
 	// Update the flag
-	if (m_updated_warpfield == IterationInputFrom::Buffer_0) {
+	if (m_updated_warpfield == IterationInputFrom::Buffer_0)
+	{
 		m_updated_warpfield = IterationInputFrom::Buffer_1;
 	}
-	else {
+	else
+	{
 		// Either init or from buffer 1
 		m_updated_warpfield = IterationInputFrom::Buffer_0;
 	}
@@ -156,32 +169,38 @@ void star::SolverIterationData::updateIterationFlags() {
 
 void star::SolverIterationData::setElasticPenaltyValue(
 	int newton_iter,
-	PenaltyConstants& constants
-) {
-	if (!Constants::kUseElasticPenalty) {
+	PenaltyConstants &constants)
+{
+	if (!Constants::kUseElasticPenalty)
+	{
 		constants.setDefaultValue();
 		return;
 	}
 
-	if (newton_iter < Constants::kNumGlobalSolverItarations) {
+	if (newton_iter < Constants::kNumGlobalSolverItarations)
+	{
 		constants.setGlobalIterationValue();
 	}
-	else {
+	else
+	{
 		constants.setLocalIterationValue();
 	}
 }
 
-star::GArraySlice<float> star::SolverIterationData::CurrentWarpFieldUpdateBuffer() {
+star::GArraySlice<float> star::SolverIterationData::CurrentWarpFieldUpdateBuffer()
+{
 	return m_warpfield_update.Slice();
 }
 
-void star::SolverIterationData::ApplyWarpFieldUpdate(cudaStream_t stream, float se3_step) {
+void star::SolverIterationData::ApplyWarpFieldUpdate(cudaStream_t stream, float se3_step)
+{
 	// Determine which node list updated to
 	const auto init_dq = CurrentNodeSE3Input();
 	GArraySlice<DualQuaternion> updated_dq;
 
-	switch (m_updated_warpfield) {
-	case IterationInputFrom::WarpFieldInit:  // Follow Buffer_1 (Usage of switch)
+	switch (m_updated_warpfield)
+	{
+	case IterationInputFrom::WarpFieldInit: // Follow Buffer_1 (Usage of switch)
 	case IterationInputFrom::Buffer_1:
 		updated_dq = m_node_se3_0.Slice();
 		break;
@@ -211,7 +230,8 @@ void star::SolverIterationData::ApplyWarpFieldUpdate(cudaStream_t stream, float 
 #endif
 }
 
-void star::SolverIterationData::InitializedAsIdentity(const unsigned num_nodes, cudaStream_t stream) {
+void star::SolverIterationData::InitializedAsIdentity(const unsigned num_nodes, cudaStream_t stream)
+{
 	dim3 blk(64);
 	dim3 grid(divUp(num_nodes, blk.x));
 

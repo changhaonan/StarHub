@@ -5,27 +5,18 @@
 #include <star/geometry/surfel/SurfelGeometryInitializer.h>
 #include <star/geometry/render/Renderer.h>
 #include <star/geometry/node_graph/NodeGraph.h>
-#include <mono_star/common/ThreadProcessor.h>
-#include <mono_star/common/StarStageBuffer.h>
-
 // Viewer
 #include <easy3d_viewer/context.hpp>
 
 namespace star
 {
-    class DynamicGeometryProcessor : public ThreadProcessor
+    class DynamicGeometryProcessor
     {
     public:
         using Ptr = std::shared_ptr<DynamicGeometryProcessor>;
         STAR_NO_COPY_ASSIGN_MOVE(DynamicGeometryProcessor);
         DynamicGeometryProcessor();
         ~DynamicGeometryProcessor();
-
-        void Process(
-            StarStageBuffer &star_stage_buffer_this,
-            const StarStageBuffer &star_stage_buffer_prev,
-            cudaStream_t stream,
-            const unsigned frame_idx) override;
         void processFrame(
             const unsigned frame_idx,
             cudaStream_t stream);

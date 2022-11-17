@@ -126,15 +126,6 @@ star::OpticalFlowProcessorGMA::~OpticalFlowProcessorGMA()
     releaseTextureCollect(m_opticalflow);
 }
 
-void star::OpticalFlowProcessorGMA::Process(StarStageBuffer &star_stage_buffer_this,
-                                            const StarStageBuffer &star_stage_buffer_prev,
-                                            cudaStream_t stream,
-                                            const unsigned frame_idx)
-{
-    // Do nothing
-    return;
-}
-
 void star::OpticalFlowProcessorGMA::ProcessFrame(
     SurfelMapTex &surfel_map_this,
     SurfelMapTex &surfel_map_prev,

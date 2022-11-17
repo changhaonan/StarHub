@@ -43,14 +43,6 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
         m_renderer->UnmapObservationMapsFromCuda();
 }
 
-void star::DynamicGeometryProcessor::Process(
-    StarStageBuffer &star_stage_buffer_this,
-    const StarStageBuffer &star_stage_buffer_prev,
-    cudaStream_t stream,
-    const unsigned frame_idx)
-{
-}
-
 void star::DynamicGeometryProcessor::processFrame(
     const unsigned frame_idx,
     cudaStream_t stream)
@@ -104,7 +96,8 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
     // Save Geometry
     unsigned last_buffer_idx = (m_buffer_idx + 1) % 2;
     std::string last_geo_name = "last_vertex";
-    if (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0) {  // Exist valid last geo
+    if (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0)
+    { // Exist valid last geo
         context.addPointCloud(last_geo_name, last_geo_name, m_cam2world.inverse());
         visualize::SavePointCloud(
             m_model_geometry[last_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
