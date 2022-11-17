@@ -2,6 +2,7 @@
 add_subdirectory(common)
 add_subdirectory(measure)
 add_subdirectory(geometry)
+# add_subdirectory(opt)
 
 # Executables
 add_executable(mono_star app.cu)

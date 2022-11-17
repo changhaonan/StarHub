@@ -1,4 +1,4 @@
-#include "node_motion_jacobian_host.h"
+#include <star/opt/node_motion_jacobian_host.h>
 
 /** Diagonal Jacobian
  */

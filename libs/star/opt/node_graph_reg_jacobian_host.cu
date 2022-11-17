@@ -1,4 +1,4 @@
-#include "node_graph_reg_jacobian_host.h"
+#include <star/opt/node_graph_reg_jacobian_host.h>
 
 /** Diagonal JtJ
  */

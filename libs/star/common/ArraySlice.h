@@ -36,6 +36,8 @@ namespace star
 		__host__ __device__ __forceinline__ size_t ByteSize() const { return m_array_size * sizeof(T); }
 		__host__ __device__ __forceinline__ const T *Ptr() const { return m_array; }
 		__host__ __device__ __forceinline__ T *Ptr() { return m_array; }
+		
+		__host__ __forceinline__ GArrayView<T> View() const { return GArrayView<T>(Ptr(), Size()); }
 
 		// Implicit convertor
 		operator T *() { return m_array; }

@@ -2,6 +2,6 @@
 
 namespace star
 {
-    // Common constants influencing the modules
+    // Common constants influencing all modules
     constexpr unsigned d_max_cam = 3;
 }

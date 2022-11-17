@@ -1,0 +1,5 @@
+file(GLOB PCG_SOLVER_SRC *.h *.hpp *.cuh *.cpp *.cu)
+source_group("src" FILES ${PCG_SOLVER_SRC})
+add_library(pcg_solver_lib SHARED ${PCG_SOLVER_SRC})
+set_target_properties(pcg_solver_lib PROPERTIES LINKER_LANGUAGE CUDA)
+target_link_libraries(pcg_solver_lib common_lib math_lib)
