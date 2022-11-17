@@ -1,20 +1,22 @@
 #pragma once
-#include "star/common/ConfigParser.h"
-#include "star/common/Constants.h"
-#include "common/macro_utils.h"
-#include "common/common_types.h"
-#include "common/ArrayView.h"
-#include "common/GBufferArray.h"
-#include "common/algorithm_types.h"
-#include "star/types/term_offset_types.h"
+#include <star/common/macro_utils.h>
+#include <star/common/common_types.h>
+#include <star/common/ArrayView.h>
+#include <star/common/GBufferArray.h>
+#include <star/common/algorithm_types.h>
+#include <mono_star/common/term_offset_types.h>
+#include <mono_star/common/ConfigParser.h>
+#include <mono_star/common/Constants.h>
 #include <memory>
 
-namespace star {
-
-	class Node2TermsIndex {
+namespace star
+{
+	class Node2TermsIndex
+	{
 	private:
 		// Knn map
-		struct {
+		struct
+		{
 			GArrayView<unsigned short> dense_image_knn_patch; // Each dense scalar term has d_surfel_knn_size nearest neighbour
 			GArrayView<ushort3> node_graph;
 			unsigned node_size;
@@ -24,6 +26,7 @@ namespace star {
 
 		// The term offset of term2node map
 		TermTypeOffset m_term_offset;
+
 	public:
 		using Ptr = std::shared_ptr<Node2TermsIndex>;
 		Node2TermsIndex();
@@ -37,8 +40,7 @@ namespace star {
 			GArrayView<unsigned short> dense_image_knn_patch,
 			GArrayView<ushort3> node_graph,
 			GArrayView<unsigned short> sparse_feature_knn_patch,
-			const unsigned num_nodes
-		);
+			const unsigned num_nodes);
 
 		// The main interface
 		void BuildIndex(cudaStream_t stream = 0);
@@ -50,6 +52,7 @@ namespace star {
 	private:
 		GBufferArray<unsigned short> m_node_keys;
 		GBufferArray<unsigned> m_term_idx_values;
+
 	public:
 		void buildTermKeyValue(cudaStream_t stream = 0);
 
@@ -58,28 +61,31 @@ namespace star {
 	private:
 		KeyValueSort<unsigned short, unsigned> m_node2term_sorter;
 		GBufferArray<unsigned> m_node2term_offset;
+
 	public:
 		void sortCompactTermIndex(cudaStream_t stream = 0);
 
 		/* A series of checking functions
 		 */
 	private:
-		static void checkKnnPatchTermIndex(int typed_term_idx, const std::vector<unsigned short>& knn_patch_vec, unsigned short node_idx);
-		static void checkSmoothTermIndex(int smooth_term_idx, const std::vector<ushort3>& node_graph, unsigned short node_idx);
+		static void checkKnnPatchTermIndex(int typed_term_idx, const std::vector<unsigned short> &knn_patch_vec, unsigned short node_idx);
+		static void checkSmoothTermIndex(int smooth_term_idx, const std::vector<ushort3> &node_graph, unsigned short node_idx);
 		void compactedIndexSanityCheck();
 		void compactedIndexLog();
 		/* The accessing interface
 		 * Depends on BuildIndex
 		 */
 	public:
-		struct Node2TermMap {
+		struct Node2TermMap
+		{
 			GArrayView<unsigned> offset;
 			GArrayView<unsigned> term_index;
 			TermTypeOffset term_offset;
 		};
 
 		// Return the outside-accessed index
-		Node2TermMap GetNode2TermMap() const {
+		Node2TermMap GetNode2TermMap() const
+		{
 			Node2TermMap map;
 			map.offset = m_node2term_offset.View();
 			map.term_index = m_node2term_sorter.valid_sorted_value;
@@ -87,5 +93,4 @@ namespace star {
 			return map;
 		}
 	};
-
 }

@@ -1,4 +1,4 @@
-#include "star/warp_solver/WarpSolver.h"
+#include <mono_star/opt/WarpSolver.h>
 
 void star::WarpSolver::UpdatePCGSolverStream(cudaStream_t stream) {
 	m_pcg_solver->UpdateCudaStream(stream);

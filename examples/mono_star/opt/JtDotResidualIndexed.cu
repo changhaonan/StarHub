@@ -5,7 +5,6 @@
 
 namespace star::device
 {
-
 	enum
 	{
 		warp_size = 32, // Note: Has to be 32 here

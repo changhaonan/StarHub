@@ -55,7 +55,9 @@ namespace star
 
 	public:
 		__host__ __device__ GArrayView2D() : m_rows(0), m_cols(0), m_byte_step(0), m_ptr(nullptr) {}
-
+		__host__ GArrayView2D(const GArray2D<T> &array2D)
+			: m_rows(array2D.rows()), m_cols(array2D.cols()),
+			  m_byte_step(array2D.step()), m_ptr(array2D.ptr()) {}
 		// The interface
 		__host__ __device__ __forceinline__ unsigned short Rows() const { return m_rows; }
 		__host__ __device__ __forceinline__ unsigned short Cols() const { return m_cols; }

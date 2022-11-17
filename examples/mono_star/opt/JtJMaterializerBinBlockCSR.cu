@@ -1,19 +1,21 @@
-#include "pcg_solver/solver_configs.h"
-#include "star/warp_solver/JtJMaterializer.h"
+#include <star/pcg_solver/solver_configs.h>
+#include <mono_star/opt/JtJMaterializer.h>
 #include <device_launch_parameters.h>
 
-namespace star { namespace device {
+namespace star::device
+{
 
 	__global__ void assembleBinBlockCSRKernel(
 		const unsigned matrix_size,
-		const float* diagonal_blks,
-		const float* nondiagonal_blks,
-		const int* csr_rowptr,
-		const unsigned* blkrow_offset,
-		float* JtJ_data
-	) {
+		const float *diagonal_blks,
+		const float *nondiagonal_blks,
+		const int *csr_rowptr,
+		const unsigned *blkrow_offset,
+		float *JtJ_data)
+	{
 		const auto row_idx = threadIdx.x + blockDim.x * blockIdx.x;
-		if (row_idx >= matrix_size) return;
+		if (row_idx >= matrix_size)
+			return;
 
 		// Now the query should all be safe
 		int data_offset = csr_rowptr[row_idx];
@@ -21,24 +23,26 @@ namespace star { namespace device {
 		const auto inblk_offset = row_idx % d_node_variable_dim;
 
 		// First fill the diagonal blks
-		for (auto k = 0; k < d_node_variable_dim; k++, data_offset += bin_size) {
+		for (auto k = 0; k < d_node_variable_dim; k++, data_offset += bin_size)
+		{
 			JtJ_data[data_offset] = diagonal_blks[d_node_variable_dim_square * blkrow_idx + inblk_offset + d_node_variable_dim * k];
 		}
 
 		// Next fill the non-diagonal blks
 		auto Iij_begin = blkrow_offset[blkrow_idx];
 		const auto Iij_end = blkrow_offset[blkrow_idx + 1];
-		for (; Iij_begin < Iij_end; Iij_begin++) {
-			for (int k = 0; k < d_node_variable_dim; k++, data_offset += bin_size) {
+		for (; Iij_begin < Iij_end; Iij_begin++)
+		{
+			for (int k = 0; k < d_node_variable_dim; k++, data_offset += bin_size)
+			{
 				JtJ_data[data_offset] = nondiagonal_blks[d_node_variable_dim_square * Iij_begin + inblk_offset + d_node_variable_dim * k];
 			}
 		}
 	}
+}
 
-} // device
-} // star
-
-void star::JtJMaterializer::AssembleBinBlockCSR(star::GArrayView<float> diagonal_blks, cudaStream_t stream) {
+void star::JtJMaterializer::AssembleBinBlockCSR(star::GArrayView<float> diagonal_blks, cudaStream_t stream)
+{
 	// Zero out the matrix
 	cudaSafeCall(cudaMemsetAsync(m_binblock_csr_data.Ptr(), 0, sizeof(float) * m_binblock_csr_data.BufferSize(), stream));
 
@@ -54,8 +58,7 @@ void star::JtJMaterializer::AssembleBinBlockCSR(star::GArrayView<float> diagonal
 		m_nondiag_blks.Ptr(),
 		m_nodepair2term_map.binblock_csr_rowptr.Ptr(),
 		m_nodepair2term_map.blkrow_offset.Ptr(),
-		m_binblock_csr_data.Ptr()
-	);
+		m_binblock_csr_data.Ptr());
 
 	// Sync and check error
 #if defined(CUDA_DEBUG_SYNC_CHECK)
@@ -68,6 +71,5 @@ void star::JtJMaterializer::AssembleBinBlockCSR(star::GArrayView<float> diagonal
 		m_binblock_csr_data.Ptr(),
 		m_nodepair2term_map.binblock_csr_rowptr.Ptr(),
 		m_nodepair2term_map.binblock_csr_colptr,
-		matrix_size
-	);
+		matrix_size);
 }

@@ -1,24 +1,17 @@
 #pragma once
-/**
- * @author Haonan Chang
- * @email chnme40cs@gmail.com
- * @create date 2022-05-04
- * @modify date 2022-05-04
- * @brief Regularize node motion
- */
-#pragma once
-#include "common/macro_utils.h"
-#include "common/ArrayView.h"
-#include "common/GBufferArray.h"
-#include "math/DualQuaternion.hpp"
-#include "star/types/solver_types.h"
+#include <star/common/macro_utils.h>
+#include <star/common/ArrayView.h>
+#include <star/common/GBufferArray.h>
+#include <star/opt/solver_types.h>
+#include <star/math/DualQuaternion.hpp>
 
-namespace star {
-
+namespace star
+{
 	/** NodeTranslation Constraint
-	* Support translation only & 6D
-	*/
-	class NodeMotionHandler {
+	 * Support translation only & 6D
+	 */
+	class NodeMotionHandler
+	{
 	private:
 		// Input from solver
 		GArrayView<DualQuaternion> m_node_se3;
@@ -26,7 +19,7 @@ namespace star {
 		GArrayView<ushortX<d_surfel_knn_size>> m_node_knn;
 		GArrayView<floatX<d_surfel_knn_size>> m_node_knn_connect_weight;
 		GArrayView<floatX<d_surfel_knn_size>> m_node_knn_spatial_weight;
-		
+
 	public:
 		using Ptr = std::shared_ptr<NodeMotionHandler>;
 		NodeMotionHandler();
@@ -35,12 +28,10 @@ namespace star {
 
 		// The input interface from solver
 		void SetInputs(
-			const NodeGraph4Solver& node_graph4solver,
-			const NodeFlow4Solver& nodeflow4solver
-		);
+			const NodeGraph4Solver &node_graph4solver,
+			const NodeFlow4Solver &nodeflow4solver);
 		void UpdateInputs(
-			const GArrayView<DualQuaternion>& node_se3
-		);
+			const GArrayView<DualQuaternion> &node_se3);
 
 	public:
 		void BuildTerm2Jacobian(cudaStream_t stream);
@@ -49,6 +40,7 @@ namespace star {
 	public:
 		void residualCheck();
 		void jacobainTermCheck();
+
 	private:
 		GBufferArray<float3> m_T_translation;
 	};

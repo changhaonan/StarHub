@@ -1,20 +1,14 @@
-/**
- * @author Wei, Haonan Chang
- * @email chnme40cs@gmail.com
- * @create date 2022-05-04
- * @modify date 2022-05-04
- * @brief NodeGraph regularization term
- */
 #pragma once
-#include "common/macro_utils.h"
-#include "common/ArrayView.h"
-#include "common/GBufferArray.h"
-#include "math/DualQuaternion.hpp"
-#include "star/types/solver_types.h"
+#include <star/common/macro_utils.h>
+#include <star/common/ArrayView.h>
+#include <star/common/GBufferArray.h>
+#include <star/math/DualQuaternion.hpp>
+#include <star/opt/solver_types.h>
 
-namespace star {
-
-	class NodeGraphHandler {
+namespace star
+{
+	class NodeGraphHandler
+	{
 	private:
 		// The input data from solver
 		GArrayView<DualQuaternion> m_node_se3;
@@ -30,11 +24,9 @@ namespace star {
 
 		// The input interface from solver
 		void SetInputs(
-			const NodeGraph4Solver& node_graph4solver
-		);
+			const NodeGraph4Solver &node_graph4solver);
 		void UpdateInputs(
-			const GArrayView<DualQuaternion>& node_se3
-		);
+			const GArrayView<DualQuaternion> &node_se3);
 
 		// Do a forward warp on nodes
 	private:
@@ -45,6 +37,7 @@ namespace star {
 		float m_node_radius_square;
 
 		void forwardWarpSmootherNodes(cudaStream_t stream);
+
 	public:
 		void BuildTerm2Jacobian(cudaStream_t stream);
 		NodeGraphRegTerm2Jacobian Term2JacobianMap() const;

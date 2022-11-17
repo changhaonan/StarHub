@@ -1,23 +1,16 @@
-/**
- * @author Haonan Chang
- * @email chnme40cs@gmail.com
- * @create date 2022-05-04
- * @modify date 2022-05-07
- * @brief PreconditionerRhsBuilder
- */
 #pragma once
-#include "star/common/global_configs.h"
-#include "star/warp_solver/PenaltyConstants.h"
-#include "common/macro_utils.h"
-#include "star/types/solver_types.h"
-#include "star/warp_solver/Node2TermsIndex.h"
-#include "star/warp_solver/PenaltyConstants.h"
-#include "pcg_solver/BlockDiagonalPreconditionerInverse.h"
+#include <mono_star/common/global_configs.h>
+#include <mono_star/opt/Node2TermsIndex.h>
+#include <mono_star/opt/PenaltyConstants.h>
+#include <star/common/macro_utils.h>
+#include <star/opt/solver_types.h>
+#include <star/pcg_solver/BlockDiagonalPreconditionerInverse.h>
 #include <memory>
 
-namespace star {
-
-	class PreconditionerRhsBuilder {
+namespace star
+{
+	class PreconditionerRhsBuilder
+	{
 	private:
 		// The map from term to jacobian, will also be accessed on device
 		Term2JacobianMaps m_term2jacobian_map;
@@ -28,6 +21,7 @@ namespace star {
 
 		// The penalty constants
 		PenaltyConstants m_penalty_constants;
+
 	public:
 		using Ptr = std::shared_ptr<PreconditionerRhsBuilder>;
 		STAR_DEFAULT_CONSTRUCT_DESTRUCT(PreconditionerRhsBuilder);
@@ -43,8 +37,7 @@ namespace star {
 			NodeGraphRegTerm2Jacobian node_graph_reg_term,
 			NodeTranslationTerm2Jacobian node_translation_term,
 			FeatureTerm2Jacobian feature_term,
-			PenaltyConstants constants = PenaltyConstants()
-		);
+			PenaltyConstants constants = PenaltyConstants());
 
 		// The processing interface
 		void ComputeDiagonalPreconditioner(cudaStream_t stream = 0);
@@ -68,9 +61,10 @@ namespace star {
 		 */
 	private:
 		BlockDiagonalPreconditionerInverse<d_node_variable_dim>::Ptr m_preconditioner_inverse_handler;
+
 	public:
 		void ComputeDiagonalPreconditionerInverse(cudaStream_t stream = 0);
-		
+
 		/* The buffer and method to compute Jt.dot(Residual)
 		 */
 	private:
@@ -78,7 +72,7 @@ namespace star {
 
 		// Methods for sanity check
 		void jacobianTransposeResidualSanityCheck();
-		
+
 	public:
 		void ComputeJtResidualIndexed(cudaStream_t stream = 0);
 		void ComputeJtResidual(cudaStream_t stream = 0);

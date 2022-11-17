@@ -1,30 +1,24 @@
-/**
-* @author Haonan Chang
-* @email chnme40cs@gmail.com
-* @create date 2022-04-20
-* @modify date 2022-04-27
-* @desc Solving warpfield
-*/
 #pragma once
-#include "star/common/ConfigParser.h"
-#include "common/macro_utils.h"
-#include "common/common_types.h"
-#include "common/data_transfer.h"
-#include "pcg_solver/BlockPCG.h"
-#include "star/types/solver_types.h"
-#include "star/warp_solver/SolverIterationData.h"
-#include "star/warp_solver/ImageTermKNNFetcher.h"
-#include "star/warp_solver/Node2TermsIndex.h"
-#include "star/warp_solver/NodePair2TermsIndex.h"
-#include "star/warp_solver/DenseImageHandler.h"
-#include "star/warp_solver/NodeGraphHandler.h"
-#include "star/warp_solver/NodeMotionHandler.h"
-#include "star/warp_solver/PreconditionerRhsBuilder.h"
-#include "star/warp_solver/JtJMaterializer.h"
+#include <mono_star/common/ConfigParser.h>
+#include <star/common/macro_utils.h>
+#include <star/common/common_types.h>
+#include <star/common/data_transfer.h>
+#include <star/pcg_solver/BlockPCG.h>
+#include <star/opt/solver_types.h>
+#include <mono_star/opt/SolverIterationData.h>
+#include <mono_star/opt/ImageTermKNNFetcher.h>
+#include <mono_star/opt/Node2TermsIndex.h>
+#include <mono_star/opt/NodePair2TermsIndex.h>
+#include <mono_star/opt/DenseImageHandler.h>
+#include <mono_star/opt/NodeGraphHandler.h>
+#include <mono_star/opt/NodeMotionHandler.h>
+#include <mono_star/opt/PreconditionerRhsBuilder.h>
+#include <mono_star/opt/JtJMaterializer.h>
 
-namespace star {
-
-	class WarpSolver {
+namespace star
+{
+	class WarpSolver
+	{
 	public:
 		using Ptr = std::shared_ptr<WarpSolver>;
 		WarpSolver();
@@ -43,18 +37,18 @@ namespace star {
 			NodeGraph4Solver node_graph4solver,
 			NodeFlow4Solver nodeflow4solver,
 			OpticalFlow4Solver opticalflow4solver,
-			const Extrinsic* camera2world
-		);
-		
+			const Extrinsic *camera2world);
+
 		// Acess
 		GArrayView<DualQuaternion> SolvedNodeSE3() const { return m_iteration_data.CurrentNodeSE3Input(); }
-		GArrayView<ushort4> PotentialPixelPair(const int cam_idx) const {
+		GArrayView<ushort4> PotentialPixelPair(const int cam_idx) const
+		{
 			return m_image_term_knn_fetcher->GetImageTermPixelAndKNN().pixels[cam_idx];
 		}
 
 		// API: Solve the warp field using stream
 		void SolveStreamed();
-		
+
 		// KNN & Index builder
 		void QueryPixelKNN(cudaStream_t stream);
 		void buildSolverIndexStreamed();
@@ -77,7 +71,7 @@ namespace star {
 		void initSolverStream();
 		void releaseSolverStream();
 		void syncAllSolverStream();
-		
+
 	private:
 		// Solver method
 		void solverIterationGlobalIterationStreamed();
@@ -97,26 +91,26 @@ namespace star {
 		unsigned m_image_width[d_max_cam];
 		unsigned m_image_height[d_max_cam];
 		SolverIterationData m_iteration_data;
-		
+
 		Extrinsic m_world2cam[d_max_cam];
 		// Stream
 		cudaStream_t m_solver_stream[4];
-		
+
 		// KNN & Index
 		GArray2D<KNNAndWeight<d_surfel_knn_size>> m_knn_map[d_max_cam];
 		ImageTermKNNFetcher::Ptr m_image_term_knn_fetcher;
 		Node2TermsIndex::Ptr m_node2term_index;
 		NodePair2TermsIndex::Ptr m_nodepair2term_index;
-		
+
 		// Handler to different terms
 		DenseImageHandler::Ptr m_dense_image_handler;
 		NodeGraphHandler::Ptr m_node_graph_handler;
 		NodeMotionHandler::Ptr m_node_motion_handler;
-		
+
 		// Jacobian handler
 		PreconditionerRhsBuilder::Ptr m_preconditioner_rhs_builder;
 		JtJMaterializer::Ptr m_jtj_materializer;
-	
+
 		// PCG-solver
 		BlockPCG<d_node_variable_dim>::Ptr m_pcg_solver;
 	};

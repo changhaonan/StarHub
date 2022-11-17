@@ -1,10 +1,11 @@
-#include "common/sanity_check.h"
-#include "pcg_solver/ApplySpMVBinBlockCSR.h"
-#include "star/warp_solver/JtJMaterializer.h"
-#include "star/warp_solver/utils/jacobian_utils.cuh"
+#include <star/common/sanity_check.h>
+#include <star/opt/jacobian_utils.cuh>
+#include <star/pcg_solver/ApplySpMVBinBlockCSR.h>
+#include <mono_star/opt/JtJMaterializer.h>
 #include <device_launch_parameters.h>
 
-void star::JtJMaterializer::nonDiagonalBlocksSanityCheck() {
+void star::JtJMaterializer::nonDiagonalBlocksSanityCheck()
+{
 	LOG(INFO) << "Sanity check of materialized non-diagonal JtJ block";
 
 	// 1 - Prepare
@@ -18,15 +19,13 @@ void star::JtJMaterializer::nonDiagonalBlocksSanityCheck() {
 		m_nodepair2term_map.encoded_nodepair,
 		jtj_blocks,
 		m_term2jacobian_map.dense_image_term,
-		constants.DenseImageSquaredVec()
-	);
+		constants.DenseImageSquaredVec());
 	// 3 - Upate Reg Jacobian
 	updateRegJtJBlockHost(
 		m_nodepair2term_map.encoded_nodepair,
 		jtj_blocks,
 		m_term2jacobian_map.node_graph_reg_term,
-		constants.RegSquared()
-	);
+		constants.RegSquared());
 	// 4 - Update NodeTranslation Jacobian
 	// 5 - Update Feature Jacobian
 	// FIXEME: to add
@@ -36,19 +35,19 @@ void star::JtJMaterializer::nonDiagonalBlocksSanityCheck() {
 	STAR_CHECK_EQ(jtj_blocks.size(), jtj_blocks_dev.size());
 	// 7 - Compute the error
 	auto relative_err = maxRelativeError(jtj_blocks, jtj_blocks_dev, 1e-3f);
-	//for(auto i = 0; i < 10 * d_node_variable_dim; i++) {
+	// for(auto i = 0; i < 10 * d_node_variable_dim; i++) {
 	//	auto dev_value = jtj_blocks_dev[i];
 	//	auto host_value = jtj_blocks[i];
 	//	printf("dev: %f, host: %f.\n", dev_value, host_value);
-	//}
+	// }
 	LOG(INFO) << "The relative error for non-diagonal jtj blocks is " << relative_err;
 }
 
 // An integrated test on the correctness of spmv
 void star::JtJMaterializer::TestSparseMV(
 	GArrayView<float> x,
-	GArrayView<float> jtj_x_result
-) {
+	GArrayView<float> jtj_x_result)
+{
 	LOG(INFO) << "Check materialized spmv given input groundtruth";
 	// Construct the matrix applier
 	ApplySpMVBinBlockCSR<d_node_variable_dim> spmv_handler;
@@ -56,11 +55,11 @@ void star::JtJMaterializer::TestSparseMV(
 		m_binblock_csr_data.Ptr(),
 		m_nodepair2term_map.binblock_csr_rowptr.Ptr(),
 		m_nodepair2term_map.binblock_csr_colptr,
-		x.Size()
-	);
+		x.Size());
 
 	// Apply it
-	GArray<float> jtj_x; jtj_x.create(x.Size());
+	GArray<float> jtj_x;
+	jtj_x.create(x.Size());
 	spmv_handler.ApplySpMV(x, GArraySlice<float>(jtj_x));
 
 	// Check the error

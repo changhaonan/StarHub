@@ -7,6 +7,7 @@
 #include <star/common/GBufferArray.h>
 #include <star/common/algorithm_types.h>
 #include <star/opt/solver_types.h>
+#include <star/opt/solver_encode.h>
 #include <mono_star/common/global_configs.h>
 #include <mono_star/common/ConfigParser.h>
 #include <mono_star/common/Constants.h>
@@ -14,7 +15,6 @@
 #include <mono_star/opt/Node2TermsIndex.h>
 #include <mono_star/opt/NodePair2TermsIndex.h>
 #include <mono_star/opt/PenaltyConstants.h>
-#include <mono_star/opt/utils/solver_encode.h>
 #include <star/pcg_solver/ApplySpMVBinBlockCSR.h>
 #include <memory>
 

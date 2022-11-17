@@ -6,7 +6,6 @@
 
 namespace star::device
 {
-
 	enum
 	{
 		jtj_blk_size = d_node_variable_dim_square,

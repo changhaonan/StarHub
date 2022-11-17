@@ -19,6 +19,9 @@
 // Geometry-related
 #include <star/geometry/constants.h>
 
+// Opt-related
+#include <star/opt/constants.h>
+
 // The scale of fusion map, will be accessed on device
 #define d_fusion_map_scale 4
 
@@ -47,13 +50,6 @@ constexpr unsigned d_fps = 10;
 
 // Debug
 //#define CUDA_DEBUG_SYNC_CHECK
-
-// Solver-related
-constexpr unsigned d_transform_dim = 6;
-constexpr unsigned d_node_variable_dim = d_transform_dim; // Only update for transformation now
-constexpr unsigned d_node_variable_dim_square = d_node_variable_dim * d_node_variable_dim;
-constexpr unsigned d_dense_image_residual_dim = 3; // 1 (picp) + 2 (opticalflow)
-
 constexpr unsigned d_bin_size = 32;      // Bin size is fixed to 32 to match warp size
 constexpr unsigned d_max_num_bin = 1024; // Fixed as 32 * 32
 

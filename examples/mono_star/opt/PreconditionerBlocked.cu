@@ -1,17 +1,11 @@
-/**
- * @author Wei, Haonan Chang
- * @email chnme40cs@gmail.com
- * @create date 2022-05-05
- * @modify date 2022-05-05
- * @brief Debugging method
- */
-#include "common/logging.h"
-#include "common/sanity_check.h"
-#include "star/warp_solver/utils/jacobian_utils.cuh"
-#include "star/warp_solver/PreconditionerRhsBuilder.h"
+#include <star/common/logging.h>
+#include <star/common/sanity_check.h>
+#include <star/opt/jacobian_utils.cuh>
+#include <mono_star/opt/PreconditionerRhsBuilder.h>
 
-void star::PreconditionerRhsBuilder::diagonalPreconditionerSanityCheck() {
-	cudaSafeCall(cudaDeviceSynchronize());  // Sync before debug
+void star::PreconditionerRhsBuilder::diagonalPreconditionerSanityCheck()
+{
+	cudaSafeCall(cudaDeviceSynchronize()); // Sync before debug
 	LOG(INFO) << "Check the diagonal elements of JtJ";
 
 	// Download the device value
@@ -29,7 +23,8 @@ void star::PreconditionerRhsBuilder::diagonalPreconditionerSanityCheck() {
 	// Check the dense depth terms
 	std::vector<float> jtj_diagonal;
 	jtj_diagonal.resize(diagonal_blks_dev.size());
-	for (auto i = 0; i < jtj_diagonal.size(); i++) {
+	for (auto i = 0; i < jtj_diagonal.size(); i++)
+	{
 		jtj_diagonal[i] = 0.0f;
 	}
 
@@ -41,8 +36,7 @@ void star::PreconditionerRhsBuilder::diagonalPreconditionerSanityCheck() {
 		m_term2jacobian_map.dense_image_term,
 		constants.DenseImageSquaredVec(),
 		inspect_index,
-		true
-	);
+		true);
 	printf("Dense: jtj_val: %f.\n", jtj_diagonal[inspect_index]);
 	updateRegJtJDiagonalHost(
 		jtj_diagonal,
@@ -50,7 +44,7 @@ void star::PreconditionerRhsBuilder::diagonalPreconditionerSanityCheck() {
 		constants.RegSquared(),
 		false);
 	printf("Reg: jtj_val: %f.\n", jtj_diagonal[inspect_index]);
-	
+
 	updateNodeTranslationJtJDiagonalHost(
 		jtj_diagonal,
 		m_term2jacobian_map.node_translation_term,
@@ -61,15 +55,17 @@ void star::PreconditionerRhsBuilder::diagonalPreconditionerSanityCheck() {
 	LOG(INFO) << "The relative error is " << relative_err;
 }
 
-void star::PreconditionerRhsBuilder::jacobianTransposeResidualSanityCheck() {
-	cudaSafeCall(cudaDeviceSynchronize());  //Sync before debug
+void star::PreconditionerRhsBuilder::jacobianTransposeResidualSanityCheck()
+{
+	cudaSafeCall(cudaDeviceSynchronize()); // Sync before debug
 	LOG(INFO) << "Check the elements of Jt Residual";
 
 	// Compute the value at host
 	const auto num_nodes = m_node2term_map.offset.Size() - 1;
 	std::vector<float> jt_residual;
 	jt_residual.resize(num_nodes * d_node_variable_dim);
-	for (auto i = 0; i < jt_residual.size(); i++) {
+	for (auto i = 0; i < jt_residual.size(); i++)
+	{
 		jt_residual[i] = 0.0f;
 	}
 
@@ -94,7 +90,7 @@ void star::PreconditionerRhsBuilder::jacobianTransposeResidualSanityCheck() {
 	STAR_CHECK_EQ(jt_residual.size(), jt_residual_dev.size());
 
 	// Check it
-	//auto relative_err = maxRelativeError(jt_residual, jt_residual_dev, 0.001f, true, d_node_variable_dim * 10);
+	// auto relative_err = maxRelativeError(jt_residual, jt_residual_dev, 0.001f, true, d_node_variable_dim * 10);
 	auto relative_err = maxRelativeError(jt_residual, jt_residual_dev, 0.001f);
 	LOG(INFO) << "The relative error is " << relative_err;
 }
