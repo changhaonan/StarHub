@@ -2,7 +2,6 @@
 
 namespace star::device
 {
-
 	/** JtJ Diagonal-related
 	 */
 	__device__ __forceinline__ void computeNodeTranslationJtJDiagonalJacobian(

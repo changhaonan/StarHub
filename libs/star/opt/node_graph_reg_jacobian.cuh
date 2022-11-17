@@ -7,7 +7,6 @@
 
 namespace star::device
 {
-
 	/**
 	 * \brief The method to compute the jacobian and residual of node graph reg term.
 	 *        The underlying form is the same, the variants are for efficiency
