@@ -27,8 +27,8 @@ namespace star
         OpticalFlowProcessorGMA();
         ~OpticalFlowProcessorGMA();
         void ProcessFrame(
-            SurfelMapTex &surfel_map_this,
-            SurfelMapTex &surfel_map_prev,
+            const SurfelMapTex &surfel_map_this,
+            const SurfelMapTex &surfel_map_prev,
             const unsigned frame_idx,
             cudaStream_t stream);
         // Public-API
@@ -43,23 +43,23 @@ namespace star
 
     private:
         void loadRGBD(
-            cudaTextureObject_t &rgbd_tex_this,
-            cudaTextureObject_t &rgbd_tex_prev,
+            const cudaTextureObject_t &rgbd_tex_this,
+            const cudaTextureObject_t &rgbd_tex_prev,
             cudaStream_t stream);
         // Directly load RGBD
         void loadRGBDDirectly(
-            cudaTextureObject_t &rgbd_tex_this,
-            cudaTextureObject_t &rgbd_tex_prev,
+            const cudaTextureObject_t &rgbd_tex_this,
+            const cudaTextureObject_t &rgbd_tex_prev,
             cudaStream_t stream);
         // Load RGBD with a pre-defined fixed background
         void loadRGBDWithBackground(
-            cudaTextureObject_t &rgbd_tex_this,
-            cudaTextureObject_t &rgbd_tex_prev,
+            const cudaTextureObject_t &rgbd_tex_this,
+            const cudaTextureObject_t &rgbd_tex_prev,
             cudaStream_t stream);
         // Compute surfel motion
         void computeSurfelFlowVisible(
-            SurfelMapTex &surfel_map_prev,
-            SurfelMapTex &surfel_map_this,
+            const SurfelMapTex &surfel_map_prev,
+            const SurfelMapTex &surfel_map_this,
             cudaStream_t stream);
         void saveOpticalFlow(
             CudaTextureSurface &opticalflow_texsurf,

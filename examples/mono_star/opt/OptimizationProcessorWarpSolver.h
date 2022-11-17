@@ -17,11 +17,11 @@ namespace star
 
 		void ProcessFrame(
 			Measure4Solver &measure4solver,
-			Render4Solver &renderer4solver,
+			Render4Solver &render4solver,
 			Geometry4Solver &geometry4solver,
 			NodeGraph4Solver &node_graph4solver,
-			NodeFlow4Solver &node_flow4solver,
-			OpticalFlow4Solver &optical_flow4solver,
+			NodeFlow4Solver &nodeflow4solver,
+			OpticalFlow4Solver &opticalflow4solver,
 			const unsigned frame_idx,
 			cudaStream_t stream);
 

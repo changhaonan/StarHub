@@ -21,11 +21,11 @@ star::OptimizationProcessorWarpSolver::~OptimizationProcessorWarpSolver()
 
 void star::OptimizationProcessorWarpSolver::ProcessFrame(
 	Measure4Solver &measure4solver,
-	Render4Solver &renderer4solver,
+	Render4Solver &render4solver,
 	Geometry4Solver &geometry4solver,
 	NodeGraph4Solver &node_graph4solver,
-	NodeFlow4Solver &node_flow4solver,
-	OpticalFlow4Solver &optical_flow4solver,
+	NodeFlow4Solver &nodeflow4solver,
+	OpticalFlow4Solver &opticalflow4solver,
 	const unsigned frame_idx,
 	cudaStream_t stream)
 {
@@ -36,11 +36,11 @@ void star::OptimizationProcessorWarpSolver::ProcessFrame(
 	// Set input
 	m_warp_solver->SetSolverInputs(
 		measure4solver,
-		renderer4solver,
+		render4solver,
 		geometry4solver,
 		node_graph4solver,
-		node_flow4solver,
-		optical_flow4solver,
+		nodeflow4solver,
+		opticalflow4solver,
 		m_cam2world);
 
 	// Seperate test

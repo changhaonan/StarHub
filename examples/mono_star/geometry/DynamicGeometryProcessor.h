@@ -17,7 +17,7 @@ namespace star
         STAR_NO_COPY_ASSIGN_MOVE(DynamicGeometryProcessor);
         DynamicGeometryProcessor();
         ~DynamicGeometryProcessor();
-        void processFrame(
+        void ProcessFrame(
             const unsigned frame_idx,
             cudaStream_t stream);
         void initGeometry(
@@ -33,9 +33,17 @@ namespace star
         {
             return m_model_geometry[frame_idx];
         };
+        NodeGraph::Ptr NodeGraph(const unsigned frame_idx) const
+        {
+            return m_node_graph[frame_idx];
+        };
         SurfelGeometry::Ptr ActiveGeometry() const
         {
             return m_model_geometry[m_buffer_idx];
+        }
+        NodeGraph::Ptr ActiveNodeGraph() const
+        {
+            return m_node_graph[m_buffer_idx];
         }
         Renderer::SolverMaps GetSolverMaps() const
         {

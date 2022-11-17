@@ -8,6 +8,9 @@
 #include <star/math/DualQuaternion.hpp>
 #include <star/common/constants.h>
 #include <star/geometry/constants.h>
+#include <star/geometry/node_graph/NodeGraph.h>
+#include <star/geometry/surfel/SurfelGeometry.h>
+#include <star/geometry/geometry_map/SurfelMap.h>
 #include <star/opt/constants.h>
 #include <ostream>
 
@@ -46,29 +49,12 @@ namespace star
 
     /* Input for solver, Geometry, 1D, surfel-level
      */
-    struct Geometry4Solver
-    {
-        GArrayView<ushortX<d_surfel_knn_size>> surfel_knn;
-        GArrayView<floatX<d_surfel_knn_size>> surfel_knn_spatial_weight;
-        GArrayView<floatX<d_surfel_knn_size>> surfel_knn_connect_weight;
-        unsigned num_vertex;
-    };
+    using Geometry4Solver = SurfelGeometry::Geometry4Solver;
 
     /* Input for solver, NodeGraph, 1D, node-level
      */
-    struct NodeGraph4Solver
-    {
-        // Used for reg term
-        GArrayView<float4> reference_node_coords;
-        GArrayView<ushort3> node_graph;
-        GArrayView<floatX<d_node_knn_size>> node_knn_connect_weight;
-        // Used for node motion term
-        GArrayView<ushortX<d_surfel_knn_size>> nodel_knn;
-        GArrayView<floatX<d_surfel_knn_size>> node_knn_spatial_weight;
-        unsigned num_node;
-        float node_radius_square;
-    };
-
+    using NodeGraph4Solver = NodeGraph::NodeGraph4Solver;
+    
     /* Input for solver, NodeFlow, 1D, node-level
      */
     struct NodeFlow4Solver

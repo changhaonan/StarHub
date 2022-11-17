@@ -127,8 +127,8 @@ star::OpticalFlowProcessorGMA::~OpticalFlowProcessorGMA()
 }
 
 void star::OpticalFlowProcessorGMA::ProcessFrame(
-    SurfelMapTex &surfel_map_this,
-    SurfelMapTex &surfel_map_prev,
+    const SurfelMapTex &surfel_map_this,
+    const SurfelMapTex &surfel_map_prev,
     const unsigned frame_idx,
     cudaStream_t stream)
 {
@@ -206,8 +206,8 @@ void star::OpticalFlowProcessorGMA::coldStart()
 }
 
 void star::OpticalFlowProcessorGMA::loadRGBD(
-    cudaTextureObject_t &rgbd_tex_this,
-    cudaTextureObject_t &rgbd_tex_prev,
+    const cudaTextureObject_t &rgbd_tex_this,
+    const cudaTextureObject_t &rgbd_tex_prev,
     cudaStream_t stream)
 {
     if (m_use_static_background)
@@ -221,8 +221,8 @@ void star::OpticalFlowProcessorGMA::loadRGBD(
 }
 
 void star::OpticalFlowProcessorGMA::loadRGBDDirectly(
-    cudaTextureObject_t &rgbd_tex_this,
-    cudaTextureObject_t &rgbd_tex_prev,
+    const cudaTextureObject_t &rgbd_tex_this,
+    const cudaTextureObject_t &rgbd_tex_prev,
     cudaStream_t stream)
 {
 
@@ -246,8 +246,8 @@ void star::OpticalFlowProcessorGMA::loadRGBDDirectly(
 }
 
 void star::OpticalFlowProcessorGMA::loadRGBDWithBackground(
-    cudaTextureObject_t &rgbd_tex_this,
-    cudaTextureObject_t &rgbd_tex_prev,
+    const cudaTextureObject_t &rgbd_tex_this,
+    const cudaTextureObject_t &rgbd_tex_prev,
     cudaStream_t stream)
 {
     // Load to this
@@ -331,8 +331,8 @@ void star::OpticalFlowProcessorGMA::saveContext(const unsigned frame_idx, cudaSt
 }
 
 void star::OpticalFlowProcessorGMA::computeSurfelFlowVisible(
-    SurfelMapTex &surfel_map_prev,
-    SurfelMapTex &surfel_map_this,
+    const SurfelMapTex &surfel_map_prev,
+    const SurfelMapTex &surfel_map_this,
     cudaStream_t stream)
 {
     // Reset surfel motion

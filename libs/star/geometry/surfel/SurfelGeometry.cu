@@ -201,6 +201,30 @@ void star::LiveSurfelGeometry::ResizeValidSurfelArrays(size_t size)
 	m_num_valid_surfels = size;
 }
 
+star::SurfelGeometry::Geometry4Solver star::SurfelGeometry::GenerateGeometry4Solver() const
+{
+	Geometry4Solver geometry4solver;
+	geometry4solver.surfel_knn = m_surfel_knn.View();
+	geometry4solver.surfel_knn_spatial_weight = m_surfel_knn_spatial_weight.View();
+	geometry4solver.surfel_knn_connect_weight = m_surfel_knn_connect_weight.View();
+	geometry4solver.num_vertex = m_num_valid_surfels;
+	return geometry4solver;
+}
+
+star::Geometry4Skinner star::SurfelGeometry::GenerateGeometry4Skinner()
+{
+	Geometry4Skinner geometry4skinner;
+	geometry4skinner.reference_vertex_confid = m_reference_vertex_confid.View();
+	geometry4skinner.reference_normal_radius = m_reference_normal_radius.View();
+	geometry4skinner.live_vertex_confid = m_live_vertex_confid.View();
+	geometry4skinner.live_normal_radius = m_live_normal_radius.View();
+	geometry4skinner.surfel_semantic_prob = m_semantic_prob.View();
+	geometry4skinner.surfel_knn = m_surfel_knn.Slice();
+	geometry4skinner.surfel_knn_spatial_weight = m_surfel_knn_spatial_weight.Slice();
+	geometry4skinner.surfel_knn_connect_weight = m_surfel_knn_connect_weight.Slice();
+	return geometry4skinner;
+}
+
 /* The debug methods
  */
 star::LiveSurfelGeometry::GeometryAttributes star::LiveSurfelGeometry::Geometry() const

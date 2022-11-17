@@ -43,7 +43,7 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
         m_renderer->UnmapObservationMapsFromCuda();
 }
 
-void star::DynamicGeometryProcessor::processFrame(
+void star::DynamicGeometryProcessor::ProcessFrame(
     const unsigned frame_idx,
     cudaStream_t stream)
 {

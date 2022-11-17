@@ -6,6 +6,7 @@
 #include <star/common/GBufferArray.h>
 #include <star/math/device_mat.h>
 #include <star/geometry/constants.h>
+#include <star/geometry/node_graph/skinner_types.h>
 
 namespace star
 {
@@ -69,6 +70,20 @@ namespace star
 		
 		GArrayView<float4> ReferenceVertexArray() const { return m_reference_vertex_confid.View(); }
 		GArrayView<float4> ReferenceNormalArray() const { return m_reference_normal_radius.View(); }
+
+		/* The read-only accessed other module
+		 */
+		struct Geometry4Solver
+		{
+			GArrayView<ushortX<d_surfel_knn_size>> surfel_knn;
+			GArrayView<floatX<d_surfel_knn_size>> surfel_knn_spatial_weight;
+			GArrayView<floatX<d_surfel_knn_size>> surfel_knn_connect_weight;
+			unsigned num_vertex;
+		};
+		// For Solver
+		Geometry4Solver GenerateGeometry4Solver() const;				
+		// For Skinner
+		Geometry4Skinner GenerateGeometry4Skinner();
 
 		/* The read-and write access
 		 */

@@ -19,7 +19,7 @@ namespace star
 		STAR_NO_COPY_ASSIGN_MOVE(MeasureProcessorOffline);
 		MeasureProcessorOffline();
 		~MeasureProcessorOffline();
-		void processFrame(
+		void ProcessFrame(
 			const unsigned frame_idx,
 			cudaStream_t stream);
 		void saveContext(

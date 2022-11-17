@@ -45,7 +45,7 @@ star::MeasureProcessorOffline::~MeasureProcessorOffline()
 	cudaSafeCall(cudaFreeHost(m_raw_color_img_buff));
 }
 
-void star::MeasureProcessorOffline::processFrame(
+void star::MeasureProcessorOffline::ProcessFrame(
 	const unsigned frame_idx,
 	cudaStream_t stream)
 {
