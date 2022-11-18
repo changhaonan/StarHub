@@ -107,15 +107,15 @@ int main()
             nodeflow4solver.node_motion_pred = node_motion_processor->GetNodeMotionPred();
 
             // Solve
-            // opt_processor->ProcessFrame(
-            //     measure4solver,
-            //     render4solver,
-            //     geometry4solver,
-            //     node_graph4solver,
-            //     nodeflow4solver,
-            //     opticalflow4solver,
-            //     frame_idx,
-            //     0);
+            opt_processor->ProcessFrame(
+                measure4solver,
+                render4solver,
+                geometry4solver,
+                node_graph4solver,
+                nodeflow4solver,
+                opticalflow4solver,
+                frame_idx,
+                0);
         }
 
         // Dynamic geometry process

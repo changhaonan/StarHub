@@ -48,15 +48,12 @@ void star::updateRegJtJDiagonalHost(
 					//[Debug]
 					if (verbose)
 					{
-						if (jtj[d_node_variable_dim * jac_row + jac_col] > 1e3)
-						{
-							printf("CPU: term: %d, val: %f, reg jacobian at node_%d: (%d, %d) is : (%f, %f, %f, %f, %f, %f).\n",
-								   i,
-								   jtj[d_node_variable_dim * jac_row + jac_col],
-								   node_ij_k.x, jac_row, jac_col,
-								   jacobian[0], jacobian[1], jacobian[2],
-								   jacobian[3], jacobian[4], jacobian[5]);
-						}
+						printf("CPU: term: %d, val: %f, reg jacobian at node_%d: (%d, %d) is : (%f, %f, %f, %f, %f, %f).\n",
+							   i,
+							   jtj[d_node_variable_dim * jac_row + jac_col],
+							   node_ij_k.x, jac_row, jac_col,
+							   jacobian[0], jacobian[1], jacobian[2],
+							   jacobian[3], jacobian[4], jacobian[5]);
 					}
 				}
 			}

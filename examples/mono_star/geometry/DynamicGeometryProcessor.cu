@@ -74,7 +74,8 @@ void star::DynamicGeometryProcessor::initGeometry(
     // Init NodeGraph
     m_node_graph[m_buffer_idx]->InitializeNodeGraphFromVertex(
         m_model_geometry[m_buffer_idx]->LiveVertexConfidenceReadOnly(), frame_idx, false, stream);
-
+    m_node_graph[m_buffer_idx]->ResetNodeGraphConnection(stream);
+    
     // Init Skinning
     auto geometyr4skinner = m_model_geometry[m_buffer_idx]->GenerateGeometry4Skinner();
     auto node_graph4skinner = m_node_graph[m_buffer_idx]->GenerateNodeGraph4Skinner();

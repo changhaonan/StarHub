@@ -36,7 +36,7 @@ void star::PreconditionerRhsBuilder::diagonalPreconditionerSanityCheck()
 		m_term2jacobian_map.dense_image_term,
 		constants.DenseImageSquaredVec(),
 		inspect_index,
-		true);
+		false);
 	printf("Dense: jtj_val: %f.\n", jtj_diagonal[inspect_index]);
 	updateRegJtJDiagonalHost(
 		jtj_diagonal,

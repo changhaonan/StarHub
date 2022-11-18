@@ -67,7 +67,7 @@ constexpr unsigned opt_warp_size = 32;
 constexpr unsigned d_max_num_semantic = 19;
 
 // Opt debug
-//#define OPT_DEBUG_CHECK
+// #define OPT_DEBUG_CHECK
 
 // Geometry debug
 #define DYNAMIC_GEOMETRY_DEBUG

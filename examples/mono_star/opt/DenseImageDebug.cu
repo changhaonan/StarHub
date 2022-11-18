@@ -4,24 +4,24 @@
 
 void star::DenseImageHandler::CheckPixelWiseResidual(const GArrayView<floatX<d_dense_image_residual_dim>> &residual) const
 {
-	// 1 - Prepare
+	// 1. Prepare
 	std::vector<floatX<d_dense_image_residual_dim>> h_residual_pixel;
 	residual.Download(h_residual_pixel);
 	float residual_depth_sum = 0.f;
 	float residual_opticalflow_sum = 0.f;
 	auto penalty = PenaltyConstants();
 
-	// 2 - Sum
+	// 2. Sum
 	for (auto i = 0; i < h_residual_pixel.size(); ++i)
 	{
-		// 2.1 - Depth
+		// 2.1. Depth
 		residual_depth_sum += h_residual_pixel[i][0] * h_residual_pixel[i][0] * penalty.DenseImageDepthSquared();
-		// 2.2 - Opticalflow
+		// 2.2. Opticalflow
 		residual_opticalflow_sum += h_residual_pixel[i][1] * h_residual_pixel[i][1] * penalty.DenseImageOpticalFlowSquared();
 		residual_opticalflow_sum += h_residual_pixel[i][2] * h_residual_pixel[i][2] * penalty.DenseImageOpticalFlowSquared();
 	}
 
-	// 3 - Log
+	// 3. Log
 	std::cout << "SOR [Depth]: " << residual_depth_sum << std::endl;
 	std::cout << "SOR [OF]: " << residual_opticalflow_sum << std::endl;
 }
