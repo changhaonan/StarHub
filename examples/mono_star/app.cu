@@ -4,7 +4,8 @@
 #include "measure/NodeMotionProcessor.h"
 #include "geometry/DynamicGeometryProcessor.h"
 #include "opt/OptimizationProcessorWarpSolver.h"
-#include "star/visualization/Visualizer.h"
+#include <star/math/DualQuaternion.hpp>
+#include <star/visualization/Visualizer.h>
 // Viewer
 #include <easy3d_viewer/context.hpp>
 
@@ -62,7 +63,7 @@ int main()
             std::string surfelmotion_name = "surfel_motion";
             context.addPointCloud(surfelmotion_name, surfelmotion_name, config.extrinsic()[0].inverse(), config.pcd_size() * 0.1);
             visualize::SavePointCloudWithNormal(
-                geometry_processor->ActiveGeometry()->LiveVertexConfidenceReadOnly(),
+                geometry_processor->ActiveGeometry()->ReferenceVertexConfidenceReadOnly(),
                 opticalflow_processor->GetSurfelMotion(),
                 context.at(surfelmotion_name));
 
@@ -78,7 +79,7 @@ int main()
             std::string nodemotion_name = "node_motion";
             context.addPointCloud(nodemotion_name, nodemotion_name, config.extrinsic()[0].inverse(), config.pcd_size());
             visualize::SavePointCloudWithNormal(
-                geometry_processor->ActiveNodeGraph()->GetLiveNodeCoordinate(),
+                geometry_processor->ActiveNodeGraph()->GetReferenceNodeCoordinate(),
                 node_motion_processor->GetNodeMotionPred(),
                 context.at(nodemotion_name));
 
@@ -118,15 +119,16 @@ int main()
                 0);
 
             // Apply the warp
+            geometry_processor->ProcessFrame(
+                opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
         }
 
-        // Dynamic geometry process
         if (frame_idx == 0)
         {
             geometry_processor->initGeometry(*measure_processor->SurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
+            GArrayView<DualQuaternion> empty_se3;
+            geometry_processor->ProcessFrame(empty_se3, frame_idx, 0);
         }
-
-        geometry_processor->ProcessFrame(frame_idx, 0);
         // Clean
         context.close();
     }

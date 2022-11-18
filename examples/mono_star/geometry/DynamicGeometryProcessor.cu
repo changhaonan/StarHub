@@ -47,9 +47,15 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
 }
 
 void star::DynamicGeometryProcessor::ProcessFrame(
+    const GArrayView<DualQuaternion> &solved_se3,
     const unsigned frame_idx,
     cudaStream_t stream)
 {
+    if (frame_idx > 0)
+    { // Can apply warp
+        updateGeometry(solved_se3, frame_idx, stream);
+    }
+
     // Generate map from geometry
     drawRenderMaps(frame_idx, stream);
     computeSurfelMapTex();
@@ -83,12 +89,26 @@ void star::DynamicGeometryProcessor::initGeometry(
     Skinner::PerformSkinningFromRef(geometyr4skinner, node_graph4skinner, stream);
 }
 
-void star::DynamicGeometryProcessor::updateGeometry(const GArrayView<DualQuaternion> &solved_se3,
-                                                    cudaStream_t stream)
+void star::DynamicGeometryProcessor::updateGeometry(
+    const GArrayView<DualQuaternion> &solved_se3,
+    const unsigned frame_idx,
+    cudaStream_t stream)
 {
     // Apply the deformation
     SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(m_node_graph[m_buffer_idx]->DeformAccess(),
                                                    *m_model_geometry[m_buffer_idx], solved_se3, stream);
+
+    // Reanchor the geometry
+    auto next_buffer_idx = (m_buffer_idx + 1) & 1;
+    SurfelGeometry::ReAnchor(
+        m_model_geometry[m_buffer_idx],
+        m_model_geometry[next_buffer_idx],
+        stream);
+    NodeGraph::ReAnchor(
+        m_node_graph[m_buffer_idx],
+        m_node_graph[next_buffer_idx],
+        stream);
+    m_buffer_idx = next_buffer_idx;
 }
 
 void star::DynamicGeometryProcessor::computeSurfelMapTex()
@@ -114,19 +134,33 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
     unsigned last_buffer_idx = (m_buffer_idx + 1) % 2;
     std::string last_geo_name = "last_vertex";
     if (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0)
-    { // Exist valid last geo
-        context.addPointCloud(last_geo_name, last_geo_name, m_cam2world.inverse(), m_pcd_size);
+    {
+        // Exist valid last geo
+        std::string ref_geo_name = "ref_geo";
+        context.addPointCloud(ref_geo_name, ref_geo_name, m_cam2world.inverse(), m_pcd_size);
         visualize::SavePointCloud(
             m_model_geometry[last_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
-            context.at(last_geo_name));
-    }
+            context.at(ref_geo_name));
 
-    // Save node graph
-    context.addGraph("live_graph", "", m_cam2world.inverse(), m_pcd_size);
-    visualize::SaveGraph(
-        m_node_graph[m_buffer_idx]->GetLiveNodeCoordinate(),
-        m_node_graph[m_buffer_idx]->GetNodeKnn(),
-        context.at("live_graph"));
+        std::string live_geo_name = "live_geo";
+        context.addPointCloud(live_geo_name, live_geo_name, m_cam2world.inverse(), m_pcd_size);
+        visualize::SavePointCloud(
+            m_model_geometry[last_buffer_idx]->LiveVertexConfidenceReadOnly(),
+            context.at(live_geo_name));
+
+        // Save node graph
+        context.addGraph("ref_graph", "", m_cam2world.inverse(), m_pcd_size);
+        visualize::SaveGraph(
+            m_node_graph[last_buffer_idx]->GetReferenceNodeCoordinate(),
+            m_node_graph[last_buffer_idx]->GetNodeKnn(),
+            context.at("ref_graph"));
+
+        context.addGraph("live_graph", "", m_cam2world.inverse(), m_pcd_size);
+        visualize::SaveGraph(
+            m_node_graph[last_buffer_idx]->GetLiveNodeCoordinate(),
+            m_node_graph[last_buffer_idx]->GetNodeKnn(),
+            context.at("live_graph"));
+    }
 
     // Save images
     context.addImage("ref-rgb");

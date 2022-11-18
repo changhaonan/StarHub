@@ -24,7 +24,9 @@ namespace star
 			OpticalFlow4Solver &opticalflow4solver,
 			const unsigned frame_idx,
 			cudaStream_t stream);
-
+		GArrayView<DualQuaternion> SolvedSE3() const {
+			return m_warp_solver->SolvedNodeSE3();
+		}
 	private:
 		unsigned m_num_cam;
 		Extrinsic m_cam2world[d_max_cam];
