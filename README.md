@@ -31,13 +31,11 @@ A unified library shared by all Star-related projects.
 
 - [x] Make the optimization working.
 - [x] Integrate the optimization into the system.
-- [ ] Get the optimization iterating.
-- [ ] Rearrange the constant arrangment.
-- [ ] Unify SolverMaps & ObservationMaps into SurfelMapTex
- 
+- [x] Get the optimization iterating.
+
 ### Nov. 18th
 
-- [ ] Combined optimization.
+- [ ] Test on the simulation data.
 
 ## Problem
 
