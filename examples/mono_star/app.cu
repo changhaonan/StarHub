@@ -116,14 +116,15 @@ int main()
                 opticalflow4solver,
                 frame_idx,
                 0);
+
+            // Apply the warp
         }
 
         // Dynamic geometry process
-        geometry_processor->initGeometry(
-            *measure_processor->SurfelMapReadOnly(),
-            config.extrinsic()[0],
-            frame_idx,
-            0);
+        if (frame_idx == 0)
+        {
+            geometry_processor->initGeometry(*measure_processor->SurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
+        }
 
         geometry_processor->ProcessFrame(frame_idx, 0);
         // Clean

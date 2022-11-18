@@ -1,4 +1,5 @@
 #include <star/geometry/node_graph/Skinner.h>
+#include <star/geometry/surfel/SurfelNodeDeformer.h>
 #include <star/visualization/Visualizer.h>
 #include <mono_star/common/ConfigParser.h>
 #include "DynamicGeometryProcessor.h"
@@ -75,11 +76,19 @@ void star::DynamicGeometryProcessor::initGeometry(
     m_node_graph[m_buffer_idx]->InitializeNodeGraphFromVertex(
         m_model_geometry[m_buffer_idx]->LiveVertexConfidenceReadOnly(), frame_idx, false, stream);
     m_node_graph[m_buffer_idx]->ResetNodeGraphConnection(stream);
-    
+
     // Init Skinning
     auto geometyr4skinner = m_model_geometry[m_buffer_idx]->GenerateGeometry4Skinner();
     auto node_graph4skinner = m_node_graph[m_buffer_idx]->GenerateNodeGraph4Skinner();
     Skinner::PerformSkinningFromRef(geometyr4skinner, node_graph4skinner, stream);
+}
+
+void star::DynamicGeometryProcessor::updateGeometry(const GArrayView<DualQuaternion> &solved_se3,
+                                                    cudaStream_t stream)
+{
+    // Apply the deformation
+    SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(m_node_graph[m_buffer_idx]->DeformAccess(),
+                                                   *m_model_geometry[m_buffer_idx], solved_se3, stream);
 }
 
 void star::DynamicGeometryProcessor::computeSurfelMapTex()

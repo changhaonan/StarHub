@@ -25,6 +25,10 @@ namespace star
             const Eigen::Matrix4f &cam2world,
             const unsigned frame_idx,
             cudaStream_t stream);
+        void updateGeometry(
+            const GArrayView<DualQuaternion>& solved_se3,
+	        cudaStream_t stream
+        );
         void computeSurfelMapTex();
         void computeSurfelMotion(cudaStream_t stream);
 

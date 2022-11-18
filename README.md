@@ -30,7 +30,8 @@ A unified library shared by all Star-related projects.
 ### Nov. 16th ~ 17th
 
 - [x] Make the optimization working.
-- [ ] Integrate the optimization into the system.
+- [x] Integrate the optimization into the system.
+- [ ] Get the optimization iterating.
 - [ ] Rearrange the constant arrangment.
 - [ ] Unify SolverMaps & ObservationMaps into SurfelMapTex
  
