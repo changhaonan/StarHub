@@ -65,6 +65,7 @@ namespace star::device
 			return;
 		est_motion_cam *= spatial_weight;
 		float3 est_motion_world = extrinsic.rot * est_motion_cam;
+		printf("depth: %f, depth_prev: %f, s_weight: %f\n", depth, depth_prev, spatial_weight);
 		// Atomic add
 		atomicAdd(&(node_motion_pred[nearest_nid].x), est_motion_world.x);
 		atomicAdd(&(node_motion_pred[nearest_nid].y), est_motion_world.y);

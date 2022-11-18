@@ -1,3 +1,4 @@
+#include <star/geometry/node_graph/Skinner.h>
 #include <star/visualization/Visualizer.h>
 #include <mono_star/common/ConfigParser.h>
 #include "DynamicGeometryProcessor.h"
@@ -26,6 +27,7 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
 
     // Vis
     m_enable_vis = config.enable_vis();
+    m_pcd_size = config.pcd_size();
 
     // Camera-related
     m_cam2world = config.extrinsic()[0];
@@ -60,7 +62,7 @@ void star::DynamicGeometryProcessor::initGeometry(
     const SurfelMap &surfel_map, const Eigen::Matrix4f &cam2world, const unsigned frame_idx, cudaStream_t stream)
 {
     // Update buffer_idx
-    m_buffer_idx = (m_buffer_idx + 1) % 2;
+    // m_buffer_idx = (m_buffer_idx + 1) % 2;
 
     // Init Surfel geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
@@ -72,6 +74,11 @@ void star::DynamicGeometryProcessor::initGeometry(
     // Init NodeGraph
     m_node_graph[m_buffer_idx]->InitializeNodeGraphFromVertex(
         m_model_geometry[m_buffer_idx]->LiveVertexConfidenceReadOnly(), frame_idx, false, stream);
+
+    // Init Skinning
+    auto geometyr4skinner = m_model_geometry[m_buffer_idx]->GenerateGeometry4Skinner();
+    auto node_graph4skinner = m_node_graph[m_buffer_idx]->GenerateNodeGraph4Skinner();
+    Skinner::PerformSkinningFromRef(geometyr4skinner, node_graph4skinner, stream);
 }
 
 void star::DynamicGeometryProcessor::computeSurfelMapTex()
@@ -98,14 +105,14 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
     std::string last_geo_name = "last_vertex";
     if (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0)
     { // Exist valid last geo
-        context.addPointCloud(last_geo_name, last_geo_name, m_cam2world.inverse());
+        context.addPointCloud(last_geo_name, last_geo_name, m_cam2world.inverse(), m_pcd_size);
         visualize::SavePointCloud(
             m_model_geometry[last_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
             context.at(last_geo_name));
     }
 
     // Save node graph
-    context.addGraph("live_graph", "", m_cam2world.inverse());
+    context.addGraph("live_graph", "", m_cam2world.inverse(), m_pcd_size);
     visualize::SaveGraph(
         m_node_graph[m_buffer_idx]->GetLiveNodeCoordinate(),
         m_node_graph[m_buffer_idx]->GetNodeKnn(),

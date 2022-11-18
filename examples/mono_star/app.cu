@@ -51,7 +51,6 @@ int main()
         // Measure process
         measure_processor->ProcessFrame(frame_idx, 0);
 
-        
         if (frame_idx > 0)
         {
             // Optical flow process
@@ -73,13 +72,20 @@ int main()
                 geometry_processor->ActiveGeometry()->GenerateGeometry4Solver(),
                 geometry_processor->ActiveNodeGraph()->GetNodeSize(),
                 frame_idx,
-                0
-            );
+                0);
+
+            // Save the nodemotion
+            std::string nodemotion_name = "node_motion";
+            context.addPointCloud(nodemotion_name, nodemotion_name, config.extrinsic()[0].inverse(), config.pcd_size());
+            visualize::SavePointCloudWithNormal(
+                geometry_processor->ActiveNodeGraph()->GetLiveNodeCoordinate(),
+                node_motion_processor->GetNodeMotionPred(),
+                context.at(nodemotion_name));
 
             // Start the optimization process
             auto geometry4solver = geometry_processor->ActiveGeometry()->GenerateGeometry4Solver();
             auto node_graph4solver = geometry_processor->ActiveNodeGraph()->GenerateNodeGraph4Solver();
-            
+
             Measure4Solver measure4solver;
             measure4solver.num_cam = 1;
             measure4solver.vertex_confid_map[0] = surfel_map_this.vertex_confid;
@@ -101,16 +107,15 @@ int main()
             nodeflow4solver.node_motion_pred = node_motion_processor->GetNodeMotionPred();
 
             // Solve
-            opt_processor->ProcessFrame(
-                measure4solver,
-                render4solver,
-                geometry4solver,
-                node_graph4solver,
-                nodeflow4solver,
-                opticalflow4solver,
-                frame_idx,
-                0
-            );
+            // opt_processor->ProcessFrame(
+            //     measure4solver,
+            //     render4solver,
+            //     geometry4solver,
+            //     node_graph4solver,
+            //     nodeflow4solver,
+            //     opticalflow4solver,
+            //     frame_idx,
+            //     0);
         }
 
         // Dynamic geometry process
@@ -119,6 +124,7 @@ int main()
             config.extrinsic()[0],
             frame_idx,
             0);
+
         geometry_processor->ProcessFrame(frame_idx, 0);
         // Clean
         context.close();
