@@ -35,6 +35,7 @@ A unified library shared by all Star-related projects.
 
 ### Nov. 18th
 
+- [ ] Add the simulation.
 - [ ] Test on the simulation data.
 
 ## Problem

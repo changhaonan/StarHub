@@ -18,7 +18,8 @@ int main()
     std::cout << "Subminor version : " << CV_SUBMINOR_VERSION << std::endl;
 
     using namespace star;
-    std::string scene_name = "move_dragon";
+    // std::string scene_name = "move_dragon";
+    std::string scene_name = "home1";
 
     auto root_path_prefix = boost::filesystem::path(__FILE__).parent_path().parent_path().parent_path();
     auto config_path_prefix = root_path_prefix / "data";
