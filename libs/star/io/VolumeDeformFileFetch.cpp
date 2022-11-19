@@ -36,31 +36,16 @@ bool star::VolumeDeformFileFetch::FetchRGBImage(size_t cam_idx, size_t frame_idx
 bool star::VolumeDeformFileFetch::FetchOFImage(size_t cam_idx, size_t frame_idx, cv::Mat &of_img)
 {
     path file_path = FileNameStar(cam_idx, frame_idx, FileType::opticalflow_file);
-    // Read the xml file
-    cv::FileStorage fs;
-    fs.open(file_path.string(), cv::FileStorage::READ);
-    cv::FileNode fn = fs.root();
-    for (cv::FileNodeIterator fit = fn.begin(); fit != fn.end(); ++fit)
-    {
-        cv::FileNode item = *fit;
-        std::cout << item.name() << std::endl;
-        if (item.name() == "optical_flow")
-        {
-            of_img = item.mat();
-            return true;
-        }
-        else if (item.name() == "opticalflow")
-        {
-            of_img = item.mat();
-            return true;
-        }
-        else if (item.name() == "OpticalFlow")
-        {
-            of_img = item.mat();
-            return true;
-        }
-    }
-    return false;
+    // Read the image
+    auto of_img_c3 = cv::imread(file_path.string(), cv::IMREAD_UNCHANGED);
+    std::cout << "Opricalflow loaded from " << file_path.string() << " !" << std::endl;
+    // Take the frist two channels of the mat
+    std::vector<cv::Mat> channels(3);
+    cv::split(of_img_c3, channels);
+    cv::merge(std::vector<cv::Mat>{channels[0], channels[1]}, of_img);
+    // Rescale and retype
+    of_img.convertTo(of_img, CV_32FC2, 1.0 / 1000.0);
+    return true;
 }
 
 bool star::VolumeDeformFileFetch::FetchOFImage(size_t cam_idx, size_t frame_idx, void *of_img)
@@ -94,7 +79,7 @@ boost::filesystem::path star::VolumeDeformFileFetch::FileNameVolumeDeform(size_t
         file_name += ".depth.png";
         break;
     case FileType::opticalflow_file:
-        file_name += ".of.xml";
+        file_name += ".of.png";
         break;
     case FileType::point_cloud_file:
         file_name += ".pcd";

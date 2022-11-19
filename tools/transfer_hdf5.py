@@ -28,7 +28,7 @@ def transfer_hdf5(hdf5_file_path, output_dir, img_idx):
             elif key == "depth":
                 image = value
                 image = np.array(image)
-                image = (image * 1000.0).astype(np.uint16)  # convert to mm
+                image = (image * 1000.0).astype(np.uint16)  # Convert to mm
                 cv2.imwrite(
                     os.path.join(output_dir, f"frame-{img_idx:>06d}.depth.png"), image
                 )
@@ -37,6 +37,16 @@ def transfer_hdf5(hdf5_file_path, output_dir, img_idx):
                 image = np.array(image)
                 cv2.imwrite(
                     os.path.join(output_dir, f"frame-{img_idx:>06d}.seg.png"), image
+                )
+            elif key == "forward_flow":
+                image = value
+                image = np.array(image)
+                # Padding a zero channel
+                image = np.concatenate((image, np.zeros((image.shape[0], image.shape[1], 1))), axis=2)
+                # Need to have a proper normalization
+                image = (image * 1000.0).astype(np.uint16)
+                cv2.imwrite(
+                    os.path.join(output_dir, f"frame-{img_idx:>06d}.of.png"), image
                 )
 
 

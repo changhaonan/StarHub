@@ -1,6 +1,7 @@
 #include "common/ConfigParser.h"
 #include "measure/MeasureProcessorOffline.h"
 #include "measure/OpticalFlowProcessorGMA.h"
+#include "measure/OpticalFlowProcessorOffline.h"
 #include "measure/NodeMotionProcessor.h"
 #include "geometry/DynamicGeometryProcessor.h"
 #include "opt/OptimizationProcessorWarpSolver.h"
@@ -40,7 +41,7 @@ int main()
     // Generate the geometry, node graph, and render in continous time
     auto measure_processor = std::make_shared<MeasureProcessorOffline>();
     auto geometry_processor = std::make_shared<DynamicGeometryProcessor>();
-    auto opticalflow_processor = std::make_shared<OpticalFlowProcessorGMA>();
+    auto opticalflow_processor = std::make_shared<OpticalFlowProcessorOffline>();
     auto node_motion_processor = std::make_shared<NodeMotionProcessor>();
     auto opt_processor = std::make_shared<OptimizationProcessorWarpSolver>();
 
@@ -109,22 +110,23 @@ int main()
             nodeflow4solver.node_motion_pred = node_motion_processor->GetNodeMotionPred();
 
             // Solve
-            opt_processor->ProcessFrame(
-                measure4solver,
-                render4solver,
-                geometry4solver,
-                node_graph4solver,
-                nodeflow4solver,
-                opticalflow4solver,
-                frame_idx,
-                0);
+            // opt_processor->ProcessFrame(
+            //     measure4solver,
+            //     render4solver,
+            //     geometry4solver,
+            //     node_graph4solver,
+            //     nodeflow4solver,
+            //     opticalflow4solver,
+            //     frame_idx,
+            //     0);
 
-            // Apply the warp
-            geometry_processor->ProcessFrame(
-                opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
+            // // Apply the warp
+            // geometry_processor->ProcessFrame(
+            //     opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
         }
 
-        if (frame_idx == 0)
+        // if (frame_idx == 0)
+        if (true)
         {
             geometry_processor->initGeometry(*measure_processor->SurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
             GArrayView<DualQuaternion> empty_se3;

@@ -94,6 +94,9 @@ void star::DynamicGeometryProcessor::updateGeometry(
     const unsigned frame_idx,
     cudaStream_t stream)
 {
+    if (solved_se3.Size() == 0)
+        return;
+        
     // Apply the deformation
     SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(m_node_graph[m_buffer_idx]->DeformAccess(),
                                                    *m_model_geometry[m_buffer_idx], solved_se3, stream);
