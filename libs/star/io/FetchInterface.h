@@ -40,6 +40,8 @@ namespace star
 
 		// Should be pcl::PointXYZRGB
 		virtual bool FetchPcd(size_t cam_idx, size_t frame_idx, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcd) = 0;
+
+		virtual bool FetchSegImage(size_t cam_idx, size_t frame_idx, cv::Mat &seg_img) = 0;
 	};
 
 }

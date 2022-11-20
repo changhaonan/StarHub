@@ -32,9 +32,10 @@ def transfer_hdf5(hdf5_file_path, output_dir, img_idx):
                 cv2.imwrite(
                     os.path.join(output_dir, f"frame-{img_idx:>06d}.depth.png"), image
                 )
-            elif key == "instance_segmaps":
+            elif key == "category_id_segmaps":
                 image = value
-                image = np.array(image)
+                image = np.array(image).astype(np.uint16)
+                print(np.unique(image))
                 cv2.imwrite(
                     os.path.join(output_dir, f"frame-{img_idx:>06d}.seg.png"), image
                 )

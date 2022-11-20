@@ -135,13 +135,17 @@ namespace star
         float m_surfel_radius_scale = 0.f;
         bool m_enable_semantic_surfel = false;
 
-        // Object-specified
+        // Semantic-prior
     public:
         floatX<d_max_num_semantic> dynamic_regulation() const { return m_dynamic_regulation; }
+        std::vector<int> semantic_label() const { return m_semantic_label; }
+        unsigned max_seg_label() const { return m_max_seg_label; }
 
     private:
         // Dynamic regulation, apply a different cofficient to different type of objects
         floatX<d_max_num_semantic> m_dynamic_regulation;
+        std::vector<int> m_semantic_label;
+        unsigned m_max_seg_label = 0;
 
         // Sample-related
     public:

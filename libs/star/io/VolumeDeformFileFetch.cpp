@@ -61,6 +61,16 @@ bool star::VolumeDeformFileFetch::FetchPcd(size_t cam_idx, size_t frame_idx, pcl
     return true;
 }
 
+bool star::VolumeDeformFileFetch::FetchSegImage(size_t cam_idx, size_t frame_idx, cv::Mat &seg_img)
+{
+    path file_path = FileNameStar(cam_idx, frame_idx, FileType::seg_img_file);
+    // Read the image
+    seg_img = cv::imread(file_path.string(), cv::IMREAD_UNCHANGED);
+    seg_img.convertTo(seg_img, CV_32SC1);
+    std::cout << "Segmentation loaded from " << file_path.string() << " !" << std::endl;
+    return true;
+}
+
 boost::filesystem::path star::VolumeDeformFileFetch::FileNameVolumeDeform(size_t cam_idx, size_t frame_idx, FileType file_type) const
 {
     // Construct the file_name
@@ -83,6 +93,9 @@ boost::filesystem::path star::VolumeDeformFileFetch::FileNameVolumeDeform(size_t
         break;
     case FileType::point_cloud_file:
         file_name += ".pcd";
+        break;
+    case FileType::seg_img_file:
+        file_name += ".seg.png";
         break;
     default:
         printf("File type is not supported.\n");

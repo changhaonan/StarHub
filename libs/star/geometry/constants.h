@@ -10,7 +10,7 @@ namespace star
     // Buffer size
     constexpr unsigned d_max_num_surfels = 800000;
     constexpr unsigned d_max_num_surfel_candidates = 200000;
-    constexpr unsigned d_max_num_semantic = 10;
+    constexpr unsigned d_max_num_semantic = 20;
     constexpr unsigned d_max_num_nodes = 2048;
 
     // Render related

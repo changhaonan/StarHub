@@ -58,16 +58,19 @@ namespace star
 		VolumeDeformFileFetch::Ptr m_fetcher;
 
         // Camera-related
+        unsigned m_raw_img_col;
+        unsigned m_raw_img_row;
         unsigned m_downsample_img_col;
         unsigned m_downsample_img_row;
         Extrinsic m_cam2world;
         Intrinsic m_intrinsic;
+        float m_downsample_scale;
 
         // Buffer
-        cv::Mat m_opticalflow_img;
+        cv::Mat m_raw_opticalflow_img;  // Raw
         void* m_raw_opticalflow_img_buff;
-		GArray<float2> m_g_opticalflow_color_img;
-        CudaTextureSurface m_opticalflow;
+		GArray<float2> m_g_raw_opticalflow_img;
+        CudaTextureSurface m_opticalflow;  // Scaled
         GBufferArray<float4> m_surfel_motion;
 
         // Vis

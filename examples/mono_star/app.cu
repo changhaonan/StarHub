@@ -3,6 +3,7 @@
 #include "measure/OpticalFlowProcessorGMA.h"
 #include "measure/OpticalFlowProcessorOffline.h"
 #include "measure/NodeMotionProcessor.h"
+#include "measure/SegmentationProcessorOffline.h"
 #include "geometry/DynamicGeometryProcessor.h"
 #include "opt/OptimizationProcessorWarpSolver.h"
 #include <star/math/DualQuaternion.hpp>
@@ -40,8 +41,10 @@ int main()
     // Build the Measure system (Use serial not parallel)
     // Generate the geometry, node graph, and render in continous time
     auto measure_processor = std::make_shared<MeasureProcessorOffline>();
+    auto semantic_processor = std::make_shared<SegmentationProcessorOffline>();
     auto geometry_processor = std::make_shared<DynamicGeometryProcessor>();
     auto opticalflow_processor = std::make_shared<OpticalFlowProcessorOffline>();
+    // auto opticalflow_processor = std::make_shared<OpticalFlowProcessorGMA>();
     auto node_motion_processor = std::make_shared<NodeMotionProcessor>();
     auto opt_processor = std::make_shared<OptimizationProcessorWarpSolver>();
 
@@ -53,6 +56,9 @@ int main()
 
         // Measure process
         measure_processor->ProcessFrame(frame_idx, 0);
+
+        // Semantic process
+        semantic_processor->ProcessFrame(measure_processor->GetSurfelMapTex(), frame_idx, 0);
 
         if (frame_idx > 0)
         {

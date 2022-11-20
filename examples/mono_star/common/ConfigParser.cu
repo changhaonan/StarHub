@@ -115,18 +115,25 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
     check_and_load(m_enable_semantic_surfel, "enable_semantic_surfel", false);
 
     // Object-specified
+    m_semantic_label.resize(d_max_num_semantic);
     for (auto i = 0; i < d_max_num_semantic; ++i)
     { // Initialized as all 1.f
         m_dynamic_regulation[i] = 1.f;
+        m_semantic_label[i] = 0;
     }
-    if (config_json.find("dynamic_regulation") != config_json.end())
+    if (config_json.find("semantic_prior") != config_json.end())
     {
-        auto dynamic_regulation_iter = config_json.find("dynamic_regulation");
-        for (auto &el : (*dynamic_regulation_iter).items())
+        auto semantic_prior_iter = config_json.find("semantic_prior");
+        unsigned sementic_id = 1;
+        for (auto &el : (*semantic_prior_iter).items())
         {
             int label = el.value().at("label").get<int>();
-            float regulation = el.value().at("regulation").get<float>();
-            m_dynamic_regulation[label] = regulation;
+            float rigidness = el.value().at("rigidness").get<float>();
+            m_dynamic_regulation[sementic_id] = rigidness;
+            m_semantic_label[sementic_id] = label;
+            if (label > m_max_seg_label)
+                m_max_seg_label = label + 1;
+            sementic_id++;
         }
     }
     // Resample-related

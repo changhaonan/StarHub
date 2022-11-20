@@ -1,4 +1,5 @@
 #include <mono_star/measure/OpticalFlowProcessorOffline.h>
+#include <star/img_proc/generate_maps.h>
 #include <star/geometry/node_graph/node_graph_opticalflow.h>
 #include <star/common/data_transfer.h>
 #include <star/visualization/Visualizer.h>
@@ -43,16 +44,19 @@ star::OpticalFlowProcessorOffline::OpticalFlowProcessorOffline()
 
     // Camera setting
     STAR_CHECK_EQ(config.num_cam(), 1); // Asset mono camera
+    m_raw_img_col = config.raw_img_cols();
+    m_raw_img_row = config.raw_img_rows();
     m_downsample_img_col = config.downsample_img_cols();
     m_downsample_img_row = config.downsample_img_rows();
     m_cam2world = config.extrinsic()[0];
     m_intrinsic = config.rgb_intrinsic_downsample();
+    m_downsample_scale = config.downsample_scale();
 
-    unsigned num_pixel = m_downsample_img_col * m_downsample_img_row;
+    unsigned num_raw_pixel = config.raw_img_cols() * config.raw_img_rows();
     // AllocateBuffer
     cudaSafeCall(cudaMallocHost(
-        (void **)&m_raw_opticalflow_img_buff, num_pixel * sizeof(float2)));
-    m_g_opticalflow_color_img.create(num_pixel);
+        (void **)&m_raw_opticalflow_img_buff, num_raw_pixel * sizeof(float2)));
+    m_g_raw_opticalflow_img.create(num_raw_pixel);
     m_surfel_motion.AllocateBuffer(d_max_num_surfels);
     m_opticalflow_suppress_threshold = config.opticalflow_suppress_threshold();
 
@@ -62,8 +66,9 @@ star::OpticalFlowProcessorOffline::OpticalFlowProcessorOffline()
 
 star::OpticalFlowProcessorOffline::~OpticalFlowProcessorOffline()
 {
+    cudaSafeCall(cudaFreeHost(m_raw_opticalflow_img_buff));
     m_surfel_motion.ReleaseBuffer();
-    m_g_opticalflow_color_img.release();
+    m_g_raw_opticalflow_img.release();
     releaseTextureCollect(m_opticalflow);
 }
 
@@ -78,15 +83,13 @@ void star::OpticalFlowProcessorOffline::ProcessFrame(
         // OpticalFlow from frame-1
         loadOpticalFlow(frame_idx, stream);
 
-        // Save opticalflow
-        if (m_opticalflow_suppress_threshold == 0.f)
-        {
-            saveOpticalFlow(m_opticalflow, stream);
-        }
-        else
-        {
-            saveOpticalFlowWithFilter(m_opticalflow, stream);
-        }
+        // Save opticalflow to texture
+        createScaledOpticalFlowMap(
+            m_g_raw_opticalflow_img.ptr(),
+            m_raw_img_row, m_raw_img_col,
+            m_downsample_scale,
+            m_opticalflow.surface,
+            stream);
 
         // Compute surfel motion
         computeSurfelFlowVisible(surfel_map_prev, surfel_map_this, stream);
@@ -103,51 +106,16 @@ void star::OpticalFlowProcessorOffline::loadOpticalFlow(
 {
     // Load of image
     const auto image_idx = size_t(frame_idx) * m_step_frame + m_start_frame_idx;
-    m_fetcher->FetchOFImage(0, image_idx, m_opticalflow_img);
+    m_fetcher->FetchOFImage(0, image_idx, m_raw_opticalflow_img);
 
     // Copy to buffer
-    memcpy(m_raw_opticalflow_img_buff, m_opticalflow_img.data, sizeof(float2) * m_opticalflow_img.total());
+    memcpy(m_raw_opticalflow_img_buff, m_raw_opticalflow_img.data, sizeof(float2) * m_raw_opticalflow_img.total());
     cudaSafeCall(cudaMemcpyAsync(
-        m_g_opticalflow_color_img.ptr(),
+        m_g_raw_opticalflow_img.ptr(),
         m_raw_opticalflow_img_buff,
-        sizeof(float2) * m_opticalflow_img.total(),
+        sizeof(float2) * m_raw_opticalflow_img.total(),
         cudaMemcpyHostToDevice,
         stream));
-}
-
-void star::OpticalFlowProcessorOffline::saveOpticalFlow(
-    CudaTextureSurface &opticalflow_texsurf,
-    cudaStream_t stream)
-{
-    cudaSafeCall(cudaMemcpy2DToArrayAsync(
-        opticalflow_texsurf.d_array,
-        0,
-        0,
-        m_g_opticalflow_color_img.ptr(),
-        sizeof(float2) * m_downsample_img_col,
-        sizeof(float2) * m_downsample_img_col,
-        m_downsample_img_row,
-        cudaMemcpyDeviceToDevice,
-        stream));
-    cudaSafeCall(cudaStreamSynchronize(stream));
-}
-
-void star::OpticalFlowProcessorOffline::saveOpticalFlowWithFilter(
-    CudaTextureSurface &opticalflow_texsurf,
-    cudaStream_t stream)
-{
-    // Run opticalflow filter
-    unsigned img_cols = m_downsample_img_col;
-    unsigned img_rows = m_downsample_img_row;
-    dim3 blk(32, 32);
-    dim3 grid(divUp(img_cols, blk.x), divUp(img_rows, blk.y));
-    device::OpticalFlowFilterKernelV2<<<grid, blk, 0, stream>>>(
-        m_g_opticalflow_color_img.ptr(),
-        opticalflow_texsurf.surface,
-        m_opticalflow_suppress_threshold,
-        img_cols,
-        img_rows);
-    cudaSafeCall(cudaStreamSynchronize(stream));
 }
 
 void star::OpticalFlowProcessorOffline::saveContext(const unsigned frame_idx, cudaStream_t stream)

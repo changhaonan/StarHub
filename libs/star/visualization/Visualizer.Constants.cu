@@ -19,5 +19,9 @@ const std::map<int, uchar3> star::visualize::default_semantic_color_dict = {
 	{15, make_uchar3(138, 43, 226)},
 	{16, make_uchar3(255, 0, 255)},
 	{17, make_uchar3(139, 69, 19)},
-	{18, make_uchar3(210, 105, 30)}
+	{18, make_uchar3(50, 105, 30)},
+	{19, make_uchar3(210, 65, 30)},
+	{20, make_uchar3(210, 105, 30)},
+	{21, make_uchar3(210, 105, 70)},
+	{22, make_uchar3(0, 105, 90)}
 };
