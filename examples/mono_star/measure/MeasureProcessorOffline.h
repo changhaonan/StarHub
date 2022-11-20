@@ -27,7 +27,10 @@ namespace star
 			cudaStream_t stream);
 
 		// Fetch-API
-		SurfelMap::Ptr SurfelMapReadOnly() const {
+		SurfelMap::Ptr GetSurfelMap() {
+			return m_surfel_map;
+		}
+		SurfelMap::Ptr GetSurfelMapReadOnly() const {
 			return m_surfel_map;
 		}
 		SurfelMapTex GetSurfelMapTex() const { return m_surfel_map->Texture(); };

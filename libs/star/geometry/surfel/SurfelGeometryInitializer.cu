@@ -302,6 +302,34 @@ void star::SurfelGeometryInitializer::initSurfelGeometry(
 		width);
 }
 
+void star::SurfelGeometryInitializer::initSurfelGeometryWithSemantic(
+	GeometryAttributes geometry,
+	const SurfelMap &surfel_map,
+	const Eigen::Matrix4f &cam2world,
+	cudaStream_t stream)
+{
+	unsigned width, height;
+	query2DTextureExtent(surfel_map.VertexConfidReadOnly(), width, height);
+
+	dim3 blk(16, 16);
+	dim3 grid(divUp(width, blk.x), divUp(height, blk.y));
+	device::initializerSurfelKernel<<<grid, blk, 0, stream>>>(
+		surfel_map.VertexConfidReadOnly(),
+		surfel_map.NormalRadiusReadOnly(),
+		surfel_map.ColorTimeReadOnly(),
+		surfel_map.IndexReadOnly(),
+		surfel_map.SegmentationReadOnly(),
+		geometry.reference_vertex_confid,
+		geometry.reference_normal_radius,
+		geometry.live_vertex_confid,
+		geometry.live_normal_radius,
+		geometry.color_time,
+		geometry.semantic_prob,
+		mat34(cam2world),
+		height,
+		width);
+}
+
 void star::SurfelGeometryInitializer::initSurfelGeometry(
 	GeometryAttributes geometry,
 	const GArrayView<DepthSurfel> &surfel_array,
@@ -393,11 +421,19 @@ void star::SurfelGeometryInitializer::InitFromGeometryMap(
 	SurfelGeometry &geometry,
 	const SurfelMap &surfel_map,
 	const Eigen::Matrix4f &cam2world,
+	const bool use_semantic,
 	cudaStream_t stream)
 {
 	geometry.ResizeValidSurfelArrays(surfel_map.NumValidSurfels());
 
 	// Init the geometry
 	const auto geometry_attributes = geometry.Geometry();
-	initSurfelGeometry(geometry_attributes, surfel_map, cam2world, stream);
+	if (!use_semantic)
+	{
+		initSurfelGeometry(geometry_attributes, surfel_map, cam2world, stream);
+	}
+	else
+	{
+		initSurfelGeometryWithSemantic(geometry_attributes, surfel_map, cam2world, stream);
+	}
 }

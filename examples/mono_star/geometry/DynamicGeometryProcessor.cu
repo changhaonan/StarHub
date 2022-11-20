@@ -32,6 +32,9 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
 
     // Camera-related
     m_cam2world = config.extrinsic()[0];
+
+    // Other
+    m_enable_semantic_surfel = config.enable_semantic_surfel();
 }
 
 star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
@@ -66,7 +69,7 @@ void star::DynamicGeometryProcessor::ProcessFrame(
 }
 
 void star::DynamicGeometryProcessor::initGeometry(
-    const SurfelMap &surfel_map, const Eigen::Matrix4f &cam2world, const unsigned frame_idx, cudaStream_t stream)
+    const SurfelMap &surfel_map, const Eigen::Matrix4f &cam2world, const bool use_semantic, const unsigned frame_idx, cudaStream_t stream)
 {
     // Update buffer_idx
     // m_buffer_idx = (m_buffer_idx + 1) % 2;
@@ -76,6 +79,7 @@ void star::DynamicGeometryProcessor::initGeometry(
         *m_model_geometry[m_buffer_idx],
         surfel_map,
         cam2world,
+        use_semantic,
         stream);
 
     // Init NodeGraph
@@ -96,7 +100,7 @@ void star::DynamicGeometryProcessor::updateGeometry(
 {
     if (solved_se3.Size() == 0)
         return;
-        
+
     // Apply the deformation
     SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(m_node_graph[m_buffer_idx]->DeformAccess(),
                                                    *m_model_geometry[m_buffer_idx], solved_se3, stream);
@@ -135,34 +139,43 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
 
     // Save Geometry
     unsigned last_buffer_idx = (m_buffer_idx + 1) % 2;
-    std::string last_geo_name = "last_vertex";
-    if (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0)
+    unsigned vis_buffer_idx = (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0) ? last_buffer_idx : m_buffer_idx;
+    // Exist valid last geo
+    std::string ref_geo_name = "ref_geo";
+    context.addPointCloud(ref_geo_name, ref_geo_name, m_cam2world.inverse(), m_pcd_size);
+    visualize::SavePointCloud(
+        m_model_geometry[vis_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
+        context.at(ref_geo_name));
+
+    std::string live_geo_name = "live_geo";
+    context.addPointCloud(live_geo_name, live_geo_name, m_cam2world.inverse(), m_pcd_size);
+    visualize::SavePointCloud(
+        m_model_geometry[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
+        context.at(live_geo_name));
+
+    // Save node graph
+    context.addGraph("ref_graph", "", m_cam2world.inverse(), m_pcd_size);
+    visualize::SaveGraph(
+        m_node_graph[vis_buffer_idx]->GetReferenceNodeCoordinate(),
+        m_node_graph[vis_buffer_idx]->GetNodeKnn(),
+        context.at("ref_graph"));
+
+    context.addGraph("live_graph", "", m_cam2world.inverse(), m_pcd_size);
+    visualize::SaveGraph(
+        m_node_graph[vis_buffer_idx]->GetLiveNodeCoordinate(),
+        m_node_graph[vis_buffer_idx]->GetNodeKnn(),
+        context.at("live_graph"));
+
+    // Save semantic
+    if (m_enable_semantic_surfel)
     {
-        // Exist valid last geo
-        std::string ref_geo_name = "ref_geo";
-        context.addPointCloud(ref_geo_name, ref_geo_name, m_cam2world.inverse(), m_pcd_size);
-        visualize::SavePointCloud(
-            m_model_geometry[last_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
-            context.at(ref_geo_name));
-
-        std::string live_geo_name = "live_geo";
-        context.addPointCloud(live_geo_name, live_geo_name, m_cam2world.inverse(), m_pcd_size);
-        visualize::SavePointCloud(
-            m_model_geometry[last_buffer_idx]->LiveVertexConfidenceReadOnly(),
-            context.at(live_geo_name));
-
-        // Save node graph
-        context.addGraph("ref_graph", "", m_cam2world.inverse(), m_pcd_size);
-        visualize::SaveGraph(
-            m_node_graph[last_buffer_idx]->GetReferenceNodeCoordinate(),
-            m_node_graph[last_buffer_idx]->GetNodeKnn(),
-            context.at("ref_graph"));
-
-        context.addGraph("live_graph", "", m_cam2world.inverse(), m_pcd_size);
-        visualize::SaveGraph(
-            m_node_graph[last_buffer_idx]->GetLiveNodeCoordinate(),
-            m_node_graph[last_buffer_idx]->GetNodeKnn(),
-            context.at("live_graph"));
+        std::string semantic_pcd_name = "semantic_pcd";
+        context.addPointCloud(semantic_pcd_name, semantic_pcd_name, m_cam2world.inverse(), m_pcd_size);
+        visualize::SaveSemanticPointCloud(
+            m_model_geometry[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
+            m_model_geometry[vis_buffer_idx]->SemanticProbReadOnly(),
+            visualize::default_semantic_color_dict,
+            context.at(semantic_pcd_name));
     }
 
     // Save images

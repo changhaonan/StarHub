@@ -24,6 +24,7 @@ namespace star
         void initGeometry(
             const SurfelMap &surfel_map,
             const Eigen::Matrix4f &cam2world,
+            const bool use_semantic,
             const unsigned frame_idx,
             cudaStream_t stream);
         void updateGeometry(
@@ -99,5 +100,8 @@ namespace star
         Renderer::SolverMaps m_solver_maps;
         Renderer::ObservationMaps m_observation_maps;
         SurfelMapTex m_surfel_map_tex;
+
+        // Other
+        bool m_enable_semantic_surfel;
     };
 }

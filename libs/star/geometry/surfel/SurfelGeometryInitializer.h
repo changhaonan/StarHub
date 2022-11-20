@@ -39,6 +39,7 @@ namespace star
 			SurfelGeometry &geometry,
 			const SurfelMap &surfel_map,
 			const Eigen::Matrix4f &cam2world,
+			const bool use_semantic,
 			cudaStream_t stream = 0);
 
 		// The members from other classes
@@ -50,6 +51,11 @@ namespace star
 	private:
 		// 	Single-map
 		static void initSurfelGeometry(
+			GeometryAttributes geometry,
+			const SurfelMap &surfel_map,
+			const Eigen::Matrix4f &cam2world,
+			cudaStream_t stream = 0);
+		static void initSurfelGeometryWithSemantic(
 			GeometryAttributes geometry,
 			const SurfelMap &surfel_map,
 			const Eigen::Matrix4f &cam2world,

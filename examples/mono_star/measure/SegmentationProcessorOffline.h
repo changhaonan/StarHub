@@ -20,7 +20,7 @@ namespace star
         ~SegmentationProcessorOffline();
         STAR_NO_COPY_ASSIGN_MOVE(SegmentationProcessorOffline);
         void ProcessFrame(
-            const SurfelMapTex& surfel_map,
+            const SurfelMap::Ptr& surfel_map,
             const unsigned frame_idx,
             cudaStream_t stream);
 
@@ -37,7 +37,7 @@ namespace star
         void* m_raw_seg_img_buff;
         GArray<int> m_g_raw_seg_img;  
 
-        CudaTextureSurface m_segmentation;  // Scale
+        cudaTextureObject_t m_segmentation_ref;  // Scale
 
         // Buffer-ReID
         GArray<int> m_remap;

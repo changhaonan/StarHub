@@ -1,4 +1,5 @@
 #include "MeasureProcessorOffline.h"
+#include <memory>
 #include <star/img_proc/image_resize.cuh>
 #include <star/visualization/Visualizer.h>
 

@@ -64,15 +64,11 @@ star::SegmentationProcessorOffline::SegmentationProcessorOffline()
     cudaSafeCall(cudaMallocHost(
         (void **)&m_raw_seg_img_buff, num_raw_pixel * sizeof(float2)));
     m_g_raw_seg_img.create(num_raw_pixel);
-
-    // Create texture/surface
-    createInt32TextureSurface(m_downsample_img_row, m_downsample_img_col, m_segmentation);
 }
 
 star::SegmentationProcessorOffline::~SegmentationProcessorOffline() {
     cudaSafeCall(cudaFreeHost(m_raw_seg_img_buff));
     m_g_raw_seg_img.release();
-    releaseTextureCollect(m_segmentation);
 }
 
 void star::SegmentationProcessorOffline::prepareReMap()
@@ -91,7 +87,7 @@ void star::SegmentationProcessorOffline::prepareReMap()
 }
 
 void star::SegmentationProcessorOffline::ProcessFrame(
-    const SurfelMapTex& surfel_map,
+    const SurfelMap::Ptr& surfel_map,
     const unsigned frame_idx,
     cudaStream_t stream)
 {
@@ -104,7 +100,7 @@ void star::SegmentationProcessorOffline::ProcessFrame(
     device::SemanticRescaleRemapKernel<<<grid, blk, 0, stream>>>(
         m_g_raw_seg_img.ptr(),
         m_remap.ptr(),
-        m_segmentation.texture,
+        surfel_map->Segmentation(),
         m_downsample_img_col,
         m_downsample_img_row,
         1.f / m_downsample_scale,
@@ -115,6 +111,8 @@ void star::SegmentationProcessorOffline::ProcessFrame(
     // Visualize
     if (m_enable_vis)
     {
+        // Bind the texture ref
+        m_segmentation_ref = surfel_map->SegmentationReadOnly();
         saveContext(frame_idx, stream);
     }
 }
@@ -141,5 +139,5 @@ void star::SegmentationProcessorOffline::saveContext(const unsigned frame_idx, c
     // Save image
     auto &context = easy3d::Context::Instance();
     context.addImage("seg");
-    visualize::SaveSemanticMap(m_segmentation.texture, visualize::default_semantic_color_dict, context.at("seg"));
+    visualize::SaveSemanticMap(m_segmentation_ref, visualize::default_semantic_color_dict, context.at("seg"));
 }

@@ -57,8 +57,8 @@ int main()
         // Measure process
         measure_processor->ProcessFrame(frame_idx, 0);
 
-        // Semantic process
-        semantic_processor->ProcessFrame(measure_processor->GetSurfelMapTex(), frame_idx, 0);
+        // Semantic process (Expand Measurement)
+        semantic_processor->ProcessFrame(measure_processor->GetSurfelMap(), frame_idx, 0);
 
         if (frame_idx > 0)
         {
@@ -134,7 +134,7 @@ int main()
         // if (frame_idx == 0)
         if (true)
         {
-            geometry_processor->initGeometry(*measure_processor->SurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
+            geometry_processor->initGeometry(*measure_processor->GetSurfelMapReadOnly(), config.extrinsic()[0], config.enable_semantic_surfel(), frame_idx, 0);
             GArrayView<DualQuaternion> empty_se3;
             geometry_processor->ProcessFrame(empty_se3, frame_idx, 0);
         }
