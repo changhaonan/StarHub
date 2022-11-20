@@ -24,7 +24,6 @@ namespace star
         void initGeometry(
             const SurfelMap &surfel_map,
             const Eigen::Matrix4f &cam2world,
-            const bool use_semantic,
             const unsigned frame_idx,
             cudaStream_t stream);
         void updateGeometry(

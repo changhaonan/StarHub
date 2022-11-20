@@ -69,7 +69,7 @@ void star::DynamicGeometryProcessor::ProcessFrame(
 }
 
 void star::DynamicGeometryProcessor::initGeometry(
-    const SurfelMap &surfel_map, const Eigen::Matrix4f &cam2world, const bool use_semantic, const unsigned frame_idx, cudaStream_t stream)
+    const SurfelMap &surfel_map, const Eigen::Matrix4f &cam2world, const unsigned frame_idx, cudaStream_t stream)
 {
     // Update buffer_idx
     // m_buffer_idx = (m_buffer_idx + 1) % 2;
@@ -79,7 +79,7 @@ void star::DynamicGeometryProcessor::initGeometry(
         *m_model_geometry[m_buffer_idx],
         surfel_map,
         cam2world,
-        use_semantic,
+        m_enable_semantic_surfel,
         stream);
 
     // Init NodeGraph
