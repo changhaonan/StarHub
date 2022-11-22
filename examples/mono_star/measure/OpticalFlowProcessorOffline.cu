@@ -37,6 +37,7 @@ star::OpticalFlowProcessorOffline::OpticalFlowProcessorOffline()
     m_fetcher = std::make_shared<VolumeDeformFileFetch>(config.data_path());
     m_start_frame_idx = config.start_frame_idx();
     m_step_frame = config.step_frame();
+    STAR_CHECK_EQ(m_step_frame, 1);  // Offline loader can only be used when step is 1.
 
     // Vis
     m_enable_vis = config.enable_vis();
@@ -104,8 +105,8 @@ void star::OpticalFlowProcessorOffline::ProcessFrame(
 void star::OpticalFlowProcessorOffline::loadOpticalFlow(
     const unsigned frame_idx, cudaStream_t stream)
 {
-    // Load of image
-    const auto image_idx = size_t(frame_idx) * m_step_frame + m_start_frame_idx;
+    // Load of of from last frame
+    const auto image_idx = size_t(frame_idx - 1) * m_step_frame + m_start_frame_idx;
     m_fetcher->FetchOFImage(0, image_idx, m_raw_opticalflow_img);
 
     // Copy to buffer
@@ -150,4 +151,14 @@ void star::OpticalFlowProcessorOffline::computeSurfelFlowVisible(
         m_cam2world,
         m_intrinsic,
         stream);
+
+    // Debug: Too see how opticalflow looks in 3D
+    // SurfelMotion2DFromOpticalFlow(
+    //     surfel_map_prev.rgbd,
+    //     m_opticalflow.texture,
+    //     surfel_map_prev.index,
+    //     m_surfel_motion.Slice(),
+    //     m_cam2world,
+    //     m_intrinsic,
+    //     stream);
 }

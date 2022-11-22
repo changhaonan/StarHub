@@ -37,4 +37,13 @@ namespace star
 		const Extrinsic &extrinsic,
 		const Intrinsic &intrinsic,
 		cudaStream_t stream);
+
+	void SurfelMotion2DFromOpticalFlow(
+		cudaTextureObject_t rgbd_map_prev,
+		cudaTextureObject_t opticalflow_map, // (dx, dy) in pixel, defined on prev
+		cudaTextureObject_t index_map_prev,	 // Surfel index
+		GArraySlice<float4> surfel_motion_pred,
+		const Extrinsic &extrinsic,
+		const Intrinsic &intrinsic,
+		cudaStream_t stream);
 }

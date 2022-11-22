@@ -44,8 +44,8 @@ def transfer_hdf5(hdf5_file_path, output_dir, img_idx):
                 image = np.array(image)
                 # Padding a zero channel
                 image = np.concatenate((image, np.zeros((image.shape[0], image.shape[1], 1))), axis=2)
-                # Need to have a proper normalization
-                image = (image * 1000.0).astype(np.uint16)
+                # Need to have a proper normalization (Shift and scale)
+                image = ((image + 1000.0) * 10.0).astype(np.uint16)
                 cv2.imwrite(
                     os.path.join(output_dir, f"frame-{img_idx:>06d}.of.png"), image
                 )

@@ -44,7 +44,7 @@ bool star::VolumeDeformFileFetch::FetchOFImage(size_t cam_idx, size_t frame_idx,
     cv::split(of_img_c3, channels);
     cv::merge(std::vector<cv::Mat>{channels[0], channels[1]}, of_img);
     // Rescale and retype
-    of_img.convertTo(of_img, CV_32FC2, 1.0 / 1000.0);
+    of_img.convertTo(of_img, CV_32FC2, 1.0 / 10.0, -1000.0);
     return true;
 }
 

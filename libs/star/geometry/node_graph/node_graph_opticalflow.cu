@@ -61,7 +61,7 @@ namespace star::device
 			vertex.y - vertex_prev.y,
 			vertex.z - vertex_prev.z);
 		// Filter out wrong match
-		if (fabs(est_motion_cam.z) > 0.05f)  // 5cm
+		if (fabs(est_motion_cam.z) > 0.05f) // 5cm
 			return;
 		est_motion_cam *= spatial_weight;
 		float3 est_motion_world = extrinsic.rot * est_motion_cam;
@@ -136,10 +136,47 @@ namespace star::device
 			vertex.x - vertex_prev.x,
 			vertex.y - vertex_prev.y,
 			vertex.z - vertex_prev.z);
-		if (fabs(est_motion_cam.z) > 0.05f)  // 5cm
+		if (fabs(est_motion_cam.z) > 0.05f) // 5cm
 			return;
 
 		float3 est_motion_world = extrinsic.rot * est_motion_cam;
+		surfel_motion_pred[index_prev] = make_float4(
+			est_motion_world.x, est_motion_world.y, est_motion_world.z, 1.f);
+	}
+
+	// Just check what raw-opticalflow looks like in 3D
+	__global__ void SurfelMotion2DFromOpticalFlowKernel(
+		cudaTextureObject_t rgbd_map_prev,
+		cudaTextureObject_t opticalflow_map, // (dx, dy) in pixel
+		cudaTextureObject_t index_map_prev,	 // Surfel index
+		float4 *__restrict__ surfel_motion_pred,
+		const unsigned image_width,
+		const unsigned image_height,
+		mat34 extrinsic,
+		Intrinsic intrinsic)
+	{
+		const auto idx_prev = threadIdx.x + blockDim.x * blockIdx.x;
+		const auto idy_prev = threadIdx.y + blockDim.y * blockIdx.y;
+		if (idx_prev > image_width || idy_prev >= image_height)
+			return;
+
+		float2 opticalflow = tex2D<float2>(opticalflow_map, idx_prev, idy_prev);
+
+		// TODO: add an optical flow: pixel to distance
+		unsigned index_prev = tex2D<unsigned>(index_map_prev, idx_prev, idy_prev); // corresponding surfel index
+		float4 rgbd_prev = tex2D<float4>(rgbd_map_prev, idx_prev, idy_prev);
+		if (index_prev == 0xFFFFFFFF)
+			return;
+		// The 3D motion in world
+		float depth_prev = 1.f / rgbd_prev.w;
+
+		// Opticalflow in 3D
+		float3 of_3d = make_float3(
+			(opticalflow.x) / intrinsic.focal_x * depth_prev,
+			(opticalflow.y) / intrinsic.focal_y * depth_prev,
+			0.f);
+
+		float3 est_motion_world = extrinsic.rot * of_3d;
 		surfel_motion_pred[index_prev] = make_float4(
 			est_motion_world.x, est_motion_world.y, est_motion_world.z, 1.f);
 	}
@@ -232,6 +269,40 @@ void star::EstimateSurfelMotionFromOpticalFlow(
 		vertex_confid_map,
 		rgbd_map_prev,
 		rgbd_map,
+		opticalflow_map, // (dx, dy) in pixel
+		index_map_prev,	 // Surfel index
+		surfel_motion_pred.Ptr(),
+		image_width,
+		image_height,
+		mat34(extrinsic),
+		intrinsic);
+
+	// Sync and check error
+#if defined(CUDA_DEBUG_SYNC_CHECK)
+	cudaSafeCall(cudaStreamSynchronize(stream));
+	cudaSafeCall(cudaGetLastError());
+#endif
+}
+
+void star::SurfelMotion2DFromOpticalFlow(
+	cudaTextureObject_t rgbd_map_prev,
+	cudaTextureObject_t opticalflow_map, // (dx, dy) in pixel, defined on prev
+	cudaTextureObject_t index_map_prev,	 // Surfel index
+	GArraySlice<float4> surfel_motion_pred,
+	const Extrinsic &extrinsic,
+	const Intrinsic &intrinsic,
+	cudaStream_t stream)
+{
+	unsigned image_width, image_height;
+	query2DTextureExtent(rgbd_map_prev, image_width, image_height);
+	dim3 blk(16, 16);
+	dim3 grid(divUp(image_width, blk.x), divUp(image_height, blk.y));
+
+	// Reset
+	cudaSafeCall(cudaMemsetAsync(surfel_motion_pred.Ptr(), 0, sizeof(float4) * surfel_motion_pred.Size(), stream));
+	// Compute
+	device::SurfelMotion2DFromOpticalFlowKernel<<<grid, blk, 0, stream>>>(
+		rgbd_map_prev,
 		opticalflow_map, // (dx, dy) in pixel
 		index_map_prev,	 // Surfel index
 		surfel_motion_pred.Ptr(),
