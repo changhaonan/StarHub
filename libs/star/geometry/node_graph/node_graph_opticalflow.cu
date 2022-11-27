@@ -136,7 +136,7 @@ namespace star::device
 			vertex.x - vertex_prev.x,
 			vertex.y - vertex_prev.y,
 			vertex.z - vertex_prev.z);
-		if (fabs(est_motion_cam.z) > 0.05f) // 5cm
+		if (fabs(est_motion_cam.z) > 0.10f) // Z-shift in 10cm
 			return;
 
 		float3 est_motion_world = extrinsic.rot * est_motion_cam;

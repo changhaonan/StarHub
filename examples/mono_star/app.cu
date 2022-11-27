@@ -39,8 +39,8 @@ int main()
     auto measure_processor = std::make_shared<MeasureProcessorOffline>();
     auto semantic_processor = std::make_shared<SegmentationProcessorOffline>();
     auto geometry_processor = std::make_shared<DynamicGeometryProcessor>();
-    auto opticalflow_processor = std::make_shared<OpticalFlowProcessorOffline>();
-    // auto opticalflow_processor = std::make_shared<OpticalFlowProcessorGMA>();
+    // auto opticalflow_processor = std::make_shared<OpticalFlowProcessorOffline>();
+    auto opticalflow_processor = std::make_shared<OpticalFlowProcessorGMA>();
     auto node_motion_processor = std::make_shared<NodeMotionProcessor>();
     auto opt_processor = std::make_shared<OptimizationProcessorWarpSolver>();
 
@@ -112,23 +112,23 @@ int main()
             nodeflow4solver.node_motion_pred = node_motion_processor->GetNodeMotionPred();
 
             // Solve
-            // opt_processor->ProcessFrame(
-            //     measure4solver,
-            //     render4solver,
-            //     geometry4solver,
-            //     node_graph4solver,
-            //     nodeflow4solver,
-            //     opticalflow4solver,
-            //     frame_idx,
-            //     0);
+            opt_processor->ProcessFrame(
+                measure4solver,
+                render4solver,
+                geometry4solver,
+                node_graph4solver,
+                nodeflow4solver,
+                opticalflow4solver,
+                frame_idx,
+                0);
 
-            // // Apply the warp
-            // geometry_processor->ProcessFrame(
-            //     opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
+            // Apply the warp
+            geometry_processor->ProcessFrame(
+                opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
         }
 
-        // if (frame_idx == 0)
-        if (true)
+        if (frame_idx == 0)
+        // if (true)
         {
             geometry_processor->initGeometry(*measure_processor->GetSurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
             GArrayView<DualQuaternion> empty_se3;
