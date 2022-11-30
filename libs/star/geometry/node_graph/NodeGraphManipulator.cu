@@ -173,9 +173,9 @@ void star::NodeGraphManipulator::CheckSurfelCandidateSupportStatus(
 	const GArrayView<float4> &vertex_confid_candidate,
 	const GArrayView<float4> &node_coord,
 	const GArrayView<uint2> &node_status,
-	GArraySlice<unsigned> &candidate_validity_indicator,
-	GArraySlice<unsigned> &candidate_unsupported_indicator,
-	GArraySlice<ushortX<d_surfel_knn_size>> &candidate_knn,
+	GArraySlice<unsigned> candidate_validity_indicator,
+	GArraySlice<unsigned> candidate_unsupported_indicator,
+	GArraySlice<ushortX<d_surfel_knn_size>> candidate_knn,
 	cudaStream_t stream,
 	const float node_radius_square)
 {
@@ -198,7 +198,7 @@ void star::NodeGraphManipulator::CheckSurfelCandidateSupportStatus(
 void star::NodeGraphManipulator::UpdateCounterNodeOutTrack(
 	const GArrayView<unsigned> &surfel_validity,
 	const GArrayView<ushortX<d_surfel_knn_size>> &surfel_knn,
-	GArraySlice<unsigned> &counter_node_outtrack,
+	GArraySlice<unsigned> counter_node_outtrack,
 	cudaStream_t stream)
 {
 	unsigned num_surfel = surfel_validity.Size();
@@ -214,8 +214,8 @@ void star::NodeGraphManipulator::UpdateCounterNodeOutTrack(
 void star::NodeGraphManipulator::RemoveNodeOutTrackSync(
 	const GArrayView<ushortX<d_surfel_knn_size>> &node_knn,
 	const GArrayView<unsigned> &counter_node_outtrack,
-	GArraySlice<uint2> &node_status,
-	GArraySlice<half> &node_distance,
+	GArraySlice<uint2> node_status,
+	GArraySlice<half> node_distance,
 	unsigned &num_node_remove_count,
 	const float counter_node_outtrack_threshold,
 	const unsigned frozen_time,
@@ -251,8 +251,8 @@ void star::NodeGraphManipulator::RemoveNodeOutTrackSync(
 void star::NodeGraphManipulator::UpdateNodeSemanticProb(
 	const GArrayView<ushortX<d_surfel_knn_size>> &surfel_knn,
 	const GArrayView<ucharX<d_max_num_semantic>> &surfel_semantic_prob,
-	GArraySlice<ucharX<d_max_num_semantic>> &node_semantic_prob,
-	GArraySlice<float> &node_semantic_prob_vote_buffer,
+	GArraySlice<ucharX<d_max_num_semantic>> node_semantic_prob,
+	GArraySlice<float> node_semantic_prob_vote_buffer,
 	cudaStream_t stream)
 {
 	// 1. Clean the voting buffer
@@ -281,8 +281,8 @@ void star::NodeGraphManipulator::UpdateNodeSemanticProb(
 void star::NodeGraphManipulator::UpdateIncNodeSemanticProb(
 	const GArrayView<ushortX<d_surfel_knn_size>> &surfel_knn,
 	const GArrayView<ucharX<d_max_num_semantic>> &surfel_semantic_prob,
-	GArraySlice<ucharX<d_max_num_semantic>> &node_semantic_prob,
-	GArraySlice<float> &node_semantic_prob_vote_buffer,
+	GArraySlice<ucharX<d_max_num_semantic>> node_semantic_prob,
+	GArraySlice<float> node_semantic_prob_vote_buffer,
 	unsigned num_prev_node,
 	cudaStream_t stream)
 {

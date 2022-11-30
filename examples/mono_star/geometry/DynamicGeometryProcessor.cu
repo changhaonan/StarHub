@@ -1,4 +1,5 @@
 #include <star/geometry/node_graph/Skinner.h>
+#include <star/geometry/node_graph/NodeGraphManipulator.h>
 #include <star/geometry/surfel/SurfelNodeDeformer.h>
 #include <star/visualization/Visualizer.h>
 #include <mono_star/common/ConfigParser.h>
@@ -33,6 +34,8 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     // Camera-related
     m_cam2world = config.extrinsic()[0];
 
+    // Regulation
+    m_dynamic_regulation = config.dynamic_regulation();
     // Other
     m_enable_semantic_surfel = config.enable_semantic_surfel();
 }
@@ -87,10 +90,26 @@ void star::DynamicGeometryProcessor::initGeometry(
         m_model_geometry[m_buffer_idx]->LiveVertexConfidenceReadOnly(), frame_idx, false, stream);
     m_node_graph[m_buffer_idx]->ResetNodeGraphConnection(stream);
 
-    // Init Skinning
+    // Perform Skinning without semantic
     auto geometyr4skinner = m_model_geometry[m_buffer_idx]->GenerateGeometry4Skinner();
     auto node_graph4skinner = m_node_graph[m_buffer_idx]->GenerateNodeGraph4Skinner();
-    Skinner::PerformSkinningFromRef(geometyr4skinner, node_graph4skinner, stream);
+    Skinner::PerformSkinningFromLive(geometyr4skinner, node_graph4skinner, stream);
+
+    // Update with skinning with semantic
+    if (m_enable_semantic_surfel) {
+        // Update semantic prob
+		NodeGraphManipulator::UpdateNodeSemanticProb(
+			m_model_geometry[m_buffer_idx]->SurfelKNN().View(),
+			m_model_geometry[m_buffer_idx]->SemanticProbReadOnly(),
+			m_node_graph[m_buffer_idx]->GetNodeSemanticProb(),
+			m_node_graph[m_buffer_idx]->GetNodeSemanticProbVoteBuffer(),
+			stream
+		);
+		// Update node connection
+		m_node_graph[m_buffer_idx]->ComputeNodeGraphConnectionFromSemantic(m_dynamic_regulation, stream);
+		// Update surfel connection
+		Skinner::UpdateSkinnningConnection(geometyr4skinner, node_graph4skinner, stream);
+    }
 }
 
 void star::DynamicGeometryProcessor::updateGeometry(
@@ -176,6 +195,27 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
             m_model_geometry[vis_buffer_idx]->SemanticProbReadOnly(),
             visualize::default_semantic_color_dict,
             context.at(semantic_pcd_name));
+        
+        // Visualize for node graph
+        std::string segmentation_graph_name = "segmentation_graph";
+        context.addGraph(segmentation_graph_name, segmentation_graph_name, m_cam2world.inverse(), m_pcd_size);
+
+        // Transfer to color first
+        std::vector<uchar3> node_vertex_color;
+        visualize::Semantic2Color(
+            m_node_graph[vis_buffer_idx]->GetNodeSemanticProbReadOnly(),
+            visualize::default_semantic_color_dict,
+            node_vertex_color
+        );
+        std::vector<float4> h_node_vertex;
+        m_node_graph[vis_buffer_idx]->GetLiveNodeCoordinate().Download(h_node_vertex);
+        std::vector<ushortX<d_node_knn_size>> h_edges;
+        m_node_graph[vis_buffer_idx]->GetNodeKnn().Download(h_edges);
+        std::vector<floatX<d_node_knn_size>> h_node_connect;
+        m_node_graph[vis_buffer_idx]->GetNodeKnnConnectWeight().Download(h_node_connect);
+        std::cout << "Semantic_node size: " << m_node_graph[vis_buffer_idx]->GetNodeSemanticProbReadOnly().Size() << std::endl;
+        std::cout << "Color_v size: " << node_vertex_color.size() << std::endl;
+        visualize::SaveGraph(h_node_vertex, node_vertex_color, h_edges, h_node_connect, context.at(segmentation_graph_name));
     }
 
     // Save images

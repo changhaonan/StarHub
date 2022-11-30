@@ -100,6 +100,8 @@ namespace star
         Renderer::ObservationMaps m_observation_maps;
         SurfelMapTex m_surfel_map_tex;
 
+        // Regulation
+        floatX<d_max_num_semantic> m_dynamic_regulation;
         // Other
         bool m_enable_semantic_surfel;
     };
