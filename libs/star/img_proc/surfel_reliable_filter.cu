@@ -5,7 +5,7 @@
 
 namespace star::device
 {
-    // constexpr float d_reliable_angle_thresh = 0.2f;  // Strict constraints
+    constexpr float d_reliable_angle_thresh = 0.1f;  // Strict constraints
     // constexpr float d_reliable_angle_thresh = 0.0f; // Loose constraints
     constexpr float d_back_ground_depth = 10.f; // Drag invalid pixel out of range during interpolation
     constexpr float d_invalid_depth = 0.f;
@@ -137,9 +137,9 @@ namespace star::device
                 normal.y / (1e-6f + normal_norm),
                 normal.z / (1e-6f + normal_norm));
             float camera_dot = dot(camera_direction, normal);
-            // if (camera_dot > -d_reliable_angle_thresh) {  // Unreliable
-            //     reliable = false;
-            // }
+            if (camera_dot > -d_reliable_angle_thresh) {  // Unreliable
+                reliable = false;
+            }
         }
 
         if (!reliable)
