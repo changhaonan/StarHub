@@ -30,6 +30,7 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     // Vis
     m_enable_vis = config.enable_vis();
     m_pcd_size = config.pcd_size();
+    m_node_graph_size = config.graph_node_size();
 
     // Camera-related
     m_cam2world = config.extrinsic()[0];
@@ -166,12 +167,6 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_model_geometry[vis_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
         context.at(ref_geo_name));
 
-    // std::string live_geo_name = "live_geo";
-    // context.addPointCloud(live_geo_name, live_geo_name, m_cam2world.inverse(), m_pcd_size);
-    // visualize::SavePointCloud(
-    //     m_model_geometry[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
-    //     context.at(live_geo_name));
-
     std::string live_color_name = "live_color";
     context.addPointCloud(live_color_name, live_color_name, m_cam2world.inverse(), m_pcd_size);
     visualize::SaveColoredPointCloud(
@@ -180,13 +175,13 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         context.at(live_color_name));
 
     // Save node graph
-    context.addGraph("ref_graph", "", m_cam2world.inverse(), m_pcd_size);
+    context.addGraph("ref_graph", "", m_cam2world.inverse(), m_node_graph_size);
     visualize::SaveGraph(
         m_node_graph[vis_buffer_idx]->GetReferenceNodeCoordinate(),
         m_node_graph[vis_buffer_idx]->GetNodeKnn(),
         context.at("ref_graph"));
 
-    context.addGraph("live_graph", "", m_cam2world.inverse(), m_pcd_size);
+    context.addGraph("live_graph", "", m_cam2world.inverse(), m_node_graph_size);
     visualize::SaveGraph(
         m_node_graph[vis_buffer_idx]->GetLiveNodeCoordinate(),
         m_node_graph[vis_buffer_idx]->GetNodeKnn(),
@@ -205,7 +200,7 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         
         // Visualize for node graph
         std::string segmentation_graph_name = "segmentation_graph";
-        context.addGraph(segmentation_graph_name, segmentation_graph_name, m_cam2world.inverse(), m_pcd_size);
+        context.addGraph(segmentation_graph_name, segmentation_graph_name, m_cam2world.inverse(), m_node_graph_size);
 
         // Transfer to color first
         std::vector<uchar3> node_vertex_color;

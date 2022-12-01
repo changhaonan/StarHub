@@ -88,6 +88,7 @@ namespace star
         // Vis
         bool m_enable_vis;
         float m_pcd_size;
+        float m_node_graph_size;
 
         // Camera-related
         Eigen::Matrix4f m_cam2world;

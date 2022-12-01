@@ -83,6 +83,8 @@ void star::SegmentationProcessorOffline::prepareReMap()
     {
         h_remap[m_semantic_label[i]] = i + 1;
     }
+    // All undefined labels are marked as 0
+    h_remap[0] = 0;
     m_remap.upload(h_remap);
 }
 
