@@ -166,11 +166,18 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_model_geometry[vis_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
         context.at(ref_geo_name));
 
-    std::string live_geo_name = "live_geo";
-    context.addPointCloud(live_geo_name, live_geo_name, m_cam2world.inverse(), m_pcd_size);
-    visualize::SavePointCloud(
+    // std::string live_geo_name = "live_geo";
+    // context.addPointCloud(live_geo_name, live_geo_name, m_cam2world.inverse(), m_pcd_size);
+    // visualize::SavePointCloud(
+    //     m_model_geometry[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
+    //     context.at(live_geo_name));
+
+    std::string live_color_name = "live_color";
+    context.addPointCloud(live_color_name, live_color_name, m_cam2world.inverse(), m_pcd_size);
+    visualize::SaveColoredPointCloud(
         m_model_geometry[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
-        context.at(live_geo_name));
+        m_model_geometry[vis_buffer_idx]->ColorTimeReadOnly(),
+        context.at(live_color_name));
 
     // Save node graph
     context.addGraph("ref_graph", "", m_cam2world.inverse(), m_pcd_size);
