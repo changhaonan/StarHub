@@ -22,6 +22,7 @@ namespace star
 			opticalflow_file,
 			point_cloud_file,
 			seg_img_file,
+			keypoint_file,
 		};
 
 		// Just copy the string to data path
@@ -38,6 +39,8 @@ namespace star
 		bool FetchOFImage(size_t cam_idx, size_t frame_idx, void *of_img) override;
 		bool FetchPcd(size_t cam_idx, size_t frame_idx, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcd) override;
 		bool FetchSegImage(size_t cam_idx, size_t frame_idx, cv::Mat &seg_img) override;
+		bool FetchKeypoint(size_t cam_idx, size_t frame_idx, std::vector<cv::KeyPoint> &keypoints,
+						   cv::Mat &descriptors, KeyPointType keypoint_type = KeyPointType::SuperPoints) override;
 
 	private:
 		path m_data_path; // The path prefix for the data

@@ -6,6 +6,11 @@
 
 namespace star
 {
+	enum class KeyPointType
+	{
+		R2D2,
+		SuperPoints
+	};
 
 	/**
 	 * \brief The virtual class for all the input image fetching.
@@ -42,6 +47,10 @@ namespace star
 		virtual bool FetchPcd(size_t cam_idx, size_t frame_idx, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcd) = 0;
 
 		virtual bool FetchSegImage(size_t cam_idx, size_t frame_idx, cv::Mat &seg_img) = 0;
+
+		// KeyPoints
+		virtual bool FetchKeypoint(size_t cam_idx, size_t frame_idx, std::vector<cv::KeyPoint> &keypoints,
+								   cv::Mat &descriptors, KeyPointType keypoint_type) = 0;
 	};
 
 }

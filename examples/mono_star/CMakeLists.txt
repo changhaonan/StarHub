@@ -15,3 +15,14 @@ target_link_libraries(mono_star
     geometry_lib 
     io_lib
     visualization_lib)
+
+add_executable(test_kp test_kp.cu)
+target_link_libraries(test_kp 
+    mono_star_common_lib 
+    mono_star_measure_lib
+    mono_star_geometry_lib
+    mono_star_opt_lib
+    common_lib 
+    geometry_lib 
+    io_lib
+    visualization_lib)

@@ -3,6 +3,9 @@
 #include <star/common/OpenCV_CrossPlatform.h>
 #include "VolumeDeformFileFetch.h"
 #include <iostream>
+#include <fstream>
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 bool star::VolumeDeformFileFetch::FetchDepthImage(size_t cam_idx, size_t frame_idx, cv::Mat &depth_img)
 {
@@ -71,6 +74,22 @@ bool star::VolumeDeformFileFetch::FetchSegImage(size_t cam_idx, size_t frame_idx
     return true;
 }
 
+bool star::VolumeDeformFileFetch::FetchKeypoint(size_t cam_idx, size_t frame_idx, std::vector<cv::KeyPoint> &keypoints,
+                                                cv::Mat &descriptors, KeyPointType keypoint_type)
+{
+    path file_path = FileNameStar(cam_idx, frame_idx, FileType::keypoint_file);
+    // Read the file
+    if (keypoint_type == KeyPointType::SuperPoints)
+    {
+        std::ifstream f(file_path.string());
+        json data = json::parse(f);
+        auto super_points = data["superpoint"];
+    }
+
+    std::cout << "Keypoints loaded from " << file_path.string() << " !" << std::endl;
+    return true;
+}
+
 boost::filesystem::path star::VolumeDeformFileFetch::FileNameVolumeDeform(size_t cam_idx, size_t frame_idx, FileType file_type) const
 {
     // Construct the file_name
@@ -96,6 +115,9 @@ boost::filesystem::path star::VolumeDeformFileFetch::FileNameVolumeDeform(size_t
         break;
     case FileType::seg_img_file:
         file_name += ".seg.png";
+        break;
+    case FileType::keypoint_file:
+        file_name += ".kp.json";
         break;
     default:
         printf("File type is not supported.\n");
