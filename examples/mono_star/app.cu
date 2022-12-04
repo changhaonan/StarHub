@@ -62,6 +62,7 @@ int main()
 
         // KeyPoint process (Expand Measurement)
         keypoint_processor->ProcessFrame(measure_processor->GetSurfelMapTex(), frame_idx, 0);
+
         if (frame_idx > 0)
         {
             // Optical flow process
