@@ -74,18 +74,25 @@ bool star::VolumeDeformFileFetch::FetchSegImage(size_t cam_idx, size_t frame_idx
     return true;
 }
 
-bool star::VolumeDeformFileFetch::FetchKeypoint(size_t cam_idx, size_t frame_idx, std::vector<cv::KeyPoint> &keypoints,
+bool star::VolumeDeformFileFetch::FetchKeypoint(size_t cam_idx, size_t frame_idx, cv::Mat &keypoints,
                                                 cv::Mat &descriptors, KeyPointType keypoint_type)
 {
     path file_path = FileNameStar(cam_idx, frame_idx, FileType::keypoint_file);
     // Read the file
     if (keypoint_type == KeyPointType::SuperPoints)
     {
-        std::ifstream f(file_path.string());
-        json data = json::parse(f);
-        auto super_points = data["superpoint"];
+        // Read xml using opencv
+        cv::FileStorage fs(file_path.string(), cv::FileStorage::READ);
+        fs["superpoint_keypoints"] >> keypoints;
+        fs["superpoint_descriptors"] >> descriptors;
     }
-
+    else if (keypoint_type == KeyPointType::R2D2) 
+    {
+        // Read xml using opencv
+        cv::FileStorage fs(file_path.string(), cv::FileStorage::READ);
+        fs["r2d2_keypoints"] >> keypoints;
+        fs["r2d2_descriptors"] >> descriptors;
+    }
     std::cout << "Keypoints loaded from " << file_path.string() << " !" << std::endl;
     return true;
 }
@@ -117,7 +124,7 @@ boost::filesystem::path star::VolumeDeformFileFetch::FileNameVolumeDeform(size_t
         file_name += ".seg.png";
         break;
     case FileType::keypoint_file:
-        file_name += ".kp.json";
+        file_name += ".feature.xml";
         break;
     default:
         printf("File type is not supported.\n");

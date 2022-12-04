@@ -39,7 +39,7 @@ namespace star
 		bool FetchOFImage(size_t cam_idx, size_t frame_idx, void *of_img) override;
 		bool FetchPcd(size_t cam_idx, size_t frame_idx, pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcd) override;
 		bool FetchSegImage(size_t cam_idx, size_t frame_idx, cv::Mat &seg_img) override;
-		bool FetchKeypoint(size_t cam_idx, size_t frame_idx, std::vector<cv::KeyPoint> &keypoints,
+		bool FetchKeypoint(size_t cam_idx, size_t frame_idx, cv::Mat &keypoints,
 						   cv::Mat &descriptors, KeyPointType keypoint_type = KeyPointType::SuperPoints) override;
 
 	private:

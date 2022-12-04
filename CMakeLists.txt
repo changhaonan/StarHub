@@ -36,7 +36,7 @@ find_package(glfw3 REQUIRED)
 # find_package(OpenGL REQUIRED)
 
 # OpenCV
-find_package(OpenCV 4.6 REQUIRED COMPONENTS core imgproc highgui)
+find_package(OpenCV 4.6 REQUIRED COMPONENTS core imgproc highgui features2d)
 include_directories(${OpenCV_INCLUDE_DIR})
 
 # Boost

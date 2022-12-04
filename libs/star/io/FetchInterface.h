@@ -49,7 +49,7 @@ namespace star
 		virtual bool FetchSegImage(size_t cam_idx, size_t frame_idx, cv::Mat &seg_img) = 0;
 
 		// KeyPoints
-		virtual bool FetchKeypoint(size_t cam_idx, size_t frame_idx, std::vector<cv::KeyPoint> &keypoints,
+		virtual bool FetchKeypoint(size_t cam_idx, size_t frame_idx, cv::Mat &keypoints,
 								   cv::Mat &descriptors, KeyPointType keypoint_type) = 0;
 	};
 
