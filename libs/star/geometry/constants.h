@@ -17,4 +17,7 @@ namespace star
     constexpr int d_stable_surfel_confidence_threshold = 1;
     constexpr int d_rendering_recent_time_threshold = 3;
     constexpr int d_fusion_map_scale = 4;
+
+    // Keypoint related
+    constexpr unsigned d_max_num_keypoints = 10000;
 }

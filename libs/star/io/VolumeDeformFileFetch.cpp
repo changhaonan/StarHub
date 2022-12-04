@@ -92,6 +92,8 @@ bool star::VolumeDeformFileFetch::FetchKeypoint(size_t cam_idx, size_t frame_idx
         cv::FileStorage fs(file_path.string(), cv::FileStorage::READ);
         fs["r2d2_keypoints"] >> keypoints;
         fs["r2d2_descriptors"] >> descriptors;
+        // Drop the last channel for keypoints
+        keypoints = keypoints.colRange(0, 2);
     }
     std::cout << "Keypoints loaded from " << file_path.string() << " !" << std::endl;
     return true;

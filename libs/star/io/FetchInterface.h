@@ -3,15 +3,10 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <memory>
+#include <star/common/common_types_cpu.h>
 
 namespace star
 {
-	enum class KeyPointType
-	{
-		R2D2,
-		SuperPoints
-	};
-
 	/**
 	 * \brief The virtual class for all the input image fetching.
 	 *        The implementation should support threaded fetching.

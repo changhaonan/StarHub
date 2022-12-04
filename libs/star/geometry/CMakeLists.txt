@@ -5,7 +5,8 @@ file(GLOB GEOMETRY_SRC
     tsdf/*.h tsdf/*.hpp tsdf/*.cpp tsdf/*.cu tsdf/*.cuh
     rgbd_image/*.h rgbd_image/*.hpp rgbd_imagel/*.cpp rgbd_image/*.cu rgbd_image/*.cuh
     sampling/*.h sampling/*.hpp sampling/*.cpp sampling/*.cu sampling/*.cuh
-    node_graph/*.h node_graph/*.hpp node_graph/*.cpp node_graph/*.cu node_graph/*.cuh)
+    node_graph/*.h node_graph/*.hpp node_graph/*.cpp node_graph/*.cu node_graph/*.cuh
+    keypoint/*.h keypoint/*.hpp keypoint/*.cpp keypoint/*.cu keypoint/*.cuh)
 
 file(GLOB RENDER_SRC render/*.h render/*.cu)
 file(GLOB GLAD_SRC render/glad.c render/glad/glad.h)
