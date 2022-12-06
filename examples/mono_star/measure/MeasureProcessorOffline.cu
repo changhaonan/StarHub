@@ -9,6 +9,7 @@ star::MeasureProcessorOffline::MeasureProcessorOffline()
 
 	m_fetcher = std::make_shared<VolumeDeformFileFetch>(config.data_path());
 	m_surfel_map = std::make_shared<SurfelMap>(config.downsample_img_cols(), config.downsample_img_rows());
+	m_surfel_map_prev = std::make_shared<SurfelMap>(config.downsample_img_cols(), config.downsample_img_rows());
 	m_surfel_map_initializer = std::make_shared<SurfelMapInitializer>(
 		config.raw_img_cols(),
 		config.raw_img_rows(),
@@ -76,6 +77,7 @@ void star::MeasureProcessorOffline::ProcessFrame(
 		stream));
 
 	// 2. Initialize surfel map
+	m_surfel_map_prev.swap(m_surfel_map);  // Replace cur & prev
 	m_surfel_map_initializer->InitFromRGBDImage(
 		GArrayView(m_g_raw_color_img),
 		GArrayView(m_g_raw_depth_img),
@@ -111,6 +113,14 @@ void star::MeasureProcessorOffline::saveContext(
 		m_surfel_map->VertexConfidReadOnly(),
 		m_surfel_map->NormalRadiusReadOnly(),
 		context.at("m_normal"));
+	
+	if (frame_idx != 0 && m_surfel_map_prev->NumValidSurfels() > 0) {
+		context.addPointCloud("m_color_prev", "", Eigen::Matrix4f::Identity(), m_pcd_size);
+		visualize::SaveColoredPointCloud(
+			m_surfel_map_prev->VertexConfidReadOnly(),
+			m_surfel_map_prev->ColorTimeReadOnly(),
+			context.at("m_color_prev"));
+	}
 
 	// Save images
 	context.addImage("measure-rgb");

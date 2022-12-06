@@ -2,6 +2,7 @@
 #include <Eigen/Eigen>
 #include <string>
 #include <star/common/common_types.h>
+#include <star/common/common_types_cpu.h>
 #include <star/common/string_utils.hpp>
 #include <boost/filesystem.hpp>
 #include "global_configs.h"
@@ -39,9 +40,9 @@ namespace star
     public:
         unsigned num_cam() const { return m_num_cam; }
         const Eigen::Matrix4f *extrinsic() const { return m_cam2world; }
-        Intrinsic depth_intrinsic_raw(size_t cam_idx=0) const { return raw_depth_intrinsic[cam_idx]; }
-        Intrinsic rgb_intrinsic_raw(size_t cam_idx=0) const { return raw_rgb_intrinsic[cam_idx]; }
-        Intrinsic rgb_intrinsic_downsample(size_t cam_idx=0) const { return downsample_rgb_intrinsic[cam_idx]; }
+        Intrinsic depth_intrinsic_raw(size_t cam_idx = 0) const { return raw_depth_intrinsic[cam_idx]; }
+        Intrinsic rgb_intrinsic_raw(size_t cam_idx = 0) const { return raw_rgb_intrinsic[cam_idx]; }
+        Intrinsic rgb_intrinsic_downsample(size_t cam_idx = 0) const { return downsample_rgb_intrinsic[cam_idx]; }
 
         unsigned raw_img_rows(const size_t cam_idx = 0) const { return m_raw_img_rows[cam_idx]; }
         unsigned raw_img_cols(const size_t cam_idx = 0) const { return m_raw_img_cols[cam_idx]; }
@@ -147,6 +148,18 @@ namespace star
         std::vector<int> m_semantic_label;
         unsigned m_max_seg_label = 0;
 
+        // Keypoint-related
+    public:
+        bool use_keypoint() const { return m_use_keypoint; }
+        KeyPointType keypoint_type() const { return m_keypoint_type; }
+        float kp_match_ratio_thresh() const { return m_kp_match_ratio_thresh; }
+        float kp_match_dist_thresh() const { return m_kp_match_dist_thresh; }
+    private:
+        bool m_use_keypoint = false;
+        float m_kp_match_ratio_thresh = 0.7f;
+        float m_kp_match_dist_thresh = 0.1f;
+        KeyPointType m_keypoint_type = KeyPointType::SuperPoints;
+
         // Sample-related
     public:
         bool use_resample() const { return m_use_resample; }
@@ -194,7 +207,7 @@ namespace star
         float graph_node_size() const { return m_graph_node_size; }
 
     private:
-        bool  m_enable_vis = false;
+        bool m_enable_vis = false;
         float m_pcd_size = 0.f;
         float m_graph_node_size = 0.f;
 

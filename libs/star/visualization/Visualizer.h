@@ -28,7 +28,6 @@ namespace star::visualize
 	void SaveDepthImage(const GArray2D<unsigned short> &depth_img, const std::string &path);
 	void DrawDepthImage(cudaTextureObject_t depth_img);
 	void SaveDepthImage(cudaTextureObject_t depth_img, const std::string &path);
-
 	void DrawDepthFloatImage(cudaTextureObject_t depth_img); // Draw Depth Image in float format
 
 	/* The color image drawing methods

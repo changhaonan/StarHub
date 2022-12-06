@@ -35,7 +35,7 @@ int main()
         cv::Mat keypoints;
         cv::Mat descriptors;
         cv::Mat rgb_img;
-        fetcher->FetchKeypoint(0, img_idx, keypoints, descriptors, KeyPointType::R2D2);
+        fetcher->FetchKeypoint(0, img_idx, keypoints, descriptors, KeyPointType::SuperPoints);
         fetcher->FetchRGBImage(0, img_idx, rgb_img);
 
         // Transfer cv::Mat into std::vector<cv::KeyPoint>
@@ -62,7 +62,7 @@ int main()
                 if (knn_matches[j][0].distance < ratio_thresh * knn_matches[j][1].distance)
                 {
                     good_matches.push_back(knn_matches[j][0]);
-                    if (good_matches.size() > 500) break;
+                    if (good_matches.size() > 200) break;
                 }
             }
 

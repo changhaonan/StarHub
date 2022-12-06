@@ -50,6 +50,7 @@ namespace star
 		GArray<uchar3> m_g_raw_color_img;
 		GArray<unsigned short> m_g_raw_depth_img;
 		SurfelMap::Ptr m_surfel_map;
+		SurfelMap::Ptr m_surfel_map_prev;
 		SurfelMapInitializer::Ptr m_surfel_map_initializer;
 
 		// Camera-related

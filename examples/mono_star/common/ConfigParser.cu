@@ -147,6 +147,23 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
         m_resample_prob = 1.f;
     }
 
+    // Keypoint-related
+    check_and_load(m_use_keypoint, "use_keypoint", false);
+    if (m_use_keypoint)
+    {
+        std::string keypoint_type_string = config_json.at("keypoint_type");
+        if (keypoint_type_string == "SuperPoints" || keypoint_type_string == "SuperPoint" || keypoint_type_string == "superpoints" || keypoint_type_string == "superpoints")
+        {
+            m_keypoint_type = KeyPointType::SuperPoints;
+        }
+        else if (keypoint_type_string == "R2D2" || keypoint_type_string == "r2d2")
+        {
+            m_keypoint_type = KeyPointType::R2D2;
+        }
+        m_kp_match_ratio_thresh = config_json.at("kp_match_ratio_thresh");
+        m_kp_match_dist_thresh = config_json.at("kp_match_dist_thresh");
+    }
+
     // Sys mode selection
     m_measure_mode = config_json.at("measure_mode");
     m_segmentation_mode = config_json.at("segmentation_mode");
