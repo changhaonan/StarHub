@@ -19,7 +19,7 @@ namespace star
 
 		// Only modifiable by warp solver
 		friend class SolverIterationData;
-		void setDefaultValue();
+		void __host__ __device__ setDefaultValue();
 		void setGlobalIterationValue();
 		void setLocalIterationValue();
 

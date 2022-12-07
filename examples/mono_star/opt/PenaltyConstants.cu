@@ -26,7 +26,7 @@ void star::PenaltyConstants::setGlobalIterationValue()
 void star::PenaltyConstants::setLocalIterationValue()
 {
 	m_lambda_dense_image_depth = 0.1f;
-	m_lambda_dense_image_optical_flow = 0.1f;
+	m_lambda_dense_image_optical_flow = 0.1f;  // Local iteration don't use optical flow
 	m_lambda_reg = 1.0f; // Local iteration has larger regulation (0.3)
 	m_lambda_node_translation = 0.0f;
 	m_lambda_feature = 0.f;

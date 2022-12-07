@@ -63,84 +63,84 @@ int main()
         // KeyPoint process (Expand Measurement)
         keypoint_processor->ProcessFrame(measure_processor->GetSurfelMapTex(), frame_idx, 0);
 
-        // if (frame_idx > 0)
-        // {
-        //     // Optical flow process
-        //     auto surfel_map_this = measure_processor->GetSurfelMapTex();
-        //     auto surfel_map_prev = geometry_processor->GetSurfelMapTex();
-        //     opticalflow_processor->ProcessFrame(surfel_map_this, surfel_map_prev, frame_idx, 0);
+        if (frame_idx > 0)
+        {
+            // Optical flow process
+            auto surfel_map_this = measure_processor->GetSurfelMapTex();
+            auto surfel_map_prev = geometry_processor->GetSurfelMapTex();
+            opticalflow_processor->ProcessFrame(surfel_map_this, surfel_map_prev, frame_idx, 0);
 
-        //     // Save the surfelmotion
-        //     std::string surfelmotion_name = "surfel_motion";
-        //     context.addPointCloud(surfelmotion_name, surfelmotion_name, config.extrinsic()[0].inverse(), config.pcd_size() * 0.1);
-        //     visualize::SavePointCloudWithNormal(
-        //         geometry_processor->ActiveGeometry()->ReferenceVertexConfidenceReadOnly(),
-        //         opticalflow_processor->GetSurfelMotion(),
-        //         context.at(surfelmotion_name));
+            // Save the surfelmotion
+            std::string surfelmotion_name = "surfel_motion";
+            context.addPointCloud(surfelmotion_name, surfelmotion_name, config.extrinsic()[0].inverse(), config.pcd_size() * 0.1);
+            visualize::SavePointCloudWithNormal(
+                geometry_processor->ActiveGeometry()->ReferenceVertexConfidenceReadOnly(),
+                opticalflow_processor->GetSurfelMotion(),
+                context.at(surfelmotion_name));
 
-        //     // Node flow process
-        //     node_motion_processor->ProcessFrame(
-        //         surfel_map_this, surfel_map_prev, opticalflow_processor->GetOpticalFlow(),
-        //         geometry_processor->ActiveGeometry()->GenerateGeometry4Solver(),
-        //         geometry_processor->ActiveNodeGraph()->GetNodeSize(),
-        //         frame_idx,
-        //         0);
+            // Node flow process
+            node_motion_processor->ProcessFrame(
+                surfel_map_this, surfel_map_prev, opticalflow_processor->GetOpticalFlow(),
+                geometry_processor->ActiveGeometry()->GenerateGeometry4Solver(),
+                geometry_processor->ActiveNodeGraph()->GetNodeSize(),
+                frame_idx,
+                0);
 
-        //     // Save the nodemotion
-        //     std::string nodemotion_name = "node_motion";
-        //     context.addPointCloud(nodemotion_name, nodemotion_name, config.extrinsic()[0].inverse(), config.pcd_size());
-        //     visualize::SavePointCloudWithNormal(
-        //         geometry_processor->ActiveNodeGraph()->GetReferenceNodeCoordinate(),
-        //         node_motion_processor->GetNodeMotionPred(),
-        //         context.at(nodemotion_name));
+            // Save the nodemotion
+            std::string nodemotion_name = "node_motion";
+            context.addPointCloud(nodemotion_name, nodemotion_name, config.extrinsic()[0].inverse(), config.pcd_size());
+            visualize::SavePointCloudWithNormal(
+                geometry_processor->ActiveNodeGraph()->GetReferenceNodeCoordinate(),
+                node_motion_processor->GetNodeMotionPred(),
+                context.at(nodemotion_name));
 
-        //     // Start the optimization process
-        //     auto geometry4solver = geometry_processor->ActiveGeometry()->GenerateGeometry4Solver();
-        //     auto node_graph4solver = geometry_processor->ActiveNodeGraph()->GenerateNodeGraph4Solver();
+            // Start the optimization process
+            auto geometry4solver = geometry_processor->ActiveGeometry()->GenerateGeometry4Solver();
+            auto node_graph4solver = geometry_processor->ActiveNodeGraph()->GenerateNodeGraph4Solver();
 
-        //     Measure4Solver measure4solver;
-        //     measure4solver.num_cam = 1;
-        //     measure4solver.vertex_confid_map[0] = surfel_map_this.vertex_confid;
-        //     measure4solver.normal_radius_map[0] = surfel_map_this.normal_radius;
-        //     measure4solver.index_map[0] = surfel_map_this.index;
+            Measure4Solver measure4solver;
+            measure4solver.num_cam = 1;
+            measure4solver.vertex_confid_map[0] = surfel_map_this.vertex_confid;
+            measure4solver.normal_radius_map[0] = surfel_map_this.normal_radius;
+            measure4solver.index_map[0] = surfel_map_this.index;
 
-        //     Render4Solver render4solver;
-        //     render4solver.num_cam = 1;
-        //     render4solver.reference_vertex_map[0] = surfel_map_prev.vertex_confid;
-        //     render4solver.reference_normal_map[0] = surfel_map_prev.normal_radius;
-        //     render4solver.index_map[0] = surfel_map_prev.index;
+            Render4Solver render4solver;
+            render4solver.num_cam = 1;
+            render4solver.reference_vertex_map[0] = surfel_map_prev.vertex_confid;
+            render4solver.reference_normal_map[0] = surfel_map_prev.normal_radius;
+            render4solver.index_map[0] = surfel_map_prev.index;
 
-        //     OpticalFlow4Solver opticalflow4solver;
-        //     opticalflow4solver.num_cam = 1;
-        //     opticalflow4solver.opticalflow_map[0] = opticalflow_processor->GetOpticalFlow();
+            OpticalFlow4Solver opticalflow4solver;
+            opticalflow4solver.num_cam = 1;
+            opticalflow4solver.opticalflow_map[0] = opticalflow_processor->GetOpticalFlow();
 
-        //     NodeFlow4Solver nodeflow4solver;
-        //     nodeflow4solver.num_node = node_motion_processor->GetNodeMotionPred().Size();
-        //     nodeflow4solver.node_motion_pred = node_motion_processor->GetNodeMotionPred();
+            NodeFlow4Solver nodeflow4solver;
+            nodeflow4solver.num_node = node_motion_processor->GetNodeMotionPred().Size();
+            nodeflow4solver.node_motion_pred = node_motion_processor->GetNodeMotionPred();
 
-        //     // Solve
-        //     opt_processor->ProcessFrame(
-        //         measure4solver,
-        //         render4solver,
-        //         geometry4solver,
-        //         node_graph4solver,
-        //         nodeflow4solver,
-        //         opticalflow4solver,
-        //         frame_idx,
-        //         0);
+            // Solve
+            opt_processor->ProcessFrame(
+                measure4solver,
+                render4solver,
+                geometry4solver,
+                node_graph4solver,
+                nodeflow4solver,
+                opticalflow4solver,
+                frame_idx,
+                0);
 
-        //     // Apply the warp
-        //     geometry_processor->ProcessFrame(
-        //         opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
-        // }
+            // Apply the warp
+            geometry_processor->ProcessFrame(
+                opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
+        }
 
-        // if (frame_idx == 0)
-        // // if (true)
-        // {
-        //     geometry_processor->initGeometry(*measure_processor->GetSurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
-        //     GArrayView<DualQuaternion> empty_se3;
-        //     geometry_processor->ProcessFrame(empty_se3, frame_idx, 0);
-        // }
+        if (frame_idx == 0)
+        // if (true)
+        {
+            geometry_processor->initGeometry(*measure_processor->GetSurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
+            GArrayView<DualQuaternion> empty_se3;
+            geometry_processor->ProcessFrame(empty_se3, frame_idx, 0);
+        }
         // Clean
         context.close();
     }

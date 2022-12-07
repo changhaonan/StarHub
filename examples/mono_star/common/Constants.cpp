@@ -30,5 +30,5 @@ const int star::Constants::kStableSurfelConfidenceThreshold = 1;
 // Use elastic penalty or not
 const bool star::Constants::kUseElasticPenalty = true;
 const int star::Constants::kNumGlobalSolverItarations = 3;
-// const int star::Constants::kNumGaussNewtonIterations = 6;
-const int star::Constants::kNumGaussNewtonIterations = 10;
+const int star::Constants::kNumGaussNewtonIterations = 6;
+// const int star::Constants::kNumGaussNewtonIterations = 10;

@@ -40,8 +40,8 @@ int main()
 
         // Transfer cv::Mat into std::vector<cv::KeyPoint>
         std::vector<cv::KeyPoint> keypoints_vec;
-        for (auto i = 0; i < keypoints.rows; ++i) {
-            cv::Point2f pt(keypoints.at<float>(i, 0), keypoints.at<float>(i, 1));
+        for (auto j = 0; j < keypoints.rows; ++j) {
+            cv::Point2f pt(keypoints.at<float>(j, 0), keypoints.at<float>(j, 1));
             cv::KeyPoint kp;
             kp.pt = pt;
             keypoints_vec.emplace_back(kp);
