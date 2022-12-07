@@ -235,3 +235,29 @@ star::LiveSurfelGeometry::GeometryAttributes star::LiveSurfelGeometry::Geometry(
 	geometry_attributes.color_time = m_color_time.Slice();
 	return geometry_attributes;
 }
+
+star::SurfelGeometrySC::SurfelGeometrySC() : SurfelGeometry()
+{
+	// Allocate buffer
+	m_reference_vertex_confid_buffer.AllocateBuffer(d_max_num_surfels);
+	m_reference_normal_radius_buffer.AllocateBuffer(d_max_num_surfels);
+	m_live_vertex_confid_buffer.AllocateBuffer(d_max_num_surfels);
+	m_live_normal_radius_buffer.AllocateBuffer(d_max_num_surfels);
+	m_color_time_buffer.AllocateBuffer(d_max_num_surfels);
+
+	// Bind buffer
+	m_reference_vertex_confid = GSliceBufferArray(m_reference_vertex_confid_buffer.Ptr(), m_reference_vertex_confid_buffer.BufferSize());
+	m_reference_normal_radius = GSliceBufferArray(m_reference_normal_radius_buffer.Ptr(), m_reference_normal_radius_buffer.BufferSize());
+	m_live_vertex_confid = GSliceBufferArray(m_live_vertex_confid_buffer.Ptr(), m_live_vertex_confid_buffer.BufferSize());
+	m_live_normal_radius = GSliceBufferArray(m_live_normal_radius_buffer.Ptr(), m_live_normal_radius_buffer.BufferSize());
+	m_color_time = GSliceBufferArray(m_color_time_buffer.Ptr(), m_color_time_buffer.BufferSize());
+}
+
+star::SurfelGeometrySC::~SurfelGeometrySC()
+{
+	m_reference_vertex_confid_buffer.ReleaseBuffer();
+	m_reference_normal_radius_buffer.ReleaseBuffer();
+	m_live_vertex_confid_buffer.ReleaseBuffer();
+	m_live_normal_radius_buffer.ReleaseBuffer();
+	m_color_time_buffer.ReleaseBuffer();
+}

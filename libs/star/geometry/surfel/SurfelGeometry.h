@@ -18,7 +18,7 @@ namespace star
 
 	class SurfelGeometry
 	{
-	private:
+	protected:
 		// The underlying struct for the surfel model
 		// Read-Write access, but not owned
 		GSliceBufferArray<float4> m_reference_vertex_confid;
@@ -28,8 +28,8 @@ namespace star
 		GSliceBufferArray<float4> m_color_time;
 		GBufferArray<ucharX<d_max_num_semantic>> m_semantic_prob;
 
-		friend struct GLSurfelGeometryVBO;	// map from graphic pipelines
-		friend class SurfelNodeDeformer;	// deform the vertex/normal given warp field
+		friend struct GLSurfelGeometryVBO; // map from graphic pipelines
+		friend class SurfelNodeDeformer;   // deform the vertex/normal given warp field
 		friend class LiveSurfelGeometry;
 		friend class GeometryCompactHandler;
 
@@ -67,7 +67,7 @@ namespace star
 		GArraySlice<float4> LiveNormalRadius() { return m_live_normal_radius.Slice(); }
 		GArraySlice<float4> ColorTime() { return m_color_time.Slice(); }
 		GArraySlice<ucharX<d_max_num_semantic>> SemanticProb() { return m_semantic_prob.Slice(); }
-		
+
 		GArrayView<float4> ReferenceVertexArray() const { return m_reference_vertex_confid.View(); }
 		GArrayView<float4> ReferenceNormalArray() const { return m_reference_normal_radius.View(); }
 
@@ -81,7 +81,7 @@ namespace star
 			unsigned num_vertex;
 		};
 		// For Solver
-		Geometry4Solver GenerateGeometry4Solver() const;				
+		Geometry4Solver GenerateGeometry4Solver() const;
 		// For Skinner
 		Geometry4Skinner GenerateGeometry4Skinner();
 
@@ -127,7 +127,7 @@ namespace star
 		friend class GLLiveSurfelGeometryVBO; // require full access
 		friend class SurfelFilter;
 
-	private:
+	protected:
 		GSliceBufferArray<float4> m_live_vertex_confid;
 		GSliceBufferArray<float4> m_live_normal_radius;
 		GSliceBufferArray<float4> m_color_time;
@@ -159,6 +159,23 @@ namespace star
 		// Access
 		GArrayView<float4> LiveVertexConfidenceReadOnly() const { return m_live_vertex_confid.View(); }
 		GArrayView<float4> ColorTimeReadOnly() const { return m_color_time.View(); }
+	};
+
+	// SurfelGeometry, but self-contained
+	class SurfelGeometrySC : public SurfelGeometry
+	{
+	protected:
+		GBufferArray<float4> m_reference_vertex_confid_buffer;
+		GBufferArray<float4> m_reference_normal_radius_buffer;
+		GBufferArray<float4> m_live_vertex_confid_buffer;
+		GBufferArray<float4> m_live_normal_radius_buffer;
+		GBufferArray<float4> m_color_time_buffer;
+
+	public:
+		using Ptr = std::shared_ptr<SurfelGeometrySC>;
+		SurfelGeometrySC();
+		~SurfelGeometrySC();
+		STAR_NO_COPY_ASSIGN_MOVE(SurfelGeometrySC);
 	};
 
 }

@@ -64,7 +64,7 @@ star::KeyPointProcessor::KeyPointProcessor()
     m_keypoints_dected = std::make_shared<KeyPoints>(m_keypoint_type);
     m_model_keypoints[0] = std::make_shared<KeyPoints>(m_keypoint_type);
     m_model_keypoints[1] = std::make_shared<KeyPoints>(m_keypoint_type);
-
+    
     // Camera parameters
     m_step_frame = config.step_frame();
     m_start_frame_idx = config.start_frame_idx();
@@ -171,8 +171,8 @@ void star::KeyPointProcessor::build3DKeyPoint(
         surfel_map_tex.color_time,
         surfel_map_tex.index,
         m_g_keypoint_2d.Ptr(),
-        m_keypoints_dected->VertexConfid().Ptr(),
-        m_keypoints_dected->NormalRadius().Ptr(),
+        m_keypoints_dected->LiveVertexConfidence().Ptr(),
+        m_keypoints_dected->LiveNormalRadius().Ptr(),
         m_keypoints_dected->ColorTime().Ptr(),
         num_keypoints);
     m_keypoints_dected->Resize(num_keypoints);
@@ -191,7 +191,7 @@ void star::KeyPointProcessor::saveContext(unsigned frame_idx, cudaStream_t strea
 
     context.addPointCloud("keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
     visualize::SaveColoredPointCloud(
-        m_keypoints_dected->VertexConfidReadOnly(), 
+        m_keypoints_dected->LiveVertexConfidenceReadOnly(), 
         m_keypoints_dected->ColorTimeReadOnly(),
         context.at("keypoints"));
 
@@ -217,8 +217,8 @@ void star::KeyPointProcessor::getMatchedKeyPoints(cudaStream_t stream)
     dim3 blk(128);
     dim3 grid(divUp(m_num_valid_matches, blk.x));
     device::GetMatchedPointKernel<<<grid, blk, 0, stream>>>(
-        m_model_keypoints[m_buffer_idx]->VertexConfid().Ptr(),
-        m_keypoints_dected->VertexConfid().Ptr(),
+        m_model_keypoints[m_buffer_idx]->LiveVertexConfidence().Ptr(),
+        m_keypoints_dected->LiveVertexConfidence().Ptr(),
         m_matched_vertex_src.Ptr(),
         m_matched_vertex_dst.Ptr(),
         m_keypoint_matches.Ptr(),

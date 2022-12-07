@@ -19,8 +19,8 @@ void star::MatchKeyPointsBFOpenCV(
     // Download vertex
     std::vector<float4> vertex_confid_src_vec;
     std::vector<float4> vertex_confid_dst_vec;
-    key_points_src.VertexConfidReadOnly().Download(vertex_confid_src_vec);
-    key_points_dst.VertexConfidReadOnly().Download(vertex_confid_dst_vec);
+    key_points_src.LiveVertexConfidenceReadOnly().Download(vertex_confid_src_vec);
+    key_points_dst.LiveVertexConfidenceReadOnly().Download(vertex_confid_dst_vec);
 
     // Create cv::Mat from std::vector<float>
     cv::Mat descriptor_src_mat(key_points_src.NumKeyPoints(), key_points_src.DescriptorDim(), CV_32F, descriptor_src_vec.data());
