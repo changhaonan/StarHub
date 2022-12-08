@@ -103,7 +103,8 @@ void star::KeyPointDetectProcessor::ProcessFrame(const SurfelMap &surfel_map, un
     // Resize
     m_g_keypoints.ResizeArrayOrException(num_keypoints_detected);
     m_g_descriptors.ResizeArrayOrException(num_keypoints_detected * KeyPoints::GetDescriptorDim(m_keypoint_type));
-    
+    m_detected_keypoints->Resize(num_keypoints_detected);
+
     // Build 3d keypoint
     // Init keypoint geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
@@ -139,7 +140,8 @@ void star::KeyPointDetectProcessor::ProcessFrame(const SurfelMap &surfel_map, un
 void star::KeyPointDetectProcessor::saveContext(unsigned frame_idx, cudaStream_t stream)
 {
     auto &context = easy3d::Context::Instance();
-
+    std::cout << "Num keypoints: " << m_detected_keypoints->NumKeyPoints() << std::endl;
+    std::cout << "Keypoints size: " << m_detected_keypoints->LiveVertexConfidenceReadOnly().Size() << std::endl;
     context.addPointCloud("d_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
     visualize::SaveColoredPointCloud(
         m_detected_keypoints->LiveVertexConfidenceReadOnly(), 

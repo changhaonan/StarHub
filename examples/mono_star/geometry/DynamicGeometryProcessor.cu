@@ -120,6 +120,8 @@ void star::DynamicGeometryProcessor::initKeyPoints(
     const unsigned frame_idx,
     cudaStream_t stream)
 {
+    // Resize keypoints
+    m_model_keypoints[m_buffer_idx]->Resize(keypoints.Size());
     // Init keypoint geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
         *m_model_keypoints[m_buffer_idx],
