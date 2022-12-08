@@ -3,26 +3,26 @@
 #include <star/geometry/keypoint/KeyPointMatcher.h>
 #include <star/visualization/Visualizer.h>
 
-// namespace star::device
-// {
-//     __global__ void GetMatchedPointKernel(
-//         const float4 *__restrict__ vertex_confid_src,
-//         const float4 *__restrict__ vertex_confid_dst,
-//         float4* __restrict__ matched_vertex_confid_src,
-//         float4* __restrict__ matched_vertex_confid_dst,
-//         int2 *__restrict__ matches,
-//         const unsigned num_matches)
-//     {
-//         const unsigned idx = threadIdx.x + blockIdx.x * blockDim.x;
-//         if (idx >= num_matches)
-//             return;
+namespace star::device
+{
+    __global__ void GetMatchedPointKernel(
+        const float4 *__restrict__ vertex_confid_src,
+        const float4 *__restrict__ vertex_confid_dst,
+        float4 *__restrict__ matched_vertex_confid_src,
+        float4 *__restrict__ matched_vertex_confid_dst,
+        int2 *__restrict__ matches,
+        const unsigned num_matches)
+    {
+        const unsigned idx = threadIdx.x + blockIdx.x * blockDim.x;
+        if (idx >= num_matches)
+            return;
 
-//         const int2 match = matches[idx];
-//         matched_vertex_confid_src[idx] = vertex_confid_src[match.x];
-//         matched_vertex_confid_dst[idx] = vertex_confid_dst[match.y];
-//     }
+        const int2 match = matches[idx];
+        matched_vertex_confid_src[idx] = vertex_confid_src[match.x];
+        matched_vertex_confid_dst[idx] = vertex_confid_dst[match.y];
+    }
 
-// }
+}
 
 star::KeyPointDetectProcessor::KeyPointDetectProcessor()
     : m_buffer_idx(0), m_num_valid_matches(0)
@@ -43,7 +43,6 @@ star::KeyPointDetectProcessor::KeyPointDetectProcessor()
     cudaSafeCall(cudaMallocHost(&m_descriptor_buffer, sizeof(float) * d_max_num_keypoints * KeyPoints::GetDescriptorDim(m_keypoint_type)));
 
     m_g_keypoints.AllocateBuffer(d_max_num_keypoints);
-    m_g_descriptors.AllocateBuffer(d_max_num_keypoints * KeyPoints::GetDescriptorDim(m_keypoint_type));
     m_keypoint_matches.AllocateBuffer(d_max_num_keypoints);
 
     m_detected_keypoints = std::make_shared<star::KeyPoints>(config.keypoint_type());
@@ -66,14 +65,14 @@ star::KeyPointDetectProcessor::~KeyPointDetectProcessor()
     cudaSafeCall(cudaFreeHost(m_descriptor_buffer));
 
     m_g_keypoints.ReleaseBuffer();
-    m_g_descriptors.ReleaseBuffer();
     m_keypoint_matches.ReleaseBuffer();
 
     m_matched_vertex_src.ReleaseBuffer();
     m_matched_vertex_dst.ReleaseBuffer();
 }
 
-void star::KeyPointDetectProcessor::ProcessFrame(const SurfelMap &surfel_map, unsigned frame_idx, cudaStream_t stream)
+void star::KeyPointDetectProcessor::ProcessFrame(
+    const SurfelMap &surfel_map, const KeyPoints &model_keypoints, unsigned frame_idx, cudaStream_t stream)
 {
     const auto image_idx = size_t(frame_idx) * m_step_frame + m_start_frame_idx;
     m_fetcher->FetchKeypoint(0, image_idx, m_keypoint_mat, m_descriptor_mat, m_keypoint_type);
@@ -94,7 +93,7 @@ void star::KeyPointDetectProcessor::ProcessFrame(const SurfelMap &surfel_map, un
         cudaMemcpyHostToDevice,
         stream));
     cudaSafeCall(cudaMemcpyAsync(
-        m_g_descriptors.Ptr(),
+        m_detected_keypoints->Descriptor().Ptr(),
         m_descriptor_buffer,
         m_descriptor_mat.total() * sizeof(float),
         cudaMemcpyHostToDevice,
@@ -102,7 +101,6 @@ void star::KeyPointDetectProcessor::ProcessFrame(const SurfelMap &surfel_map, un
 
     // Resize
     m_g_keypoints.ResizeArrayOrException(num_keypoints_detected);
-    m_g_descriptors.ResizeArrayOrException(num_keypoints_detected * KeyPoints::GetDescriptorDim(m_keypoint_type));
     m_detected_keypoints->Resize(num_keypoints_detected);
 
     // Build 3d keypoint
@@ -115,65 +113,66 @@ void star::KeyPointDetectProcessor::ProcessFrame(const SurfelMap &surfel_map, un
         m_enable_semantic_surfel,
         stream);
 
-    // if (frame_idx != 0 && m_model_keypoints[m_buffer_idx]->NumKeyPoints() > 0)
-    // {
-    //     // Apply matching between model keypoints and detected keypoints
-    //     MatchKeyPointsBFOpenCV(
-    //         *m_model_keypoints[m_buffer_idx],
-    //         *m_keypoints_dected,
-    //         m_keypoint_matches.Slice(),
-    //         m_num_valid_matches,
-    //         m_kp_match_ratio_thresh,
-    //         m_kp_match_dist_thresh,
-    //         stream);
-    //     m_keypoint_matches.ResizeArrayOrException(m_num_valid_matches);
-    // }
+    if (frame_idx != 0 && m_detected_keypoints->NumKeyPoints() > 0 && model_keypoints.NumKeyPoints() > 0)
+    {
+        // Apply matching between model keypoints and detected keypoints
+        MatchKeyPointsBFOpenCV(
+            *m_detected_keypoints,
+            model_keypoints,
+            m_keypoint_matches.Slice(),
+            m_num_valid_matches,
+            m_kp_match_ratio_thresh,
+            m_kp_match_dist_thresh,
+            stream);
+        m_keypoint_matches.ResizeArrayOrException(m_num_valid_matches);
+    }
 
     // Sync stream
     cudaSafeCall(cudaStreamSynchronize(stream));
 
     // Save context
     if (m_enable_vis)
-        saveContext(frame_idx, stream);
+        saveContext(model_keypoints, frame_idx, stream);
 }
 
-void star::KeyPointDetectProcessor::saveContext(unsigned frame_idx, cudaStream_t stream)
+void star::KeyPointDetectProcessor::saveContext(
+    const KeyPoints &model_keypoints, unsigned frame_idx, cudaStream_t stream)
 {
     auto &context = easy3d::Context::Instance();
-    std::cout << "Num keypoints: " << m_detected_keypoints->NumKeyPoints() << std::endl;
-    std::cout << "Keypoints size: " << m_detected_keypoints->LiveVertexConfidenceReadOnly().Size() << std::endl;
     context.addPointCloud("d_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
-    visualize::SaveColoredPointCloud(
-        m_detected_keypoints->LiveVertexConfidenceReadOnly(), 
-        m_detected_keypoints->ColorTimeReadOnly(),
+    visualize::SavePointCloud(
+        m_detected_keypoints->LiveVertexConfidenceReadOnly(),
         context.at("d_keypoints"));
 
-    // // Draw the matched keypoints
-    // if (m_num_valid_matches > 0) {
-    //     getMatchedKeyPoints(stream);
-    //     context.addPointCloud("matched_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
-    //     visualize::SaveMatchedPointCloud(
-    //         m_matched_vertex_src.View(),
-    //         m_matched_vertex_dst.View(),
-    //         context.at("matched_keypoints")
-    //     );
-    // }
+    // Draw the matched keypoints
+    if (m_num_valid_matches > 0)
+    {
+        getMatchedKeyPoints(*m_detected_keypoints, model_keypoints, stream);
+        context.addPointCloud("matched_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
+        visualize::SaveMatchedPointCloud(
+            m_matched_vertex_src.View(),
+            m_matched_vertex_dst.View(),
+            context.at("matched_keypoints"));
+    }
 }
 
-void star::KeyPointDetectProcessor::getMatchedKeyPoints(cudaStream_t stream)
+void star::KeyPointDetectProcessor::getMatchedKeyPoints(
+    const KeyPoints &keypoints_src,
+    const KeyPoints &keypoints_dst,
+    cudaStream_t stream)
 {
-    // // Resize
-    // m_matched_vertex_src.ResizeArrayOrException(m_num_valid_matches);
-    // m_matched_vertex_dst.ResizeArrayOrException(m_num_valid_matches);
-    
-    // // Get matched keypoints
-    // dim3 blk(128);
-    // dim3 grid(divUp(m_num_valid_matches, blk.x));
-    // device::GetMatchedPointKernel<<<grid, blk, 0, stream>>>(
-    //     m_model_keypoints[m_buffer_idx]->LiveVertexConfidence().Ptr(),
-    //     m_keypoints_dected->LiveVertexConfidence().Ptr(),
-    //     m_matched_vertex_src.Ptr(),
-    //     m_matched_vertex_dst.Ptr(),
-    //     m_keypoint_matches.Ptr(),
-    //     m_num_valid_matches);
+    // Resize
+    m_matched_vertex_src.ResizeArrayOrException(m_num_valid_matches);
+    m_matched_vertex_dst.ResizeArrayOrException(m_num_valid_matches);
+
+    // Get matched keypoints
+    dim3 blk(128);
+    dim3 grid(divUp(m_num_valid_matches, blk.x));
+    device::GetMatchedPointKernel<<<grid, blk, 0, stream>>>(
+        keypoints_src.ReferenceVertexConfidenceReadOnly().Ptr(),
+        keypoints_dst.ReferenceVertexConfidenceReadOnly().Ptr(),
+        m_matched_vertex_src.Ptr(),
+        m_matched_vertex_dst.Ptr(),
+        m_keypoint_matches.Ptr(),
+        m_num_valid_matches);
 }

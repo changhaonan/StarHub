@@ -28,3 +28,66 @@ void star::KeyPoints::Resize(size_t size)
     ResizeValidSurfelArrays(size);
     m_descriptor.ResizeArrayOrException(size * m_descriptor_dim);
 }
+
+void star::KeyPoints::ReAnchor(
+    KeyPoints::ConstPtr src_keypoints,
+    KeyPoints::Ptr tar_keypoints,
+    cudaStream_t stream)
+{
+    // Copy owned data
+    cudaSafeCall(
+        cudaMemcpyAsync(
+            tar_keypoints->SurfelKNN(),
+            src_keypoints->SurfelKNNReadOnly(),
+            src_keypoints->SurfelKNNReadOnly().ByteSize(),
+            cudaMemcpyDeviceToDevice, stream));
+    cudaSafeCall(
+        cudaMemcpyAsync(
+            tar_keypoints->SurfelKNNSpatialWeight(),
+            src_keypoints->SurfelKNNSpatialWeightReadOnly(),
+            src_keypoints->SurfelKNNSpatialWeightReadOnly().ByteSize(),
+            cudaMemcpyDeviceToDevice, stream));
+    cudaSafeCall(
+        cudaMemcpyAsync(
+            tar_keypoints->SurfelKNNConnectWeight(),
+            src_keypoints->SurfelKNNConnectWeightReadOnly(),
+            src_keypoints->SurfelKNNConnectWeightReadOnly().ByteSize(),
+            cudaMemcpyDeviceToDevice, stream));
+    // Copy geometry data
+    cudaSafeCall(
+        cudaMemcpyAsync(
+            tar_keypoints->ReferenceVertexConfidence(),
+            src_keypoints->LiveVertexConfidenceReadOnly(),
+            src_keypoints->LiveVertexConfidenceReadOnly().ByteSize(),
+            cudaMemcpyDeviceToDevice, stream));
+    cudaSafeCall(
+        cudaMemcpyAsync(
+            tar_keypoints->ReferenceNormalRadius(),
+            src_keypoints->LiveNormalRadiusReadOnly(),
+            src_keypoints->LiveNormalRadiusReadOnly().ByteSize(),
+            cudaMemcpyDeviceToDevice, stream));
+    cudaSafeCall(
+        cudaMemcpyAsync(
+            tar_keypoints->ColorTime(),
+            src_keypoints->ColorTimeReadOnly(),
+            src_keypoints->ColorTimeReadOnly().ByteSize(),
+            cudaMemcpyDeviceToDevice, stream));
+    // Optional
+    cudaSafeCall(
+        cudaMemcpyAsync(
+            tar_keypoints->SemanticProb(),
+            src_keypoints->SemanticProbReadOnly(),
+            src_keypoints->SemanticProbReadOnly().ByteSize(),
+            cudaMemcpyDeviceToDevice, stream));
+    // Descriptor
+    cudaSafeCall(
+        cudaMemcpyAsync(
+            tar_keypoints->Descriptor(),
+            src_keypoints->DescriptorReadOnly(),
+            src_keypoints->DescriptorReadOnly().ByteSize(),
+            cudaMemcpyDeviceToDevice, stream));
+
+    // Sync & Resize
+    cudaSafeCall(cudaStreamSynchronize(stream));
+    tar_keypoints->Resize(src_keypoints->NumKeyPoints());
+}

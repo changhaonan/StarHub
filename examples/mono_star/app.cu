@@ -61,7 +61,7 @@ int main()
         semantic_processor->ProcessFrame(measure_processor->GetSurfelMap(), frame_idx, 0);
 
         // KeyPoint process (Expand Measurement)
-        keypoint_processor->ProcessFrame(*measure_processor->GetSurfelMapReadOnly(), frame_idx, 0);
+        keypoint_processor->ProcessFrame(*measure_processor->GetSurfelMapReadOnly(), *geometry_processor->ActiveKeyPoints(), frame_idx, 0);
 
         if (frame_idx > 0)
         {

@@ -23,11 +23,12 @@ namespace star
         ~KeyPointDetectProcessor();
         void ProcessFrame(
             const SurfelMap &surfel_map,
+            const KeyPoints &model_keypoints,
             const unsigned frame_idx,
             cudaStream_t stream);
         // Fetch-API
         GArrayView<float2> GetKeyPointsReadOnly() const { return m_g_keypoints.View(); }
-        GArrayView<float> GetDescriptorsReadOnly() const { return m_g_descriptors.View(); }
+        GArrayView<float> GetDescriptorsReadOnly() const { return m_detected_keypoints->DescriptorReadOnly(); }
     private:
         void build3DKeyPoint(
             const SurfelMapTex &surfel_map_tex,
@@ -36,8 +37,11 @@ namespace star
         void matchKeyPoints(
             cudaStream_t stream);
         void getMatchedKeyPoints(
+            const KeyPoints& keypoints_src,
+            const KeyPoints& keypoints_dst,
             cudaStream_t stream);
         void saveContext(
+            const KeyPoints& model_keypoints,
             unsigned frame_idx,
             cudaStream_t stream);
 
@@ -67,7 +71,6 @@ namespace star
         GBufferArray<float4> m_matched_vertex_dst;
 
         GBufferArray<float2> m_g_keypoints;
-        GBufferArray<float> m_g_descriptors;
         KeyPointType m_keypoint_type;
         unsigned m_dim_descriptor;
         VolumeDeformFileFetch::Ptr m_fetcher;

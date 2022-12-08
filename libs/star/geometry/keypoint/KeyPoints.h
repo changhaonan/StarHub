@@ -13,6 +13,7 @@ namespace star
     {
     public:
         using Ptr = std::shared_ptr<KeyPoints>;
+        using ConstPtr = std::shared_ptr<const KeyPoints>;
         STAR_NO_COPY_ASSIGN_MOVE(KeyPoints);
         KeyPoints(const KeyPointType keypoint_type);
         ~KeyPoints();
@@ -41,6 +42,12 @@ namespace star
             }
         };
 
+        // Static methods
+        static void ReAnchor(
+            KeyPoints::ConstPtr src_keypoints,
+            KeyPoints::Ptr tar_keypoints,
+            cudaStream_t stream
+        );
     protected:
         KeyPointType m_keypoint_type;
         GBufferArray<float4> m_vertex_confid;

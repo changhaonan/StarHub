@@ -130,6 +130,13 @@ void star::DynamicGeometryProcessor::initKeyPoints(
         cam2world,
         m_enable_semantic_surfel,
         stream);
+    // Init keypoint descriptor
+    cudaSafeCall(cudaMemcpyAsync(
+        m_model_keypoints[m_buffer_idx]->Descriptor().Ptr(),
+        descriptors.Ptr(),
+        descriptors.ByteSize(),
+        cudaMemcpyDeviceToDevice,
+        stream));
 
     // Perform Skinning without semantic
     auto geometyr4skinner = m_model_keypoints[m_buffer_idx]->GenerateGeometry4Skinner();
@@ -164,13 +171,14 @@ void star::DynamicGeometryProcessor::updateGeometry(
         m_model_geometry[m_buffer_idx],
         m_model_geometry[next_buffer_idx],
         stream);
-    SurfelGeometry::ReAnchor(
-        m_model_keypoints[m_buffer_idx],
-        m_model_keypoints[next_buffer_idx],
-        stream);
     NodeGraph::ReAnchor(
         m_node_graph[m_buffer_idx],
         m_node_graph[next_buffer_idx],
+        stream);
+    // Reanchor the keypoints
+    KeyPoints::ReAnchor(
+        m_model_keypoints[m_buffer_idx],
+        m_model_keypoints[next_buffer_idx],
         stream);
     m_buffer_idx = next_buffer_idx;
 }
@@ -198,11 +206,12 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
     unsigned last_buffer_idx = (m_buffer_idx + 1) % 2;
     unsigned vis_buffer_idx = (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0) ? last_buffer_idx : m_buffer_idx;
     // Exist valid last geo
-    std::string ref_geo_name = "ref_geo";
-    context.addPointCloud(ref_geo_name, ref_geo_name, m_cam2world.inverse(), m_pcd_size);
-    visualize::SavePointCloud(
+    std::string ref_color_name = "ref_color";
+    context.addPointCloud(ref_color_name, ref_color_name, m_cam2world.inverse(), m_pcd_size);
+    visualize::SaveColoredPointCloud(
         m_model_geometry[vis_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
-        context.at(ref_geo_name));
+        m_model_geometry[vis_buffer_idx]->ColorTimeReadOnly(),
+        context.at(ref_color_name));
 
     std::string live_color_name = "live_color";
     context.addPointCloud(live_color_name, live_color_name, m_cam2world.inverse(), m_pcd_size);
@@ -213,14 +222,12 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
 
     // Save keypoints
     context.addPointCloud("ref_keypoints", "", m_cam2world.inverse(), m_pcd_size);
-    visualize::SaveColoredPointCloud(
+    visualize::SavePointCloud(
         m_model_keypoints[vis_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
-        m_model_keypoints[vis_buffer_idx]->ColorTimeReadOnly(),
         context.at("ref_keypoints"));
     context.addPointCloud("live_keypoints", "", m_cam2world.inverse(), m_pcd_size);
-    visualize::SaveColoredPointCloud(
+    visualize::SavePointCloud(
         m_model_keypoints[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
-        m_model_keypoints[vis_buffer_idx]->ColorTimeReadOnly(),
         context.at("live_keypoints"));
 
     // Save node graph
