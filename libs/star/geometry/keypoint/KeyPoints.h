@@ -14,7 +14,7 @@ namespace star
     public:
         using Ptr = std::shared_ptr<KeyPoints>;
         STAR_NO_COPY_ASSIGN_MOVE(KeyPoints);
-        KeyPoints(KeyPointType keypoint_type);
+        KeyPoints(const KeyPointType keypoint_type);
         ~KeyPoints();
 
         size_t NumKeyPoints() const { return m_num_valid_surfels; }
@@ -23,6 +23,24 @@ namespace star
         // Fetch API
         GArraySlice<float> Descriptor() { return m_descriptor.Slice(); }
         GArrayView<float> DescriptorReadOnly() const { return m_descriptor.View(); }
+
+        // Static API
+        static unsigned GetDescriptorDim(KeyPointType keypoint_type)
+        {
+            if (keypoint_type == KeyPointType::R2D2)
+            {
+                return 128;
+            }
+            else if (keypoint_type == KeyPointType::SuperPoints)
+            {
+                return 256;
+            }
+            else
+            {
+                return 0;
+            }
+        };
+
     protected:
         KeyPointType m_keypoint_type;
         GBufferArray<float4> m_vertex_confid;

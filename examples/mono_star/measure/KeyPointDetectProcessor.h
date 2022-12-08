@@ -10,29 +10,28 @@
 namespace star
 {
     /**
-     * @brief KeyPointProcessor
-     * @note KeyPointProcessor is kind of similar to DynamicGeometry processor,
+     * @brief KeyPointDetectProcessor
+     * @note KeyPointDetectProcessor is kind of similar to DynamicGeometry processor,
      * providing update and matching keypoints.
      */
-    class KeyPointProcessor
+    class KeyPointDetectProcessor
     {
     public:
-        using Ptr = std::shared_ptr<KeyPointProcessor>;
-        STAR_NO_COPY_ASSIGN_MOVE(KeyPointProcessor);
-        KeyPointProcessor();
-        ~KeyPointProcessor();
+        using Ptr = std::shared_ptr<KeyPointDetectProcessor>;
+        STAR_NO_COPY_ASSIGN_MOVE(KeyPointDetectProcessor);
+        KeyPointDetectProcessor();
+        ~KeyPointDetectProcessor();
         void ProcessFrame(
-            const SurfelMapTex &surfel_map_tex,
+            const SurfelMap &surfel_map,
             const unsigned frame_idx,
             cudaStream_t stream);
-
+        // Fetch-API
+        GArrayView<float2> GetKeyPointsReadOnly() const { return m_g_keypoints.View(); }
+        GArrayView<float> GetDescriptorsReadOnly() const { return m_g_descriptors.View(); }
     private:
         void build3DKeyPoint(
             const SurfelMapTex &surfel_map_tex,
             unsigned num_keypoints,
-            cudaStream_t stream);
-        void updateModelKeyPoints(
-            const unsigned frame_idx,
             cudaStream_t stream);
         void matchKeyPoints(
             cudaStream_t stream);
@@ -46,6 +45,8 @@ namespace star
         unsigned m_step_frame;
         unsigned m_start_frame_idx;
         unsigned m_buffer_idx;
+        Extrinsic m_cam2world;
+        bool m_enable_semantic_surfel;
 
         // Matching-related
         float m_kp_match_ratio_thresh;
@@ -53,8 +54,11 @@ namespace star
         unsigned m_num_valid_matches;
         GBufferArray<int2> m_keypoint_matches;
 
+        // Keypoint
+        KeyPoints::Ptr m_detected_keypoints;
+
         // Buffer
-        cv::Mat m_keypoint_2d_mat;
+        cv::Mat m_keypoint_mat;
         cv::Mat m_descriptor_mat;
         void *m_keypoint_buffer;
         void *m_descriptor_buffer;
@@ -62,10 +66,10 @@ namespace star
         GBufferArray<float4> m_matched_vertex_src;
         GBufferArray<float4> m_matched_vertex_dst;
 
-        GBufferArray<float2> m_g_keypoint_2d;
+        GBufferArray<float2> m_g_keypoints;
+        GBufferArray<float> m_g_descriptors;
         KeyPointType m_keypoint_type;
-        KeyPoints::Ptr m_keypoints_dected;
-        KeyPoints::Ptr m_model_keypoints[2];
+        unsigned m_dim_descriptor;
         VolumeDeformFileFetch::Ptr m_fetcher;
 
         // Vis

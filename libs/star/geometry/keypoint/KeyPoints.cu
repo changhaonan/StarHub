@@ -1,6 +1,6 @@
 #include "KeyPoints.h"
 
-star::KeyPoints::KeyPoints(KeyPointType keypoint_type)
+star::KeyPoints::KeyPoints(const KeyPointType keypoint_type)
     : SurfelGeometrySC(), m_keypoint_type(keypoint_type)
 {
     switch (keypoint_type)

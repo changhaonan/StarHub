@@ -3,7 +3,7 @@
 #include "measure/OpticalFlowProcessorGMA.h"
 #include "measure/OpticalFlowProcessorOffline.h"
 #include "measure/NodeMotionProcessor.h"
-#include "measure/KeyPointProcessor.h"
+#include "measure/KeyPointDetectProcessor.h"
 #include "measure/SegmentationProcessorOffline.h"
 #include "geometry/DynamicGeometryProcessor.h"
 #include "opt/OptimizationProcessorWarpSolver.h"
@@ -40,7 +40,7 @@ int main()
     // Generate the geometry, node graph, and render in continous time
     auto measure_processor = std::make_shared<MeasureProcessorOffline>();
     auto semantic_processor = std::make_shared<SegmentationProcessorOffline>();
-    auto keypoint_processor = std::make_shared<KeyPointProcessor>();
+    auto keypoint_processor = std::make_shared<KeyPointDetectProcessor>();
 
     auto geometry_processor = std::make_shared<DynamicGeometryProcessor>();
     // auto opticalflow_processor = std::make_shared<OpticalFlowProcessorOffline>();
@@ -61,7 +61,7 @@ int main()
         semantic_processor->ProcessFrame(measure_processor->GetSurfelMap(), frame_idx, 0);
 
         // KeyPoint process (Expand Measurement)
-        keypoint_processor->ProcessFrame(measure_processor->GetSurfelMapTex(), frame_idx, 0);
+        keypoint_processor->ProcessFrame(*measure_processor->GetSurfelMapReadOnly(), frame_idx, 0);
 
         // if (frame_idx > 0)
         // {

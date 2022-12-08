@@ -166,6 +166,121 @@ namespace star::device
 		semantic_prob_val[semantic_label] = 2; // Semantic initialized as 2
 		semantic_prob[index] = semantic_prob_val;
 	}
+
+	// For cudaTexture
+	__global__ void initializerSurfelKernelWithKey(
+		cudaTextureObject_t vertex_confid_map,
+		cudaTextureObject_t normal_radius_map,
+		cudaTextureObject_t color_time_map,
+		cudaTextureObject_t index_map,
+		float4 *reference_vertex_confid,
+		float4 *reference_normal_radius,
+		float4 *live_vertex_confid,
+		float4 *live_normal_radius,
+		float4 *color_time,
+		const float2* keys,
+		const mat34 cam2world,
+		const unsigned img_rows,
+		const unsigned img_cols,
+		const unsigned num_keys)
+	{
+		const int idx = threadIdx.x + blockDim.x * blockIdx.x;
+		if (idx >= num_keys)
+			return;
+		float2 key = keys[idx];
+		float x = key.x;
+		float y = key.y;
+
+		if (x >= float(img_cols) || y >= float(img_rows))
+			return;
+
+		float4 vertex_confid = tex2D<float4>(vertex_confid_map, x, y);
+		if (fabs(vertex_confid.z) < 1e-6f)
+			return; // Not valid
+
+		float3 vertex_confid_world = cam2world.rot * vertex_confid + cam2world.trans;
+		vertex_confid = make_float4(
+			vertex_confid_world.x,
+			vertex_confid_world.y,
+			vertex_confid_world.z,
+			vertex_confid.w);
+		reference_vertex_confid[idx] = vertex_confid;
+		live_vertex_confid[idx] = vertex_confid;
+
+		float4 normal_radius = tex2D<float4>(normal_radius_map, x, y);
+		float3 normal_radius_world = cam2world.rot * normal_radius;
+		normal_radius = make_float4(
+			normal_radius_world.x,
+			normal_radius_world.y,
+			normal_radius_world.z,
+			normal_radius.w);
+		reference_normal_radius[idx] = normal_radius;
+		live_normal_radius[idx] = normal_radius;
+
+		float4 color_time_ = tex2D<float4>(color_time_map, x, y);
+		color_time[idx] = color_time_;
+	}
+
+	// For cudaTexture
+	__global__ void initializerSurfelKernelWithKey(
+		cudaTextureObject_t vertex_confid_map,
+		cudaTextureObject_t normal_radius_map,
+		cudaTextureObject_t color_time_map,
+		cudaTextureObject_t index_map,
+		cudaTextureObject_t segmentation_map,
+		float4 *reference_vertex_confid,
+		float4 *reference_normal_radius,
+		float4 *live_vertex_confid,
+		float4 *live_normal_radius,
+		float4 *color_time,
+		ucharX<d_max_num_semantic> *semantic_prob,
+		const float2* keys,
+		const mat34 cam2world,
+		const unsigned img_rows,
+		const unsigned img_cols,
+		const unsigned num_keys)
+	{
+		const int idx = threadIdx.x + blockDim.x * blockIdx.x;
+		if (idx >= num_keys)
+			return;
+		float2 key = keys[idx];
+		float x = key.x;
+		float y = key.y;
+
+		if (x >= float(img_cols) || y >= float(img_rows))
+			return;
+
+		float4 vertex_confid = tex2D<float4>(vertex_confid_map, x, y);
+		if (fabs(vertex_confid.z) < 1e-6f)
+			return; // Not valid
+
+		float3 vertex_confid_world = cam2world.rot * vertex_confid + cam2world.trans;
+		vertex_confid = make_float4(
+			vertex_confid_world.x,
+			vertex_confid_world.y,
+			vertex_confid_world.z,
+			vertex_confid.w);
+		reference_vertex_confid[idx] = vertex_confid;
+		live_vertex_confid[idx] = vertex_confid;
+
+		float4 normal_radius = tex2D<float4>(normal_radius_map, x, y);
+		float3 normal_radius_world = cam2world.rot * normal_radius;
+		normal_radius = make_float4(
+			normal_radius_world.x,
+			normal_radius_world.y,
+			normal_radius_world.z,
+			normal_radius.w);
+		reference_normal_radius[idx] = normal_radius;
+		live_normal_radius[idx] = normal_radius;
+
+		float4 color_time_ = tex2D<float4>(color_time_map, x, y);
+		color_time[idx] = color_time_;
+
+		int semantic_label = tex2D<int>(segmentation_map, x, y);
+		ucharX<d_max_num_semantic> semantic_prob_val;
+		semantic_prob_val[semantic_label] = 2; // Semantic initialized as 2
+		semantic_prob[idx] = semantic_prob_val;
+	}
 };
 
 void star::SurfelGeometryInitializer::InitFromObservationSerial(
@@ -332,6 +447,66 @@ void star::SurfelGeometryInitializer::initSurfelGeometryWithSemantic(
 
 void star::SurfelGeometryInitializer::initSurfelGeometry(
 	GeometryAttributes geometry,
+	const SurfelMap &surfel_map,
+	const GArrayView<float2>& keys,
+	const Eigen::Matrix4f &cam2world,
+	cudaStream_t stream)
+{
+	unsigned width, height;
+	query2DTextureExtent(surfel_map.VertexConfidReadOnly(), width, height);
+
+	dim3 blk(16, 16);
+	dim3 grid(divUp(width, blk.x), divUp(height, blk.y));
+	device::initializerSurfelKernelWithKey<<<grid, blk, 0, stream>>>(
+		surfel_map.VertexConfidReadOnly(),
+		surfel_map.NormalRadiusReadOnly(),
+		surfel_map.ColorTimeReadOnly(),
+		surfel_map.IndexReadOnly(),
+		geometry.reference_vertex_confid,
+		geometry.reference_normal_radius,
+		geometry.live_vertex_confid,
+		geometry.live_normal_radius,
+		geometry.color_time,
+		keys.Ptr(),
+		mat34(cam2world),
+		height,
+		width,
+		keys.Size());
+}
+
+void star::SurfelGeometryInitializer::initSurfelGeometryWithSemantic(
+	GeometryAttributes geometry,
+	const SurfelMap &surfel_map,
+	const GArrayView<float2>& keys,
+	const Eigen::Matrix4f &cam2world,
+	cudaStream_t stream)
+{
+	unsigned width, height;
+	query2DTextureExtent(surfel_map.VertexConfidReadOnly(), width, height);
+
+	dim3 blk(16, 16);
+	dim3 grid(divUp(width, blk.x), divUp(height, blk.y));
+	device::initializerSurfelKernelWithKey<<<grid, blk, 0, stream>>>(
+		surfel_map.VertexConfidReadOnly(),
+		surfel_map.NormalRadiusReadOnly(),
+		surfel_map.ColorTimeReadOnly(),
+		surfel_map.IndexReadOnly(),
+		surfel_map.SegmentationReadOnly(),
+		geometry.reference_vertex_confid,
+		geometry.reference_normal_radius,
+		geometry.live_vertex_confid,
+		geometry.live_normal_radius,
+		geometry.color_time,
+		geometry.semantic_prob,
+		keys.Ptr(),
+		mat34(cam2world),
+		height,
+		width,
+		keys.Size());
+}
+
+void star::SurfelGeometryInitializer::initSurfelGeometry(
+	GeometryAttributes geometry,
 	const GArrayView<DepthSurfel> &surfel_array,
 	cudaStream_t stream)
 {
@@ -435,5 +610,27 @@ void star::SurfelGeometryInitializer::InitFromGeometryMap(
 	else
 	{
 		initSurfelGeometryWithSemantic(geometry_attributes, surfel_map, cam2world, stream);
+	}
+}
+
+void star::SurfelGeometryInitializer::InitFromGeometryMap(
+	SurfelGeometry &geometry,
+	const SurfelMap &surfel_map,
+	const GArrayView<float2>& keys,
+	const Eigen::Matrix4f &cam2world,
+	const bool use_semantic,
+	cudaStream_t stream)
+{
+	geometry.ResizeValidSurfelArrays(keys.Size());
+
+	// Init the geometry
+	const auto geometry_attributes = geometry.Geometry();
+	if (!use_semantic)
+	{
+		initSurfelGeometry(geometry_attributes, surfel_map, keys, cam2world, stream);
+	}
+	else
+	{
+		initSurfelGeometryWithSemantic(geometry_attributes, surfel_map, keys, cam2world, stream);
 	}
 }

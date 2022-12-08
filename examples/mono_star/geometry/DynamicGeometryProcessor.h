@@ -5,6 +5,7 @@
 #include <star/geometry/surfel/SurfelGeometryInitializer.h>
 #include <star/geometry/render/Renderer.h>
 #include <star/geometry/node_graph/NodeGraph.h>
+#include <star/geometry/keypoint/KeyPoints.h>
 // Viewer
 #include <easy3d_viewer/context.hpp>
 
@@ -18,7 +19,7 @@ namespace star
         DynamicGeometryProcessor();
         ~DynamicGeometryProcessor();
         void ProcessFrame(
-            const GArrayView<DualQuaternion>& solved_se3,
+            const GArrayView<DualQuaternion> &solved_se3,
             const unsigned frame_idx,
             cudaStream_t stream);
         void initGeometry(
@@ -26,62 +27,45 @@ namespace star
             const Eigen::Matrix4f &cam2world,
             const unsigned frame_idx,
             cudaStream_t stream);
-        void updateGeometry(
-            const GArrayView<DualQuaternion>& solved_se3,
+        void initKeyPoints(
+            const SurfelMap &surfel_map,
+            const GArrayView<float2> &keypoints,
+            const GArrayView<float> &descriptors,
+            const Eigen::Matrix4f &cam2world,
             const unsigned frame_idx,
-	        cudaStream_t stream
-        );
+            cudaStream_t stream);
+        void updateGeometry(
+            const GArrayView<DualQuaternion> &solved_se3,
+            const unsigned frame_idx,
+            cudaStream_t stream);
         void computeSurfelMapTex();
         void computeSurfelMotion(cudaStream_t stream);
 
         // Access API
-        SurfelGeometry::Ptr Geometry(const unsigned frame_idx) const
-        {
-            return m_model_geometry[frame_idx];
-        };
-        NodeGraph::Ptr NodeGraph(const unsigned frame_idx) const
-        {
-            return m_node_graph[frame_idx];
-        };
-        SurfelGeometry::Ptr ActiveGeometry() const
-        {
-            return m_model_geometry[m_buffer_idx];
-        }
-        NodeGraph::Ptr ActiveNodeGraph() const
-        {
-            return m_node_graph[m_buffer_idx];
-        }
-        Renderer::SolverMaps GetSolverMaps() const
-        {
-            return m_solver_maps;
-        }
-        Renderer::ObservationMaps GetObservationMaps() const
-        {
-            return m_observation_maps;
-        }
+        SurfelGeometry::Ptr Geometry(const unsigned frame_idx) const { return m_model_geometry[frame_idx]; };
+        KeyPoints::Ptr KeyPoints(const unsigned frame_idx) const { return m_model_keypoints[frame_idx]; };
+        NodeGraph::Ptr NodeGraph(const unsigned frame_idx) const { return m_node_graph[frame_idx]; };
+        SurfelGeometry::Ptr ActiveGeometry() const { return m_model_geometry[m_buffer_idx]; }
+        NodeGraph::Ptr ActiveNodeGraph() const { return m_node_graph[m_buffer_idx]; }
+        KeyPoints::Ptr ActiveKeyPoints() const { return m_model_keypoints[m_buffer_idx]; }
+        Renderer::SolverMaps GetSolverMaps() const { return m_solver_maps; }
+        Renderer::ObservationMaps GetObservationMaps() const { return m_observation_maps; }
         SurfelMapTex GetSurfelMapTex() const { return m_surfel_map_tex; };
 
         // Visualize
         void saveContext(const unsigned frame_idx, cudaStream_t stream);
         // Render-related
-        void drawRenderMaps(
-            const unsigned frame_idx,
-            cudaStream_t stream);
+        void drawRenderMaps(const unsigned frame_idx, cudaStream_t stream);
 
     private:
         // Render-related
-        void drawSolverMaps(
-            const unsigned frame_idx,
-            const unsigned geometry_idx,
-            cudaStream_t stream);
-        void drawObservationMaps(
-            const unsigned frame_idx,
-            const unsigned geometry_idx,
-            cudaStream_t stream);
+        void drawSolverMaps(const unsigned frame_idx, const unsigned geometry_idx, cudaStream_t stream);
+        void drawObservationMaps(const unsigned frame_idx, const unsigned geometry_idx, cudaStream_t stream);
 
         unsigned m_buffer_idx = 0;
         SurfelGeometry::Ptr m_data_geometry;     // Double buffer
-        SurfelGeometry::Ptr m_model_geometry[2]; // Double buffer
+        SurfelGeometry::Ptr m_model_geometry[2]; // Geometry
+        KeyPoints::Ptr m_model_keypoints[2];     // KeyPoints
         NodeGraph::Ptr m_node_graph[2];
         Renderer::Ptr m_renderer;
 

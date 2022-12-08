@@ -12,11 +12,13 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     m_data_geometry = std::make_shared<star::SurfelGeometry>();
     m_model_geometry[0] = std::make_shared<star::SurfelGeometry>();
     m_model_geometry[1] = std::make_shared<star::SurfelGeometry>();
+    m_model_keypoints[0] = std::make_shared<star::KeyPoints>(config.keypoint_type());
+    m_model_keypoints[1] = std::make_shared<star::KeyPoints>(config.keypoint_type());
     m_node_graph[0] = std::make_shared<star::NodeGraph>(config.node_radius());
     m_node_graph[1] = std::make_shared<star::NodeGraph>(config.node_radius());
 
     // Render
-    m_renderer = std::make_shared<star::Renderer>(
+    m_renderer = std::make_shared<Renderer>(
         config.num_cam(),
         config.downsample_img_cols(),
         config.downsample_img_rows(),
@@ -75,9 +77,6 @@ void star::DynamicGeometryProcessor::ProcessFrame(
 void star::DynamicGeometryProcessor::initGeometry(
     const SurfelMap &surfel_map, const Eigen::Matrix4f &cam2world, const unsigned frame_idx, cudaStream_t stream)
 {
-    // Update buffer_idx
-    // m_buffer_idx = (m_buffer_idx + 1) % 2;
-
     // Init Surfel geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
         *m_model_geometry[m_buffer_idx],
@@ -97,19 +96,49 @@ void star::DynamicGeometryProcessor::initGeometry(
     Skinner::PerformSkinningFromLive(geometyr4skinner, node_graph4skinner, stream);
 
     // Update with skinning with semantic
-    if (m_enable_semantic_surfel) {
+    if (m_enable_semantic_surfel)
+    {
         // Update semantic prob
-		NodeGraphManipulator::UpdateNodeSemanticProb(
-			m_model_geometry[m_buffer_idx]->SurfelKNN().View(),
-			m_model_geometry[m_buffer_idx]->SemanticProbReadOnly(),
-			m_node_graph[m_buffer_idx]->GetNodeSemanticProb(),
-			m_node_graph[m_buffer_idx]->GetNodeSemanticProbVoteBuffer(),
-			stream
-		);
-		// Update node connection
-		m_node_graph[m_buffer_idx]->ComputeNodeGraphConnectionFromSemantic(m_dynamic_regulation, stream);
-		// Update surfel connection
-		Skinner::UpdateSkinnningConnection(geometyr4skinner, node_graph4skinner, stream);
+        NodeGraphManipulator::UpdateNodeSemanticProb(
+            m_model_geometry[m_buffer_idx]->SurfelKNN().View(),
+            m_model_geometry[m_buffer_idx]->SemanticProbReadOnly(),
+            m_node_graph[m_buffer_idx]->GetNodeSemanticProb(),
+            m_node_graph[m_buffer_idx]->GetNodeSemanticProbVoteBuffer(),
+            stream);
+        // Update node connection
+        m_node_graph[m_buffer_idx]->ComputeNodeGraphConnectionFromSemantic(m_dynamic_regulation, stream);
+        // Update surfel connection
+        Skinner::UpdateSkinnningConnection(geometyr4skinner, node_graph4skinner, stream);
+    }
+}
+
+void star::DynamicGeometryProcessor::initKeyPoints(
+    const SurfelMap &surfel_map,
+    const GArrayView<float2> &keypoints,
+    const GArrayView<float> &descriptors,
+    const Eigen::Matrix4f &cam2world,
+    const unsigned frame_idx,
+    cudaStream_t stream)
+{
+    // Init keypoint geometry
+    SurfelGeometryInitializer::InitFromGeometryMap(
+        *m_model_keypoints[m_buffer_idx],
+        surfel_map,
+        keypoints,
+        cam2world,
+        m_enable_semantic_surfel,
+        stream);
+
+    // Perform Skinning without semantic
+    auto geometyr4skinner = m_model_keypoints[m_buffer_idx]->GenerateGeometry4Skinner();
+    auto node_graph4skinner = m_node_graph[m_buffer_idx]->GenerateNodeGraph4Skinner();
+    Skinner::PerformSkinningFromLive(geometyr4skinner, node_graph4skinner, stream);
+
+    // Update with skinning with semantic
+    if (m_enable_semantic_surfel)
+    {
+        // Update surfel connection
+        Skinner::UpdateSkinnningConnection(geometyr4skinner, node_graph4skinner, stream);
     }
 }
 
@@ -122,14 +151,20 @@ void star::DynamicGeometryProcessor::updateGeometry(
         return;
 
     // Apply the deformation
-    SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(m_node_graph[m_buffer_idx]->DeformAccess(),
-                                                   *m_model_geometry[m_buffer_idx], solved_se3, stream);
+    SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(
+        m_node_graph[m_buffer_idx]->DeformAccess(), *m_model_geometry[m_buffer_idx], solved_se3, stream);
+    SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(
+        m_node_graph[m_buffer_idx]->DeformAccess(), *m_model_keypoints[m_buffer_idx], solved_se3, stream);
 
     // Reanchor the geometry
     auto next_buffer_idx = (m_buffer_idx + 1) & 1;
     SurfelGeometry::ReAnchor(
         m_model_geometry[m_buffer_idx],
         m_model_geometry[next_buffer_idx],
+        stream);
+    SurfelGeometry::ReAnchor(
+        m_model_keypoints[m_buffer_idx],
+        m_model_keypoints[next_buffer_idx],
         stream);
     NodeGraph::ReAnchor(
         m_node_graph[m_buffer_idx],
@@ -174,6 +209,18 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_model_geometry[vis_buffer_idx]->ColorTimeReadOnly(),
         context.at(live_color_name));
 
+    // Save keypoints
+    context.addPointCloud("ref_keypoints", "", m_cam2world.inverse(), m_pcd_size);
+    visualize::SaveColoredPointCloud(
+        m_model_keypoints[vis_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
+        m_model_keypoints[vis_buffer_idx]->ColorTimeReadOnly(),
+        context.at("ref_keypoints"));
+    context.addPointCloud("live_keypoints", "", m_cam2world.inverse(), m_pcd_size);
+    visualize::SaveColoredPointCloud(
+        m_model_keypoints[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
+        m_model_keypoints[vis_buffer_idx]->ColorTimeReadOnly(),
+        context.at("live_keypoints"));
+
     // Save node graph
     context.addGraph("ref_graph", "", m_cam2world.inverse(), m_node_graph_size);
     visualize::SaveGraph(
@@ -197,7 +244,7 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
             m_model_geometry[vis_buffer_idx]->SemanticProbReadOnly(),
             visualize::default_semantic_color_dict,
             context.at(semantic_pcd_name));
-        
+
         // Visualize for node graph
         std::string segmentation_graph_name = "segmentation_graph";
         context.addGraph(segmentation_graph_name, segmentation_graph_name, m_cam2world.inverse(), m_node_graph_size);
@@ -207,8 +254,7 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         visualize::Semantic2Color(
             m_node_graph[vis_buffer_idx]->GetNodeSemanticProbReadOnly(),
             visualize::default_semantic_color_dict,
-            node_vertex_color
-        );
+            node_vertex_color);
         std::vector<float4> h_node_vertex;
         m_node_graph[vis_buffer_idx]->GetLiveNodeCoordinate().Download(h_node_vertex);
         std::vector<ushortX<d_node_knn_size>> h_edges;
