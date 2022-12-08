@@ -137,6 +137,7 @@ star::GArrayView<star::DualQuaternion> star::SolverIterationData::CurrentNodeSE3
 	default:
 		LOG(FATAL) << "Should never happen";
 	}
+	return star::GArrayView<star::DualQuaternion>();
 }
 
 void star::SolverIterationData::SanityCheck() const
