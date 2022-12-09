@@ -181,8 +181,8 @@ void star::DynamicGeometryProcessor::updateGeometry(
     // Apply the deformation
     SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(
         m_node_graph[m_buffer_idx]->DeformAccess(), *m_model_geometry[m_buffer_idx], solved_se3, stream);
-    SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(
-        m_node_graph[m_buffer_idx]->DeformAccess(), *m_model_keypoints[m_buffer_idx], solved_se3, stream);
+    // SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(
+    //     m_node_graph[m_buffer_idx]->DeformAccess(), *m_model_keypoints[m_buffer_idx], solved_se3, stream);
 
     // Init data geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
@@ -211,10 +211,10 @@ void star::DynamicGeometryProcessor::updateGeometry(
         m_node_graph[next_buffer_idx],
         stream);
     // Reanchor the keypoints
-    KeyPoints::ReAnchor(
-        m_model_keypoints[m_buffer_idx],
-        m_model_keypoints[next_buffer_idx],
-        stream);
+    // KeyPoints::ReAnchor(
+    //     m_model_keypoints[m_buffer_idx],
+    //     m_model_keypoints[next_buffer_idx],
+    //     stream);
     m_buffer_idx = next_buffer_idx;
 }
 
@@ -256,14 +256,14 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         context.at(live_color_name));
 
     // Save keypoints
-    context.addPointCloud("ref_keypoints", "", m_cam2world.inverse(), m_pcd_size);
-    visualize::SavePointCloud(
-        m_model_keypoints[vis_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
-        context.at("ref_keypoints"));
-    context.addPointCloud("live_keypoints", "", m_cam2world.inverse(), m_pcd_size);
-    visualize::SavePointCloud(
-        m_model_keypoints[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
-        context.at("live_keypoints"));
+    // context.addPointCloud("ref_keypoints", "", m_cam2world.inverse(), m_pcd_size);
+    // visualize::SavePointCloud(
+    //     m_model_keypoints[vis_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
+    //     context.at("ref_keypoints"));
+    // context.addPointCloud("live_keypoints", "", m_cam2world.inverse(), m_pcd_size);
+    // visualize::SavePointCloud(
+    //     m_model_keypoints[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
+    //     context.at("live_keypoints"));
 
     // Save node graph
     context.addGraph("ref_graph", "", m_cam2world.inverse(), m_node_graph_size);
