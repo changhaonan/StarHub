@@ -29,8 +29,10 @@ namespace star
 			const bool enable_semantic_surfel);
 		~SurfelFusionHandler();
 		STAR_NO_COPY_ASSIGN(SurfelFusionHandler);
-
 		using FusionMaps = Renderer::FusionMaps;
+		using Geometry4Fusion = SurfelGeometry::Geometry4Fusion;
+		using Geometry4SemanticFusion = SurfelGeometry::Geometry4SemanticFusion;
+
 		// The input requires all CamearObservation
 		void SetInputs(
 			const FusionMaps &fusion_maps,

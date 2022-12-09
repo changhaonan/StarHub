@@ -11,7 +11,6 @@
 
 namespace star
 {
-
 	class DynamicGeometryAppendHandler
 	{
 	public:

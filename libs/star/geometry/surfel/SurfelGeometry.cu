@@ -225,6 +225,28 @@ star::Geometry4Skinner star::SurfelGeometry::GenerateGeometry4Skinner()
 	return geometry4skinner;
 }
 
+star::SurfelGeometry::Geometry4Fusion star::SurfelGeometry::GenerateGeometry4Fusion(const bool use_ref) {
+	Geometry4Fusion geometry4fusion;
+	if (use_ref) {
+		geometry4fusion.vertex_confid = m_reference_vertex_confid.Slice();
+		geometry4fusion.normal_radius = m_reference_normal_radius.Slice();
+	}
+	else {
+		geometry4fusion.vertex_confid = m_live_vertex_confid.Slice();
+		geometry4fusion.normal_radius = m_live_normal_radius.Slice();
+	}
+	geometry4fusion.color_time = m_color_time.Slice();
+	geometry4fusion.num_valid_surfel = NumValidSurfels();
+	return geometry4fusion;
+}
+
+star::SurfelGeometry::Geometry4SemanticFusion star::SurfelGeometry::GenerateGeometry4SemanticFusion() {
+	Geometry4SemanticFusion geometry4semantic_fusion;
+	geometry4semantic_fusion.semantic_prob = m_semantic_prob.Slice();
+	geometry4semantic_fusion.num_valid_surfel = NumValidSurfels();
+	return geometry4semantic_fusion;
+}
+
 /* The debug methods
  */
 star::LiveSurfelGeometry::GeometryAttributes star::LiveSurfelGeometry::Geometry() const

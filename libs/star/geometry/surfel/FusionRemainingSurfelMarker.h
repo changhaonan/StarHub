@@ -21,8 +21,10 @@ namespace star
 		FusionRemainingSurfelMarker(const unsigned num_cam = 1);
 		~FusionRemainingSurfelMarker();
 		STAR_NO_COPY_ASSIGN_MOVE(FusionRemainingSurfelMarker);
-
 		using FusionMaps = Renderer::FusionMaps;
+		using Geometry4Fusion = SurfelGeometry::Geometry4Fusion;
+		using Geometry4SemanticFusion = SurfelGeometry::Geometry4SemanticFusion;
+
 		// Set input for STAR version removal
 		void SetInputs(
 			const Measure4Fusion &measure4fusion,

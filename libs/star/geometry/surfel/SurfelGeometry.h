@@ -80,10 +80,25 @@ namespace star
 			GArrayView<floatX<d_surfel_knn_size>> surfel_knn_connect_weight;
 			unsigned num_vertex;
 		};
+		struct Geometry4Fusion
+		{
+			GArraySlice<float4> vertex_confid;
+			GArraySlice<float4> normal_radius;
+			GArraySlice<float4> color_time;
+			unsigned num_valid_surfel = 0;
+		};
+		struct Geometry4SemanticFusion
+		{
+			GArraySlice<ucharX<d_max_num_semantic>> semantic_prob;
+			unsigned num_valid_surfel = 0;
+		};
 		// For Solver
 		Geometry4Solver GenerateGeometry4Solver() const;
 		// For Skinner
 		Geometry4Skinner GenerateGeometry4Skinner();
+		// For Fusion
+		Geometry4Fusion GenerateGeometry4Fusion(const bool use_ref);
+		Geometry4SemanticFusion GenerateGeometry4SemanticFusion();
 
 		/* The read-and write access
 		 */
