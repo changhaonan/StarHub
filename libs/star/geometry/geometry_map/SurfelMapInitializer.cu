@@ -257,7 +257,15 @@ void star::SurfelMapInitializer::InitFromRGBDImage(
         num_valid_surfel,
         0,
         stream);
-
+    // 6. Create the depth map 
+    // FIXME: The depth map is different from the one used in rgbd map
+    createScaledDepthMap(
+		m_filtered_depth_img_collect.texture,
+		m_height,
+        m_width,
+		scale,
+		surfel_map.m_depth.surface,
+		stream);
     cudaSafeCall(cudaStreamSynchronize(stream));
     surfel_map.m_num_valid_surfel = num_valid_surfel;
 }

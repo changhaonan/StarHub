@@ -19,6 +19,7 @@ namespace star
         DynamicGeometryProcessor();
         ~DynamicGeometryProcessor();
         void ProcessFrame(
+            const SurfelMap& surfel_map,
             const GArrayView<DualQuaternion> &solved_se3,
             const unsigned frame_idx,
             cudaStream_t stream);

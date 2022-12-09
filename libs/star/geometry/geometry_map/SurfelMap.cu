@@ -8,6 +8,7 @@ star::SurfelMap::SurfelMap(const unsigned width, const unsigned height) : Geomet
     createFloat4TextureSurface(height, width, m_normal_radius);
     createFloat4TextureSurface(height, width, m_color_time);
     createFloat4TextureSurface(height, width, m_rgbd);
+    createFloat1TextureSurface(height, width, m_depth);
     createIndexTextureSurface(height, width, m_index);
     createInt32TextureSurface(height, width, m_segmentation);
 }
@@ -18,6 +19,7 @@ star::SurfelMap::~SurfelMap()
     releaseTextureCollect(m_normal_radius);
     releaseTextureCollect(m_color_time);
     releaseTextureCollect(m_rgbd);
+    releaseTextureCollect(m_depth);
     releaseTextureCollect(m_index);
     releaseTextureCollect(m_segmentation);
 }
