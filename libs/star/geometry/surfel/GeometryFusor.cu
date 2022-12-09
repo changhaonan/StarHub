@@ -5,8 +5,16 @@
 star::GeometryFusor::GeometryFusor(
     SurfelGeometry::Ptr model_surfel_geometry[2],
     NodeGraph::Ptr node_graph[2],
-    Renderer::Ptr renderer)
-    : m_active_buffer_idx(0), m_fusion_maps_mapped(false), m_geometry_counter(10)
+    Renderer::Ptr renderer,
+    const unsigned num_cam,
+    const unsigned img_cols,
+    const unsigned img_rows,
+    Extrinsic &cam2world,
+    Intrinsic &intrinsic,
+    const bool use_semantic,
+    const unsigned reinit_count,
+    const floatX<d_max_num_semantic> dynamic_regulation)
+    : m_active_buffer_idx(0), m_fusion_maps_mapped(false)
 {
     // Binding at initalization
     m_model_surfel_geometry[0] = model_surfel_geometry[0];
@@ -15,26 +23,28 @@ star::GeometryFusor::GeometryFusor(
     m_node_graph[1] = node_graph[1];
     m_renderer = renderer;
 
-    auto &config = ConfigParser::Instance();
-    m_num_cam = config.num_cam();
-    m_dynamic_regulation = config.dynamic_regulation();
-
+    // FIXME: Only support mono camera for now
     // Camera related
-    unsigned img_cols[d_max_cam];
-    unsigned img_rows[d_max_cam];
-    for (auto cam_idx = 0; cam_idx < m_num_cam; ++cam_idx)
-    {
-        img_cols[cam_idx] = config.downsample_img_cols(cam_idx);
-        img_rows[cam_idx] = config.downsample_img_rows(cam_idx);
-        m_cam2world[cam_idx] = config.extrinsic()[cam_idx];
-        m_intrinsic[cam_idx] = config.rgb_intrinsic_downsample(cam_idx);
-    }
+    STAR_CHECK_EQ(num_cam, 1);
+    m_num_cam = num_cam;
+    m_cam2world[0] = cam2world;
+    m_intrinsic[0] = intrinsic;
+    m_img_cols[0] = img_cols;
+    m_img_rows[0] = img_rows;
+
+    // Semantic related
+    m_dynamic_regulation = dynamic_regulation;
+    m_use_semantic = use_semantic;
+
+    m_geometry_counter.SetCountPerRound(reinit_count);
+
+    // Operators
     m_surfel_fusion_handler = std::make_shared<SurfelFusionHandler>(
-        config.num_cam(),
-        img_cols,
-        img_rows,
-        config.enable_semantic_surfel());
-    m_fusion_remaining_surfel_marker = std::make_shared<FusionRemainingSurfelMarker>(config.num_cam());
+        m_num_cam,
+        m_img_cols,
+        m_img_rows,
+        m_use_semantic);
+    m_fusion_remaining_surfel_marker = std::make_shared<FusionRemainingSurfelMarker>(m_num_cam);
     m_geometry_compact_handler = std::make_shared<GeometryCompactHandler>();
     m_geometry_append_handler = std::make_shared<DynamicGeometryAppendHandler>();
 }
@@ -48,7 +58,7 @@ star::GeometryFusor::~GeometryFusor()
 void star::GeometryFusor::Fuse(
     const unsigned active_buffer_idx,
     const unsigned frame_idx,
-    const SurfelMap& surfel_map,
+    const SurfelMap &surfel_map,
     SurfelGeometry::Ptr measure_surfel_geometry,
     cudaStream_t stream)
 {
@@ -75,7 +85,10 @@ void star::GeometryFusor::Fuse(
     unsigned current_geometry_idx = m_active_buffer_idx; // Pointer de-coupling
     unsigned current_node_graph_idx = m_active_buffer_idx;
     bool geometry_reinit = static_cast<bool>(m_geometry_counter.count());
-
+    if (geometry_reinit)
+    {
+        std::cout << "Geometry reinit triggered at frame " << frame_idx << "!" << std::endl;
+    }
     // Remove geometry
     if (geometry_reinit)
     {

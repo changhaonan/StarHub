@@ -9,7 +9,6 @@
 #include <star/geometry/surfel/DynamicGeometryAppendHandler.h>
 #include <star/geometry/surfel/GeometryCompactHandler.h>
 #include <star/geometry/render/Renderer.h>
-#include <mono_star/common/ConfigParser.h>
 
 namespace star
 {
@@ -21,7 +20,15 @@ namespace star
         GeometryFusor(
             SurfelGeometry::Ptr model_surfel_geometry[2],
             NodeGraph::Ptr node_graph[2],
-            Renderer::Ptr renderer);
+            Renderer::Ptr renderer,
+            const unsigned num_cam,
+            const unsigned img_cols,
+            const unsigned img_rows,
+            Extrinsic& cam2world,
+            Intrinsic& intrinsic,
+            const bool use_semantic,
+            const unsigned reinit_count,
+            const floatX<d_max_num_semantic> dynamic_regulation);
         ~GeometryFusor();
         STAR_NO_COPY_ASSIGN_MOVE(GeometryFusor);
         using FusionMaps = Renderer::FusionMaps;
@@ -92,6 +99,8 @@ namespace star
         unsigned m_num_cam;
         Extrinsic m_cam2world[d_max_cam];
         Intrinsic m_intrinsic[d_max_cam];
+        unsigned m_img_cols[d_max_cam];
+        unsigned m_img_rows[d_max_cam];
         // Flag
         bool m_fusion_maps_mapped;
 

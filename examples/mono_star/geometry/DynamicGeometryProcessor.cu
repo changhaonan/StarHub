@@ -29,24 +29,35 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     m_renderer->MapModelSurfelGeometryToCuda(0, *m_model_geometry[0]);
     m_renderer->MapModelSurfelGeometryToCuda(1, *m_model_geometry[1]);
 
+    // Camera-related
+    m_num_cam = config.num_cam();
+    m_cam2world = config.extrinsic()[0];
+    m_intrinsic = config.rgb_intrinsic_downsample();
+    m_img_cols = config.downsample_img_cols();
+    m_img_rows = config.downsample_img_rows();
+    // Regulation
+    m_dynamic_regulation = config.dynamic_regulation();
+    // Other
+    m_enable_semantic_surfel = config.enable_semantic_surfel();
+    m_reinit_counter = config.reinit_counter();
+
     m_geometry_fusor = std::make_shared<GeometryFusor>(
         m_model_geometry,
         m_node_graph,
-        m_renderer
-    );
+        m_renderer,
+        m_num_cam,
+        m_img_cols,
+        m_img_rows,
+        m_cam2world,
+        m_intrinsic,
+        m_enable_semantic_surfel,
+        m_reinit_counter,
+        m_dynamic_regulation);
 
     // Vis
     m_enable_vis = config.enable_vis();
     m_pcd_size = config.pcd_size();
     m_node_graph_size = config.graph_node_size();
-
-    // Camera-related
-    m_cam2world = config.extrinsic()[0];
-
-    // Regulation
-    m_dynamic_regulation = config.dynamic_regulation();
-    // Other
-    m_enable_semantic_surfel = config.enable_semantic_surfel();
 }
 
 star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
@@ -62,14 +73,14 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
 }
 
 void star::DynamicGeometryProcessor::ProcessFrame(
-    const SurfelMap& surfel_map,
+    const SurfelMap &surfel_map,
     const GArrayView<DualQuaternion> &solved_se3,
     const unsigned frame_idx,
     cudaStream_t stream)
 {
     if (frame_idx > 0)
-    { 
-        updateGeometry(surfel_map, solved_se3, frame_idx, stream);  // Apply warp
+    {
+        updateGeometry(surfel_map, solved_se3, frame_idx, stream); // Apply warp
     }
 
     // Generate map from geometry
@@ -294,8 +305,6 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_node_graph[vis_buffer_idx]->GetNodeKnn().Download(h_edges);
         std::vector<floatX<d_node_knn_size>> h_node_connect;
         m_node_graph[vis_buffer_idx]->GetNodeKnnConnectWeight().Download(h_node_connect);
-        std::cout << "Semantic_node size: " << m_node_graph[vis_buffer_idx]->GetNodeSemanticProbReadOnly().Size() << std::endl;
-        std::cout << "Color_v size: " << node_vertex_color.size() << std::endl;
         visualize::SaveGraph(h_node_vertex, node_vertex_color, h_edges, h_node_connect, context.at(segmentation_graph_name));
     }
 

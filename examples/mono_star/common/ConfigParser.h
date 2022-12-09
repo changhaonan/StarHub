@@ -154,6 +154,7 @@ namespace star
         KeyPointType keypoint_type() const { return m_keypoint_type; }
         float kp_match_ratio_thresh() const { return m_kp_match_ratio_thresh; }
         float kp_match_dist_thresh() const { return m_kp_match_dist_thresh; }
+
     private:
         bool m_use_keypoint = false;
         float m_kp_match_ratio_thresh = 0.7f;
@@ -197,6 +198,13 @@ namespace star
         std::string m_nn_device = "";
         std::string m_segmentation_model_specify = "";
 
+        // Processing-related
+    public:
+        unsigned reinit_counter() const { return m_reinit_counter; }
+
+    private:
+        unsigned m_reinit_counter = 10;
+        
         // Visualization related
     public:
         void loadVisConfigFromJson(const void *json_ptr);

@@ -6,7 +6,7 @@
 #include <star/geometry/render/Renderer.h>
 #include <star/geometry/node_graph/NodeGraph.h>
 #include <star/geometry/keypoint/KeyPoints.h>
-#include <mono_star/geometry/GeometryFusor.h>
+#include <star/geometry/surfel/GeometryFusor.h>
 // Viewer
 #include <easy3d_viewer/context.hpp>
 
@@ -78,7 +78,16 @@ namespace star
         float m_node_graph_size;
 
         // Camera-related
+        unsigned m_num_cam;
         Eigen::Matrix4f m_cam2world;
+        Intrinsic m_intrinsic;
+        unsigned m_img_rows;
+        unsigned m_img_cols;
+        // Regulation
+        floatX<d_max_num_semantic> m_dynamic_regulation;
+        // Other
+        bool m_enable_semantic_surfel;
+        unsigned m_reinit_counter;
 
         // Flag
         bool m_solver_maps_mapped = false;
@@ -90,9 +99,5 @@ namespace star
 
         // Operator
         GeometryFusor::Ptr m_geometry_fusor;
-        // Regulation
-        floatX<d_max_num_semantic> m_dynamic_regulation;
-        // Other
-        bool m_enable_semantic_surfel;
     };
 }

@@ -125,6 +125,7 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
     {
         auto semantic_prior_iter = config_json.find("semantic_prior");
         unsigned sementic_id = 1;
+        float max_rigidness = 0.f;
         for (auto &el : (*semantic_prior_iter).items())
         {
             int label = el.value().at("label").get<int>();
@@ -133,9 +134,14 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
             m_semantic_label[sementic_id] = label;
             if (label > m_max_seg_label)
                 m_max_seg_label = label + 1;
+            if (rigidness > max_rigidness)
+                max_rigidness = rigidness;
             sementic_id++;
         }
+        m_semantic_label.resize(sementic_id);
+        m_dynamic_regulation[0] = max_rigidness;  // The background is the most rigid
     }
+
     // Resample-related
     check_and_load(m_use_resample, "use_resample", false);
     if (m_use_resample)
@@ -176,6 +182,9 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
     // Network related
     m_nn_device = config_json.at("nn_device");
     check_and_load_string(m_segmentation_model_specify, "segmentation_model_specify", "segmenter_320x240_model");
+
+    // Process related
+    m_reinit_counter = config_json.at("reinit_counter");
 
     // Log out information
     Log();
