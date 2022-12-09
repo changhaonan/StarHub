@@ -14,16 +14,16 @@
 namespace star
 {
     // Fusing geometry with measurement
-    class DynamicGeometryFusor
+    class GeometryFusor
     {
     public:
-        using Ptr = std::shared_ptr<DynamicGeometryFusor>;
-        DynamicGeometryFusor(
+        using Ptr = std::shared_ptr<GeometryFusor>;
+        GeometryFusor(
             SurfelGeometry::Ptr model_surfel_geometry[2],
             NodeGraph::Ptr node_graph[2],
             Renderer::Ptr renderer);
-        ~DynamicGeometryFusor();
-        STAR_NO_COPY_ASSIGN_MOVE(DynamicGeometryFusor);
+        ~GeometryFusor();
+        STAR_NO_COPY_ASSIGN_MOVE(GeometryFusor);
         using FusionMaps = Renderer::FusionMaps;
 
         // Fuse the geometry with measurement, and update the node graph

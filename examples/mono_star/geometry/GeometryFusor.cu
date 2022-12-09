@@ -1,8 +1,8 @@
-#include "DynamicGeometryFusor.h"
+#include "GeometryFusor.h"
 #include <star/geometry/node_graph/NodeGraphManipulator.h>
 #include <star/geometry/node_graph/Skinner.h>
 
-star::DynamicGeometryFusor::DynamicGeometryFusor(
+star::GeometryFusor::GeometryFusor(
     SurfelGeometry::Ptr model_surfel_geometry[2],
     NodeGraph::Ptr node_graph[2],
     Renderer::Ptr renderer)
@@ -39,13 +39,13 @@ star::DynamicGeometryFusor::DynamicGeometryFusor(
     m_geometry_append_handler = std::make_shared<DynamicGeometryAppendHandler>();
 }
 
-star::DynamicGeometryFusor::~DynamicGeometryFusor()
+star::GeometryFusor::~GeometryFusor()
 {
     if (m_fusion_maps_mapped)
         m_renderer->UnmapFusionMapsFromCuda();
 }
 
-void star::DynamicGeometryFusor::Fuse(
+void star::GeometryFusor::Fuse(
     const unsigned active_buffer_idx,
     const unsigned frame_idx,
     const SurfelMap& surfel_map,
@@ -139,7 +139,7 @@ void star::DynamicGeometryFusor::Fuse(
     }
 }
 
-void star::DynamicGeometryFusor::drawFusionMaps(
+void star::GeometryFusor::drawFusionMaps(
     const unsigned frame_idx,
     const unsigned geometry_idx,
     cudaStream_t stream)
@@ -164,7 +164,7 @@ void star::DynamicGeometryFusor::drawFusionMaps(
     cudaSafeCall(cudaStreamSynchronize(stream));
 }
 
-void star::DynamicGeometryFusor::geometryRemoval(
+void star::GeometryFusor::geometryRemoval(
     const Measure4Fusion &measure4fusion,
     const unsigned current_time,
     unsigned &current_geometry_idx,
@@ -228,7 +228,7 @@ void star::DynamicGeometryFusor::geometryRemoval(
     current_geometry_idx = compact_buffer_idx;
 }
 
-void star::DynamicGeometryFusor::geometryRemovalSurfelWarp(
+void star::GeometryFusor::geometryRemovalSurfelWarp(
     const Measure4GeometryRemoval &meaure4geometry_removal,
     const unsigned current_time,
     unsigned &current_geometry_idx,
@@ -304,7 +304,7 @@ void star::DynamicGeometryFusor::geometryRemovalSurfelWarp(
     current_geometry_idx = compact_buffer_idx;
 }
 
-void star::DynamicGeometryFusor::geometryFusion(
+void star::GeometryFusor::geometryFusion(
     const Measure4Fusion &measure4fusion,
     const Segmentation4SemanticFusion &segmentation4semantic_fusion,
     Geometry4GeometryAppend &geometry4geometry_append,
@@ -384,7 +384,7 @@ void star::DynamicGeometryFusor::geometryFusion(
     geometry4geometry_append = m_surfel_fusion_handler->GenerateGeometry4GeometryAppend();
 }
 
-void star::DynamicGeometryFusor::geometryAppend(
+void star::GeometryFusor::geometryAppend(
     const Geometry4GeometryAppend &geometry4geometry_append,
     const unsigned current_time,
     unsigned &current_geometry_idx,
@@ -432,7 +432,7 @@ void star::DynamicGeometryFusor::geometryAppend(
     current_geometry_idx = compact_buffer_idx;
 }
 
-void star::DynamicGeometryFusor::geometrySkinning(
+void star::GeometryFusor::geometrySkinning(
     const unsigned num_remaining_surfel,
     const bool is_incremental,
     unsigned &current_geometry_idx,

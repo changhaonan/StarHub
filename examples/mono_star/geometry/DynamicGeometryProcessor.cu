@@ -29,6 +29,12 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     m_renderer->MapModelSurfelGeometryToCuda(0, *m_model_geometry[0]);
     m_renderer->MapModelSurfelGeometryToCuda(1, *m_model_geometry[1]);
 
+    m_geometry_fusor = std::make_shared<GeometryFusor>(
+        m_model_geometry,
+        m_node_graph,
+        m_renderer
+    );
+
     // Vis
     m_enable_vis = config.enable_vis();
     m_pcd_size = config.pcd_size();
@@ -62,8 +68,8 @@ void star::DynamicGeometryProcessor::ProcessFrame(
     cudaStream_t stream)
 {
     if (frame_idx > 0)
-    { // Can apply warp
-        updateGeometry(solved_se3, frame_idx, stream);
+    { 
+        updateGeometry(surfel_map, solved_se3, frame_idx, stream);  // Apply warp
     }
 
     // Generate map from geometry
@@ -153,6 +159,7 @@ void star::DynamicGeometryProcessor::initKeyPoints(
 }
 
 void star::DynamicGeometryProcessor::updateGeometry(
+    const SurfelMap &surfel_map,
     const GArrayView<DualQuaternion> &solved_se3,
     const unsigned frame_idx,
     cudaStream_t stream)
@@ -165,6 +172,22 @@ void star::DynamicGeometryProcessor::updateGeometry(
         m_node_graph[m_buffer_idx]->DeformAccess(), *m_model_geometry[m_buffer_idx], solved_se3, stream);
     SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(
         m_node_graph[m_buffer_idx]->DeformAccess(), *m_model_keypoints[m_buffer_idx], solved_se3, stream);
+
+    // Init data geometry
+    SurfelGeometryInitializer::InitFromGeometryMap(
+        *m_data_geometry,
+        surfel_map,
+        m_cam2world,
+        m_enable_semantic_surfel,
+        stream);
+
+    // Apply the geometry fusion
+    m_geometry_fusor->Fuse(
+        m_buffer_idx,
+        frame_idx,
+        surfel_map,
+        m_data_geometry,
+        stream);
 
     // Reanchor the geometry
     auto next_buffer_idx = (m_buffer_idx + 1) & 1;
