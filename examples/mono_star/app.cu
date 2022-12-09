@@ -137,6 +137,7 @@ int main()
         if (frame_idx == 0)
         // if (true)
         {
+            geometry_processor->initGeometry(*measure_processor->GetSurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
             geometry_processor->initKeyPoints(
                 *measure_processor->GetSurfelMapReadOnly(),
                 keypoint_processor->GetKeyPointsReadOnly(),

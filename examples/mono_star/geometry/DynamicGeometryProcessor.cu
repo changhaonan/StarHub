@@ -67,11 +67,7 @@ void star::DynamicGeometryProcessor::ProcessFrame(
     const unsigned frame_idx,
     cudaStream_t stream)
 {
-    if (frame_idx == 0)
-    {
-        initGeometry(surfel_map, m_cam2world, frame_idx, stream);
-    }
-    else
+    if (frame_idx > 0)
     {
         updateGeometry(surfel_map, solved_se3, frame_idx, stream);
     }
