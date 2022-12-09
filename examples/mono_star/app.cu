@@ -15,7 +15,7 @@
 int main()
 {
     std::cout << "Start testing Mono-STAR" << std::endl;
-    
+
     using namespace star;
     // std::string scene_name = "move_dragon";
     // std::string scene_name = "home1";
@@ -131,23 +131,21 @@ int main()
 
             // Apply the warp
             geometry_processor->ProcessFrame(
-                opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
+                *measure_processor->GetSurfelMap(), opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
         }
 
         if (frame_idx == 0)
         // if (true)
         {
-            geometry_processor->initGeometry(*measure_processor->GetSurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
             geometry_processor->initKeyPoints(
                 *measure_processor->GetSurfelMapReadOnly(),
                 keypoint_processor->GetKeyPointsReadOnly(),
                 keypoint_processor->GetDescriptorsReadOnly(),
                 config.extrinsic()[0],
                 frame_idx,
-                0
-            );
+                0);
             GArrayView<DualQuaternion> empty_se3;
-            geometry_processor->ProcessFrame(empty_se3, frame_idx, 0);
+            geometry_processor->ProcessFrame(*measure_processor->GetSurfelMap(), empty_se3, frame_idx, 0);
         }
         // Clean
         context.close();

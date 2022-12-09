@@ -6,6 +6,7 @@
 #include <star/geometry/render/Renderer.h>
 #include <star/geometry/node_graph/NodeGraph.h>
 #include <star/geometry/keypoint/KeyPoints.h>
+#include <mono_star/geometry/DynamicGeometryFusor.h>
 // Viewer
 #include <easy3d_viewer/context.hpp>
 
@@ -19,6 +20,7 @@ namespace star
         DynamicGeometryProcessor();
         ~DynamicGeometryProcessor();
         void ProcessFrame(
+            const SurfelMap &surfel_map,
             const GArrayView<DualQuaternion> &solved_se3,
             const unsigned frame_idx,
             cudaStream_t stream);
@@ -35,6 +37,7 @@ namespace star
             const unsigned frame_idx,
             cudaStream_t stream);
         void updateGeometry(
+            const SurfelMap &surfel_map,
             const GArrayView<DualQuaternion> &solved_se3,
             const unsigned frame_idx,
             cudaStream_t stream);
@@ -85,6 +88,8 @@ namespace star
         Renderer::ObservationMaps m_observation_maps;
         SurfelMapTex m_surfel_map_tex;
 
+        // Fusing operator
+        DynamicGeometryFusor::Ptr m_geometry_fusor;
         // Regulation
         floatX<d_max_num_semantic> m_dynamic_regulation;
         // Other
