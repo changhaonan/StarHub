@@ -48,7 +48,7 @@ star::DynamicGeometryFusor::~DynamicGeometryFusor()
 void star::DynamicGeometryFusor::Fuse(
     const unsigned active_buffer_idx,
     const unsigned frame_idx,
-    const SurfelMap& surfel_map,
+    const SurfelMap &surfel_map,
     SurfelGeometry::Ptr measure_surfel_geometry,
     cudaStream_t stream)
 {

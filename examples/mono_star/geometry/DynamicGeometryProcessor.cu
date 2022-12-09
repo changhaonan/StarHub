@@ -30,10 +30,10 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     m_renderer->MapModelSurfelGeometryToCuda(1, *m_model_geometry[1]);
 
     // Init operator
-    m_geometry_fusor = std::make_shared<DynamicGeometryFusor>(
-        m_model_geometry,
-        m_node_graph,
-        m_renderer);
+    // m_geometry_fusor = std::make_shared<DynamicGeometryFusor>(
+    //     m_model_geometry,
+    //     m_node_graph,
+    //     m_renderer);
 
     // Vis
     m_enable_vis = config.enable_vis();
@@ -72,7 +72,7 @@ void star::DynamicGeometryProcessor::ProcessFrame(
         initGeometry(surfel_map, m_cam2world, frame_idx, stream);
     }
     else
-    {   
+    {
         updateGeometry(surfel_map, solved_se3, frame_idx, stream);
     }
 
@@ -121,6 +121,9 @@ void star::DynamicGeometryProcessor::initGeometry(
         // Update surfel connection
         Skinner::UpdateSkinnningConnection(geometyr4skinner, node_graph4skinner, stream);
     }
+
+    // Check size:
+    std::cout << "Node graph size: " << m_node_graph[m_buffer_idx]->GetNodeSize() << std::endl;
 }
 
 void star::DynamicGeometryProcessor::initKeyPoints(
@@ -178,20 +181,20 @@ void star::DynamicGeometryProcessor::updateGeometry(
         m_node_graph[m_buffer_idx]->DeformAccess(), *m_model_keypoints[m_buffer_idx], solved_se3, stream);
 
     // Init data geometry
-    SurfelGeometryInitializer::InitFromGeometryMap(
-        *m_data_geometry,
-        surfel_map,
-        m_cam2world,
-        m_enable_semantic_surfel,
-        stream);
+    // SurfelGeometryInitializer::InitFromGeometryMap(
+    //     *m_data_geometry,
+    //     surfel_map,
+    //     m_cam2world,
+    //     m_enable_semantic_surfel,
+    //     stream);
 
     // Apply the geometry fusion
-    m_geometry_fusor->Fuse(
-        m_buffer_idx,
-        frame_idx,
-        surfel_map,
-        m_data_geometry,
-        stream);
+    // m_geometry_fusor->Fuse(
+    //     m_buffer_idx,
+    //     frame_idx,
+    //     surfel_map,
+    //     m_data_geometry,
+    //     stream);
 
     // Reanchor the geometry
     auto next_buffer_idx = (m_buffer_idx + 1) & 1;
@@ -209,6 +212,9 @@ void star::DynamicGeometryProcessor::updateGeometry(
         m_model_keypoints[next_buffer_idx],
         stream);
     m_buffer_idx = next_buffer_idx;
+    // Check size:
+    std::cout << "This, Node graph size: " << m_node_graph[m_buffer_idx]->GetNodeSize() << std::endl;
+    std::cout << "Prev, Node graph size: " << m_node_graph[next_buffer_idx]->GetNodeSize() << std::endl;
 }
 
 void star::DynamicGeometryProcessor::computeSurfelMapTex()
