@@ -74,13 +74,21 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
 
 void star::DynamicGeometryProcessor::ProcessFrame(
     const SurfelMap &surfel_map,
+    const GArrayView<float2> &keypoints,
+    const GArrayView<float> &descriptors,
     const GArrayView<DualQuaternion> &solved_se3,
     const unsigned frame_idx,
     cudaStream_t stream)
-{
-    if (frame_idx > 0)
+{   
+    if (frame_idx == 0) {
+        initGeometry(surfel_map, m_cam2world, frame_idx, stream);
+        initKeyPoints(surfel_map, keypoints, descriptors, m_cam2world, frame_idx, stream);
+    }
+    else if (frame_idx > 0)
     {
         updateGeometry(surfel_map, solved_se3, frame_idx, stream); // Apply warp
+        // Update the keypoints 10 frames
+        // TODO: test this in the future
     }
 
     // Generate map from geometry
@@ -109,9 +117,9 @@ void star::DynamicGeometryProcessor::initGeometry(
     m_node_graph[m_buffer_idx]->ResetNodeGraphConnection(stream);
 
     // Perform Skinning without semantic
-    auto geometyr4skinner = m_model_geometry[m_buffer_idx]->GenerateGeometry4Skinner();
+    auto geometry4skinner = m_model_geometry[m_buffer_idx]->GenerateGeometry4Skinner();
     auto node_graph4skinner = m_node_graph[m_buffer_idx]->GenerateNodeGraph4Skinner();
-    Skinner::PerformSkinningFromLive(geometyr4skinner, node_graph4skinner, stream);
+    Skinner::PerformSkinningFromLive(geometry4skinner, node_graph4skinner, stream);
 
     // Update with skinning with semantic
     if (m_enable_semantic_surfel)
@@ -126,7 +134,7 @@ void star::DynamicGeometryProcessor::initGeometry(
         // Update node connection
         m_node_graph[m_buffer_idx]->ComputeNodeGraphConnectionFromSemantic(m_dynamic_regulation, stream);
         // Update surfel connection
-        Skinner::UpdateSkinnningConnection(geometyr4skinner, node_graph4skinner, stream);
+        Skinner::UpdateSkinnningConnection(geometry4skinner, node_graph4skinner, stream);
     }
 }
 
@@ -157,15 +165,15 @@ void star::DynamicGeometryProcessor::initKeyPoints(
         stream));
 
     // Perform Skinning without semantic
-    auto geometyr4skinner = m_model_keypoints[m_buffer_idx]->GenerateGeometry4Skinner();
+    auto geometry4skinner = m_model_keypoints[m_buffer_idx]->GenerateGeometry4Skinner();
     auto node_graph4skinner = m_node_graph[m_buffer_idx]->GenerateNodeGraph4Skinner();
-    Skinner::PerformSkinningFromLive(geometyr4skinner, node_graph4skinner, stream);
+    Skinner::PerformSkinningFromLive(geometry4skinner, node_graph4skinner, stream);
 
     // Update with skinning with semantic
     if (m_enable_semantic_surfel)
     {
         // Update surfel connection
-        Skinner::UpdateSkinnningConnection(geometyr4skinner, node_graph4skinner, stream);
+        Skinner::UpdateSkinnningConnection(geometry4skinner, node_graph4skinner, stream);
     }
 }
 

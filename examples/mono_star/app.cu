@@ -131,22 +131,23 @@ int main()
 
             // Apply the warp
             geometry_processor->ProcessFrame(
-                *measure_processor->GetSurfelMapReadOnly(), opt_processor->SolvedSE3(), frame_idx, 0); // Dynamic geometry process
+                *measure_processor->GetSurfelMapReadOnly(), 
+                keypoint_processor->GetKeyPointsReadOnly(),
+                keypoint_processor->GetDescriptorsReadOnly(), 
+                opt_processor->SolvedSE3(), 
+                frame_idx, 
+                0); // Dynamic geometry process
         }
-
-        if (frame_idx == 0)
-        // if (true)
+        else if (frame_idx == 0)
         {
-            geometry_processor->initGeometry(*measure_processor->GetSurfelMapReadOnly(), config.extrinsic()[0], frame_idx, 0);
-            geometry_processor->initKeyPoints(
-                *measure_processor->GetSurfelMapReadOnly(),
+            GArrayView<DualQuaternion> empty_se3;
+            geometry_processor->ProcessFrame(
+                *measure_processor->GetSurfelMapReadOnly(), 
                 keypoint_processor->GetKeyPointsReadOnly(),
                 keypoint_processor->GetDescriptorsReadOnly(),
-                config.extrinsic()[0],
-                frame_idx,
+                empty_se3, 
+                frame_idx, 
                 0);
-            GArrayView<DualQuaternion> empty_se3;
-            geometry_processor->ProcessFrame(*measure_processor->GetSurfelMapReadOnly(), empty_se3, frame_idx, 0);
         }
         // Clean
         context.close();
