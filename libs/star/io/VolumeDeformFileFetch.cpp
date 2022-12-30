@@ -86,12 +86,21 @@ bool star::VolumeDeformFileFetch::FetchKeypoint(size_t cam_idx, size_t frame_idx
         fs["superpoint_keypoints"] >> keypoints;
         fs["superpoint_descriptors"] >> descriptors;
     }
-    else if (keypoint_type == KeyPointType::R2D2) 
+    else if (keypoint_type == KeyPointType::R2D2)
     {
         // Read xml using opencv
         cv::FileStorage fs(file_path.string(), cv::FileStorage::READ);
         fs["r2d2_keypoints"] >> keypoints;
         fs["r2d2_descriptors"] >> descriptors;
+        // Drop the last channel for keypoints
+        keypoints = keypoints.colRange(0, 2);
+    }
+    else if (keypoint_type == KeyPointType::ORB)
+    {
+        // Read xml using opencv
+        cv::FileStorage fs(file_path.string(), cv::FileStorage::READ);
+        fs["points"] >> keypoints;
+        fs["descriptions"] >> descriptors;
         // Drop the last channel for keypoints
         keypoints = keypoints.colRange(0, 2);
     }
@@ -126,7 +135,7 @@ boost::filesystem::path star::VolumeDeformFileFetch::FileNameVolumeDeform(size_t
         file_name += ".seg.png";
         break;
     case FileType::keypoint_file:
-        file_name += ".feature.xml";
+        file_name += ".orb.xml";  // TODO: temporary using orb feature as feature name
         break;
     default:
         printf("File type is not supported.\n");

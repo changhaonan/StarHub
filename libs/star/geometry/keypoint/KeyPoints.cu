@@ -11,6 +11,9 @@ star::KeyPoints::KeyPoints(const KeyPointType keypoint_type)
     case KeyPointType::SuperPoints:
         m_descriptor_dim = 256;
         break;
+    case KeyPointType::ORB:
+        m_descriptor_dim = 32;
+        break;
     default:
         break;
     }

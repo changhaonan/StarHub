@@ -51,6 +51,7 @@ namespace star
         unsigned m_buffer_idx;
         Extrinsic m_cam2world;
         bool m_enable_semantic_surfel;
+        float m_downsample_scale;
 
         // Matching-related
         float m_kp_match_ratio_thresh;

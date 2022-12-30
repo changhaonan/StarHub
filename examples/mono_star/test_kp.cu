@@ -35,7 +35,7 @@ int main()
         cv::Mat keypoints;
         cv::Mat descriptors;
         cv::Mat rgb_img;
-        fetcher->FetchKeypoint(0, img_idx, keypoints, descriptors, KeyPointType::SuperPoints);
+        fetcher->FetchKeypoint(0, img_idx, keypoints, descriptors, KeyPointType::ORB);
         fetcher->FetchRGBImage(0, img_idx, rgb_img);
 
         // Transfer cv::Mat into std::vector<cv::KeyPoint>

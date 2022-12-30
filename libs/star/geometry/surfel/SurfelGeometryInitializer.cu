@@ -250,7 +250,6 @@ namespace star::device
 		float2 key = keys[idx];
 		float x = key.x;
 		float y = key.y;
-
 		if (x >= float(img_cols) || y >= float(img_rows))
 			is_valid = false;
 

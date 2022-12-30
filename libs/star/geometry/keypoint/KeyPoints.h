@@ -36,6 +36,10 @@ namespace star
             {
                 return 256;
             }
+            else if (keypoint_type == KeyPointType::ORB) 
+            {
+                return 32;
+            }
             else
             {
                 return 0;

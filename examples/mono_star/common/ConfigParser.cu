@@ -166,6 +166,15 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
         {
             m_keypoint_type = KeyPointType::R2D2;
         }
+        else if (keypoint_type_string == "ORB" || keypoint_type_string == "orb" || keypoint_type_string == "Orb")
+        {
+            m_keypoint_type = KeyPointType::ORB;
+        }
+        else
+        {
+            std::cout << "Unknown keypoint type: " << keypoint_type_string << std::endl;
+            exit(-1);
+        }
         m_kp_match_ratio_thresh = config_json.at("kp_match_ratio_thresh");
         m_kp_match_dist_thresh = config_json.at("kp_match_dist_thresh");
     }

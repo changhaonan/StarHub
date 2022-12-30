@@ -37,6 +37,7 @@ star::KeyPointDetectProcessor::KeyPointDetectProcessor()
     m_start_frame_idx = config.start_frame_idx();
     m_cam2world = config.extrinsic()[0];
     m_enable_semantic_surfel = config.enable_semantic_surfel();
+    m_downsample_scale = config.downsample_scale();
 
     // Create host buffer
     cudaSafeCall(cudaMallocHost(&m_keypoint_buffer, sizeof(float) * 2 * d_max_num_keypoints));
@@ -76,6 +77,9 @@ void star::KeyPointDetectProcessor::ProcessFrame(
 {
     const auto image_idx = size_t(frame_idx) * m_step_frame + m_start_frame_idx;
     m_fetcher->FetchKeypoint(0, image_idx, m_keypoint_mat, m_descriptor_mat, m_keypoint_type);
+
+    // Scale keypoints according to downsample ratio
+    m_keypoint_mat = m_keypoint_mat * m_downsample_scale;
 
     // Load the keypoint and descriptor into gpu
     unsigned num_keypoints_detected = m_keypoint_mat.rows;
@@ -143,6 +147,14 @@ void star::KeyPointDetectProcessor::saveContext(
     visualize::SavePointCloud(
         m_detected_keypoints->LiveVertexConfidenceReadOnly(),
         context.at("d_keypoints"));
+
+    if (model_keypoints.NumKeyPoints() > 0)
+    {
+        context.addPointCloud("model_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
+        visualize::SavePointCloud(
+            model_keypoints.LiveVertexConfidenceReadOnly(),
+            context.at("model_keypoints"));
+    }
 
     // Draw the matched keypoints
     if (m_num_valid_matches > 0)

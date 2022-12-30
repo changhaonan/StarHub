@@ -6,6 +6,7 @@ namespace star
     enum class KeyPointType
     {
         R2D2,
-        SuperPoints
+        SuperPoints,
+        ORB
     };
 }
