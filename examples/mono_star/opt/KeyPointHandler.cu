@@ -1,5 +1,6 @@
 #include "KeyPointHandler.h"
 #include <mono_star/common/ConfigParser.h>
+#include <mono_star/opt/PenaltyConstants.h>
 
 namespace star::device
 {
@@ -101,6 +102,11 @@ namespace star::device
         term_residual = dot(e, e);
         term_gradient.translation = e;
         term_gradient.rotation = cross(warped_vertex_world, e);
+
+        printf("can: %f, %f, %f, warped: %f %f %f, target: %f %f %f, term: %f.\n",
+               can_vertex4.x, can_vertex4.y, can_vertex4.z,
+               warped_vertex_world.x, warped_vertex_world.y, warped_vertex_world.z,
+               target_vertex.x, target_vertex.y, target_vertex.z, term_residual);
 
         // Assign to output
         residual[idx] = term_residual;
@@ -220,6 +226,8 @@ star::FeatureTerm2Jacobian star::KeyPointHandler::Term2JacobianMap() const
 
 void star::KeyPointHandler::DebugResidual()
 {
+    auto penalty = PenaltyConstants();
+
     // Compute keypoint residual and log
     std::vector<float> h_residual;
     m_term_residual.View().Download(h_residual);
@@ -227,7 +235,7 @@ void star::KeyPointHandler::DebugResidual()
     float residual_sum = 0.f;
     for (int i = 0; i < h_residual.size(); ++i)
     {
-        residual_sum += h_residual[i];
+        residual_sum += h_residual[i] * h_residual[i] * penalty.FeatureSquared();
     }
     std::cout << "SOR [Feature]: " << residual_sum << std::endl;
 }
@@ -239,8 +247,8 @@ void star::KeyPointHandler::BuildTerm2Jacobian(cudaStream_t stream)
     dim3 grid(divUp(m_num_match, blk.x));
     device::ComputeKPJacobianResidual<<<grid, blk, 0, stream>>>(
         m_kp_vertex_confid.Ptr(),
-        m_kp_normal_radius.Ptr(),
         m_d_kp_vertex_confid.Ptr(),
+        m_kp_normal_radius.Ptr(),
         m_d_kp_normal_radius.Ptr(),
         m_kp_match.Ptr(),
         // KNN structure

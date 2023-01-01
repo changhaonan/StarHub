@@ -379,7 +379,7 @@ void star::WarpSolver::computeNode2JacobianSync()
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[2]));
-	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[4]));
+	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[3]));
 
 	// Debug: Check Residual
 #ifdef OPT_DEBUG_CHECK

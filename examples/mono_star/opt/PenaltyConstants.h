@@ -15,7 +15,7 @@ namespace star
 		float m_lambda_dense_image_optical_flow;
 		float m_lambda_reg;				 // Asap loss
 		float m_lambda_node_translation; // Node motion prediction
-		float m_lambda_feature;
+		float m_lambda_feature;			 // Feature loss
 
 		// Only modifiable by warp solver
 		friend class SolverIterationData;
