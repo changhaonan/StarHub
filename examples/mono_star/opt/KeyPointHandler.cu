@@ -85,17 +85,18 @@ namespace star::device
             node_se3, knn_patch_ptr, knn_patch_spatial_weight_ptr, knn_patch_connect_weight_ptr, d_node_knn_size);
         const mat34 se3 = dq_average.se3_matrix();
 
-        // Warp the source keypoint
+        
         // TODO: currently normal is not used
-        const float4 can_vertex4 = kp_vertex_confid_src[match.x];
-        const float4 can_normal4 = kp_normal_radius_src[match.x];
-        const float3 warped_vertex_world = se3.rot * can_vertex4 + se3.trans;
-        const float3 warped_normal_world = se3.rot * can_normal4;
-
-        const float4 target_vertex4 = kp_vertex_confid_dst[match.y];
-        const float4 target_normal4 = kp_normal_radius_dst[match.y];
+        const float4 target_vertex4 = kp_vertex_confid_dst[match.x]; // The first one is measure
+        const float4 target_normal4 = kp_normal_radius_dst[match.x];
         const float3 target_vertex = make_float3(target_vertex4.x, target_vertex4.y, target_vertex4.z);
         const float3 target_normal = make_float3(target_normal4.x, target_normal4.y, target_normal4.z);
+
+        // Warp
+        const float4 can_vertex4 = kp_vertex_confid_src[match.y]; // The second one is model
+        const float4 can_normal4 = kp_normal_radius_src[match.y];
+        const float3 warped_vertex_world = se3.rot * can_vertex4 + se3.trans;
+        const float3 warped_normal_world = se3.rot * can_normal4;
 
         // Compute Jacobian, assume all is valid
         auto e = warped_vertex_world - target_vertex;
@@ -103,10 +104,10 @@ namespace star::device
         term_gradient.translation = e;
         term_gradient.rotation = cross(warped_vertex_world, e);
 
-        printf("can: %f, %f, %f, warped: %f %f %f, target: %f %f %f, term: %f.\n",
-               can_vertex4.x, can_vertex4.y, can_vertex4.z,
-               warped_vertex_world.x, warped_vertex_world.y, warped_vertex_world.z,
-               target_vertex.x, target_vertex.y, target_vertex.z, term_residual);
+        // printf("can: %f, %f, %f, warped: %f %f %f, target: %f %f %f, term: %f.\n",
+        //        can_vertex4.x, can_vertex4.y, can_vertex4.z,
+        //        warped_vertex_world.x, warped_vertex_world.y, warped_vertex_world.z,
+        //        target_vertex.x, target_vertex.y, target_vertex.z, term_residual);
 
         // Assign to output
         residual[idx] = term_residual;
