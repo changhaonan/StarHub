@@ -63,6 +63,7 @@ star::WarpSolver::WarpSolver()
 	m_dense_image_handler = std::make_shared<DenseImageHandler>();
 	m_node_graph_handler = std::make_shared<NodeGraphHandler>();
 	m_node_motion_handler = std::make_shared<NodeMotionHandler>();
+	m_keypoint_handler = std::make_shared<KeyPointHandler>();
 	// Preconditioner
 	m_preconditioner_rhs_builder = std::make_shared<PreconditionerRhsBuilder>();
 	m_jtj_materializer = std::make_shared<JtJMaterializer>();
@@ -128,6 +129,7 @@ void star::WarpSolver::SetSolverInputs(
 	NodeGraph4Solver node_graph4solver,
 	NodeFlow4Solver nodeflow4solver,
 	OpticalFlow4Solver opticalflow4solver,
+	KeyPoint4Solver keypoint4solver,
 	const Extrinsic *camera2world)
 {
 	m_measure4solver = measure4solver;
@@ -136,6 +138,7 @@ void star::WarpSolver::SetSolverInputs(
 	m_node_graph4solver = node_graph4solver;
 	m_nodeflow4solver = nodeflow4solver;
 	m_opticalflow4solver = opticalflow4solver;
+	m_keypoint4solver = keypoint4solver;
 
 	// Reinteperate
 	GArrayView<float> node_knn_patch_connect_weight =
@@ -201,7 +204,8 @@ void star::WarpSolver::buildSolverIndexStreamed()
 
 	// Build input for handler
 	setTermHandlerInput();
-
+	// Build handler knn term
+	initTermHandler(m_solver_stream[0]);
 	// Node index: has been built in node-graph
 	// Build index
 	SetNode2TermIndexInput();
@@ -220,7 +224,7 @@ void star::WarpSolver::buildSolverIndexStreamed()
 
 void star::WarpSolver::SetNode2TermIndexInput()
 {
-	GArrayView<unsigned short> sparse_feature_knn_patch;
+	auto sparse_feature_knn_patch = m_keypoint_handler->KNNPatchArray();
 	auto image_term_pixel_knn = m_image_term_knn_fetcher->GetImageTermPixelAndKNN();
 	unsigned num_nodes = m_node_graph4solver.num_node;
 	// Log
@@ -334,7 +338,6 @@ void star::WarpSolver::solverIterationLocalIterationStreamed()
 
 void star::WarpSolver::setTermHandlerInput()
 {
-
 	m_dense_image_handler->SetInputs(
 		m_image_term_knn_fetcher->GetImageTermPixelAndKNN(),
 		m_knn_map,
@@ -347,6 +350,13 @@ void star::WarpSolver::setTermHandlerInput()
 	m_node_motion_handler->SetInputs(
 		m_node_graph4solver,
 		m_nodeflow4solver);
+	m_keypoint_handler->SetInputs(
+		m_keypoint4solver);
+}
+
+void star::WarpSolver::initTermHandler(cudaStream_t stream)
+{
+	m_keypoint_handler->InitKNNSync(stream);
 }
 
 void star::WarpSolver::computeNode2JacobianSync()
@@ -357,16 +367,19 @@ void star::WarpSolver::computeNode2JacobianSync()
 	m_dense_image_handler->UpdateInputs(node_se3, m_image_term_knn_fetcher->GetImageTermPixelAndKNN());
 	m_node_graph_handler->UpdateInputs(node_se3);
 	m_node_motion_handler->UpdateInputs(node_se3);
+	m_keypoint_handler->UpdateInputs(node_se3, m_solver_stream[3]);
 
 	// Compute Jacobian
 	m_dense_image_handler->ComputeJacobianTermsFixedIndex(m_solver_stream[0]);
 	m_node_graph_handler->BuildTerm2Jacobian(m_solver_stream[1]);
 	m_node_motion_handler->BuildTerm2Jacobian(m_solver_stream[2]);
+	m_keypoint_handler->BuildTerm2Jacobian(m_solver_stream[3]);
 
 	// Synchronization
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[1]));
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[2]));
+	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[4]));
 
 	// Debug: Check Residual
 #ifdef OPT_DEBUG_CHECK
@@ -387,7 +400,7 @@ void star::WarpSolver::SetPreconditionerBuilderAndJtJApplierInput()
 	const auto dense_image_term2jacobian = m_dense_image_handler->Term2JacobianMap();
 	const auto reg_term2jacobian = m_node_graph_handler->Term2JacobianMap();
 	const auto node_translation_term2jacobian = m_node_motion_handler->Term2JacobianMap();
-	FeatureTerm2Jacobian empty_feature_term2jacobian; // FIXME: Using placeholder for now
+	const auto feature_term2jacobian = m_keypoint_handler->Term2JacobianMap();
 
 	// Penalty constants
 	const auto penalty_constants = m_iteration_data.CurrentPenaltyConstants();
@@ -398,7 +411,7 @@ void star::WarpSolver::SetPreconditionerBuilderAndJtJApplierInput()
 		dense_image_term2jacobian,
 		reg_term2jacobian,
 		node_translation_term2jacobian,
-		empty_feature_term2jacobian,
+		feature_term2jacobian,
 		penalty_constants);
 }
 
@@ -412,7 +425,7 @@ void star::WarpSolver::SetJtJMaterializerInput()
 	const auto dense_image_term2jacobian = m_dense_image_handler->Term2JacobianMap();
 	const auto reg_term2jacobian = m_node_graph_handler->Term2JacobianMap();
 	const auto node_translation_term2jacobian = m_node_motion_handler->Term2JacobianMap();
-	FeatureTerm2Jacobian empty_feature_term2jacobian; // FIXME: Using placeholder for now
+	const auto feature_term2jacobian = m_keypoint_handler->Term2JacobianMap();
 
 	// Penalty constants
 	const auto penalty_constants = m_iteration_data.CurrentPenaltyConstants();
@@ -423,7 +436,7 @@ void star::WarpSolver::SetJtJMaterializerInput()
 		dense_image_term2jacobian,
 		reg_term2jacobian,
 		node_translation_term2jacobian,
-		empty_feature_term2jacobian,
+		feature_term2jacobian,
 		node2term,
 		penalty_constants);
 }

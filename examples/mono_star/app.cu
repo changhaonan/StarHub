@@ -118,6 +118,16 @@ int main()
             nodeflow4solver.num_node = node_motion_processor->GetNodeMotionPred().Size();
             nodeflow4solver.node_motion_pred = node_motion_processor->GetNodeMotionPred();
 
+            KeyPoint4Solver keypoint4solver;
+            keypoint4solver.kp_match = keypoint_processor->GetMatchedKeyPointsReadOnly();
+            keypoint4solver.d_kp_vertex_confid = keypoint_processor->GetKeyPointsReadOnly()->LiveVertexConfidenceReadOnly();
+            keypoint4solver.d_kp_normal_radius = keypoint_processor->GetKeyPointsReadOnly()->LiveNormalRadiusReadOnly();
+            keypoint4solver.kp_vertex_confid = geometry_processor->ActiveKeyPoints()->LiveVertexConfidenceReadOnly();
+            keypoint4solver.kp_normal_radius = geometry_processor->ActiveKeyPoints()->LiveNormalRadiusReadOnly();
+            keypoint4solver.kp_knn = geometry_processor->ActiveKeyPoints()->SurfelKNNReadOnly();
+            keypoint4solver.kp_knn_spatial_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNSpatialWeightReadOnly();
+            keypoint4solver.kp_knn_connect_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNConnectWeightReadOnly();
+
             // Solve
             opt_processor->ProcessFrame(
                 measure4solver,
@@ -126,13 +136,14 @@ int main()
                 node_graph4solver,
                 nodeflow4solver,
                 opticalflow4solver,
+                keypoint4solver,
                 frame_idx,
                 0);
 
             // Apply the warp
             geometry_processor->ProcessFrame(
                 *measure_processor->GetSurfelMapReadOnly(), 
-                keypoint_processor->GetKeyPointsReadOnly(),
+                keypoint_processor->Get2DKeyPointsReadOnly(),
                 keypoint_processor->GetDescriptorsReadOnly(), 
                 opt_processor->SolvedSE3(), 
                 frame_idx, 
@@ -143,7 +154,7 @@ int main()
             GArrayView<DualQuaternion> empty_se3;
             geometry_processor->ProcessFrame(
                 *measure_processor->GetSurfelMapReadOnly(), 
-                keypoint_processor->GetKeyPointsReadOnly(),
+                keypoint_processor->Get2DKeyPointsReadOnly(),
                 keypoint_processor->GetDescriptorsReadOnly(),
                 empty_se3, 
                 frame_idx, 

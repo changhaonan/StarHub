@@ -22,6 +22,7 @@ namespace star
 			NodeGraph4Solver &node_graph4solver,
 			NodeFlow4Solver &nodeflow4solver,
 			OpticalFlow4Solver &opticalflow4solver,
+			KeyPoint4Solver& keypoint4solver,
 			const unsigned frame_idx,
 			cudaStream_t stream);
 		GArrayView<DualQuaternion> SolvedSE3() const {

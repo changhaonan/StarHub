@@ -27,13 +27,11 @@ namespace star
             const unsigned frame_idx,
             cudaStream_t stream);
         // Fetch-API
-        GArrayView<float2> GetKeyPointsReadOnly() const { return m_g_keypoints.View(); }
+        GArrayView<float2> Get2DKeyPointsReadOnly() const { return m_g_keypoints.View(); }
         GArrayView<float> GetDescriptorsReadOnly() const { return m_detected_keypoints->DescriptorReadOnly(); }
+        star::KeyPoints::Ptr GetKeyPointsReadOnly() const { return m_detected_keypoints; }
+        GArrayView<int2> GetMatchedKeyPointsReadOnly() const { return m_keypoint_matches.View(); }
     private:
-        void build3DKeyPoint(
-            const SurfelMapTex &surfel_map_tex,
-            unsigned num_keypoints,
-            cudaStream_t stream);
         void matchKeyPoints(
             cudaStream_t stream);
         void getMatchedKeyPoints(

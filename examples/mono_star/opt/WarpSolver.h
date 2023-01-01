@@ -12,6 +12,7 @@
 #include <mono_star/opt/DenseImageHandler.h>
 #include <mono_star/opt/NodeGraphHandler.h>
 #include <mono_star/opt/NodeMotionHandler.h>
+#include <mono_star/opt/KeyPointHandler.h>
 #include <mono_star/opt/PreconditionerRhsBuilder.h>
 #include <mono_star/opt/JtJMaterializer.h>
 
@@ -37,6 +38,7 @@ namespace star
 			NodeGraph4Solver node_graph4solver,
 			NodeFlow4Solver nodeflow4solver,
 			OpticalFlow4Solver opticalflow4solver,
+			KeyPoint4Solver keypoint4solver,
 			const Extrinsic *camera2world);
 
 		// Acess
@@ -77,6 +79,7 @@ namespace star
 		void solverIterationGlobalIterationStreamed();
 		void solverIterationLocalIterationStreamed();
 		void setTermHandlerInput();
+		void initTermHandler(cudaStream_t stream);
 		void computeNode2JacobianSync();
 
 		// Input data
@@ -86,6 +89,7 @@ namespace star
 		NodeGraph4Solver m_node_graph4solver;
 		NodeFlow4Solver m_nodeflow4solver;
 		OpticalFlow4Solver m_opticalflow4solver;
+		KeyPoint4Solver m_keypoint4solver;
 		// Owned data
 		unsigned m_num_cam;
 		unsigned m_image_width[d_max_cam];
@@ -106,6 +110,7 @@ namespace star
 		DenseImageHandler::Ptr m_dense_image_handler;
 		NodeGraphHandler::Ptr m_node_graph_handler;
 		NodeMotionHandler::Ptr m_node_motion_handler;
+		KeyPointHandler::Ptr m_keypoint_handler;
 
 		// Jacobian handler
 		PreconditionerRhsBuilder::Ptr m_preconditioner_rhs_builder;

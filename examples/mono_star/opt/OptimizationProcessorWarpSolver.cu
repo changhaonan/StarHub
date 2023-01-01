@@ -26,6 +26,7 @@ void star::OptimizationProcessorWarpSolver::ProcessFrame(
 	NodeGraph4Solver &node_graph4solver,
 	NodeFlow4Solver &nodeflow4solver,
 	OpticalFlow4Solver &opticalflow4solver,
+	KeyPoint4Solver& keypoint4solver,
 	const unsigned frame_idx,
 	cudaStream_t stream)
 {
@@ -41,6 +42,7 @@ void star::OptimizationProcessorWarpSolver::ProcessFrame(
 		node_graph4solver,
 		nodeflow4solver,
 		opticalflow4solver,
+		keypoint4solver,
 		m_cam2world);
 
 	// Seperate test

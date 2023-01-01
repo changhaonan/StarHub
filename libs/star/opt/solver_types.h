@@ -47,6 +47,23 @@ namespace star
         cudaTextureObject_t normalized_rgbd_map[d_max_cam] = {0};
     };
 
+    // KeyPoints
+    struct KeyPoint4Solver
+    {
+        // Match
+        GArrayView<int2> kp_match;
+        // Measurement
+        GArrayView<float4> d_kp_vertex_confid;
+        GArrayView<float4> d_kp_normal_radius;
+        // Model
+        GArrayView<float4> kp_vertex_confid;
+        GArrayView<float4> kp_normal_radius;
+        // KNN structure
+        GArrayView<ushortX<d_surfel_knn_size>> kp_knn;
+        GArrayView<floatX<d_surfel_knn_size>> kp_knn_spatial_weight;
+        GArrayView<floatX<d_surfel_knn_size>> kp_knn_connect_weight;
+    };
+
     /* Input for solver, Geometry, 1D, surfel-level
      */
     using Geometry4Solver = SurfelGeometry::Geometry4Solver;
