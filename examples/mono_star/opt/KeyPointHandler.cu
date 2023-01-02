@@ -4,6 +4,8 @@
 
 namespace star::device
 {
+    constexpr float d_kp_outlier_threshold = 0.03f;
+
     __global__ void BuildKNNPathKernel(
         const ushortX<d_surfel_knn_size> *__restrict__ kp_knn,
         const floatX<d_surfel_knn_size> *__restrict__ kp_knn_spatial_weight,
@@ -112,8 +114,15 @@ namespace star::device
         //        target_vertex.x, target_vertex.y, target_vertex.z, term_residual);
 
         // Assign to output
-        residual[idx] = term_residual;
-        gradient[idx] = term_gradient;
+        if (e_norm < d_kp_outlier_threshold) {
+            residual[idx] = term_residual;
+            gradient[idx] = term_gradient;
+        }
+        else {
+            // Regarded as outlier
+            residual[idx] = 0.0f;
+            gradient[idx] = GradientOfScalarCost();
+        }
     }
 }
 

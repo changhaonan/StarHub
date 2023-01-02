@@ -127,11 +127,7 @@ int main()
             keypoint4solver.kp_knn = geometry_processor->ActiveKeyPoints()->SurfelKNNReadOnly();
             keypoint4solver.kp_knn_spatial_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNSpatialWeightReadOnly();
             keypoint4solver.kp_knn_connect_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNConnectWeightReadOnly();
-
-            // Check model vertex
-            // std::vector<float4> h_kp_vertex_confid;
-            // keypoint4solver.kp_vertex_confid.Download(h_kp_vertex_confid);
-            // std::cout << "Check: " << h_kp_vertex_confid[0].x << ", " << h_kp_vertex_confid[0].y << ", " << h_kp_vertex_confid[0].z << ", " << h_kp_vertex_confid[0].w << std::endl;
+            
             // Solve
             opt_processor->ProcessFrame(
                 measure4solver,
