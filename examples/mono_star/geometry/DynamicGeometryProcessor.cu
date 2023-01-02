@@ -79,8 +79,9 @@ void star::DynamicGeometryProcessor::ProcessFrame(
     const GArrayView<DualQuaternion> &solved_se3,
     const unsigned frame_idx,
     cudaStream_t stream)
-{   
-    if (frame_idx == 0) {
+{
+    if (frame_idx == 0)
+    {
         initGeometry(surfel_map, m_cam2world, frame_idx, stream);
         initKeyPoints(surfel_map, keypoints, descriptors, m_cam2world, frame_idx, stream);
     }
@@ -89,6 +90,8 @@ void star::DynamicGeometryProcessor::ProcessFrame(
         updateGeometry(surfel_map, solved_se3, frame_idx, stream); // Apply warp
         // Update the keypoints 10 frames
         // TODO: test this in the future
+        if (frame_idx % 10 == 0)
+            initKeyPoints(surfel_map, keypoints, descriptors, m_cam2world, frame_idx, stream);
     }
 
     // Generate map from geometry
@@ -299,7 +302,7 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
 
         // Visualize for node graph
         std::string segmentation_graph_name = "segmentation_graph";
-        context.addGraph(segmentation_graph_name, segmentation_graph_name, m_cam2world.inverse(), m_node_graph_size);
+        context.addGraph(segmentation_graph_name, segmentation_graph_name, m_cam2world.inverse(), m_node_graph_size, 0.0, 1.0, true);
 
         // Transfer to color first
         std::vector<uchar3> node_vertex_color;
@@ -315,6 +318,18 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_node_graph[vis_buffer_idx]->GetNodeKnnConnectWeight().Download(h_node_connect);
         visualize::SaveGraph(h_node_vertex, node_vertex_color, h_edges, h_node_connect, context.at(segmentation_graph_name));
     }
+
+    // Debug
+    // Save valid skinning
+    context.addPointCloud("valid_skinning", "", m_cam2world.inverse(), m_pcd_size);
+    visualize::SaveValidSkinning<d_surfel_knn_size>(
+        m_model_geometry[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
+        m_node_graph[vis_buffer_idx]->GetLiveNodeCoordinate(),
+        m_model_geometry[vis_buffer_idx]->SurfelKNNReadOnly(),
+        m_model_geometry[vis_buffer_idx]->SurfelKNNConnectWeightReadOnly(),
+        0.5,
+        0.1,
+        context.at("valid_skinning"));
 
     // Save images
     context.addImage("ref-rgb");

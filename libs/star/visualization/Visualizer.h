@@ -319,6 +319,17 @@ namespace star::visualize
 		const GArrayView<float4> &tar_vertex_confid,
 		const std::string &path);
 
+	// Save valid skinning
+	template<unsigned knn_size>
+	void SaveValidSkinning(
+		const GArrayView<float4> &surfel_vertex,
+		const GArrayView<float4> &node_vertex,
+		const GArrayView<ushortX<knn_size>> &skinning,
+		const GArrayView<floatX<knn_size>> &skinning_connect,
+		const float valid_threshold,
+		const float sample_rate,
+		const std::string &path);
+
 	/* The method to draw fused point cloud
 	 */
 	void DrawFusedSurfelCloud(
@@ -430,3 +441,4 @@ namespace star::visualize
 // Header-implementation
 #include <star/visualization/Visualizer.Semantic.cuh>
 #include <star/visualization/Visualizer.Graph.cuh>
+#include <star/visualization/Visualizer.PointCloud.cuh>
