@@ -99,10 +99,12 @@ namespace star::device
         const float3 warped_normal_world = se3.rot * can_normal4;
 
         // Compute Jacobian, assume all is valid
-        auto e = warped_vertex_world - target_vertex;
-        term_residual = dot(e, e);
-        term_gradient.translation = e;
-        term_gradient.rotation = cross(warped_vertex_world, e);
+        float3 e = warped_vertex_world - target_vertex;
+        float e_norm = norm(e);
+        float e_norm_inv = 1.f / (e_norm + 1e-8f);
+        term_residual = e_norm;
+        term_gradient.translation = e * e_norm_inv * 0.5f;
+        term_gradient.rotation = cross(warped_vertex_world, e)* e_norm_inv * 0.5f;
 
         // printf("can: %f, %f, %f, warped: %f %f %f, target: %f %f %f, term: %f.\n",
         //        can_vertex4.x, can_vertex4.y, can_vertex4.z,

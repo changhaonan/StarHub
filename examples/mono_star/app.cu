@@ -120,14 +120,18 @@ int main()
 
             KeyPoint4Solver keypoint4solver;
             keypoint4solver.kp_match = keypoint_processor->GetMatchedKeyPointsReadOnly();
-            keypoint4solver.d_kp_vertex_confid = keypoint_processor->GetKeyPointsReadOnly()->LiveVertexConfidenceReadOnly();
-            keypoint4solver.d_kp_normal_radius = keypoint_processor->GetKeyPointsReadOnly()->LiveNormalRadiusReadOnly();
-            keypoint4solver.kp_vertex_confid = geometry_processor->ActiveKeyPoints()->LiveVertexConfidenceReadOnly();
-            keypoint4solver.kp_normal_radius = geometry_processor->ActiveKeyPoints()->LiveNormalRadiusReadOnly();
+            keypoint4solver.d_kp_vertex_confid = keypoint_processor->GetKeyPointsReadOnly()->ReferenceVertexConfidenceReadOnly();
+            keypoint4solver.d_kp_normal_radius = keypoint_processor->GetKeyPointsReadOnly()->ReferenceNormalRadiusReadOnly();
+            keypoint4solver.kp_vertex_confid = geometry_processor->ActiveKeyPoints()->ReferenceVertexConfidenceReadOnly();
+            keypoint4solver.kp_normal_radius = geometry_processor->ActiveKeyPoints()->ReferenceNormalRadiusReadOnly();
             keypoint4solver.kp_knn = geometry_processor->ActiveKeyPoints()->SurfelKNNReadOnly();
             keypoint4solver.kp_knn_spatial_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNSpatialWeightReadOnly();
             keypoint4solver.kp_knn_connect_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNConnectWeightReadOnly();
 
+            // Check model vertex
+            // std::vector<float4> h_kp_vertex_confid;
+            // keypoint4solver.kp_vertex_confid.Download(h_kp_vertex_confid);
+            // std::cout << "Check: " << h_kp_vertex_confid[0].x << ", " << h_kp_vertex_confid[0].y << ", " << h_kp_vertex_confid[0].z << ", " << h_kp_vertex_confid[0].w << std::endl;
             // Solve
             opt_processor->ProcessFrame(
                 measure4solver,
