@@ -260,7 +260,7 @@ void star::DynamicGeometryProcessor::computeSurfelMapTex()
 void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaStream_t stream)
 {
     auto &context = easy3d::Context::Instance();
-
+    
     // Save Geometry
     unsigned last_buffer_idx = (m_buffer_idx + 1) % 2;
     unsigned vis_buffer_idx = (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0) ? last_buffer_idx : m_buffer_idx;
@@ -321,18 +321,6 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_node_graph[vis_buffer_idx]->NodeKnnConnectWeightReadOnly().Download(h_node_connect);
         visualize::SaveGraph(h_node_vertex, node_vertex_color, h_edges, h_node_connect, context.at(segmentation_graph_name));
     }
-
-    // Debug
-    // Save valid skinning
-    // context.addPointCloud("valid_skinning", "", m_cam2world.inverse(), m_pcd_size);
-    // visualize::SaveValidSkinning<d_surfel_knn_size>(
-    //     m_model_geometry[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
-    //     m_node_graph[vis_buffer_idx]->LiveNodeCoordinateReadOnly(),
-    //     m_model_geometry[vis_buffer_idx]->SurfelKNNReadOnly(),
-    //     m_model_geometry[vis_buffer_idx]->SurfelKNNConnectWeightReadOnly(),
-    //     0.5,
-    //     0.1,
-    //     context.at("valid_skinning"));
 
 #ifdef ENABLE_POSE_EVAL
     if (frame_idx > 0)

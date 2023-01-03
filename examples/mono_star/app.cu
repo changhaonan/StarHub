@@ -50,6 +50,7 @@ int main()
 
     for (int frame_idx = 0; frame_idx < config.num_frames(); frame_idx++)
     {
+        std::cout << "==================== Frame-" << frame_idx << " ====================" << std::endl;
         // Prepare context
         auto &context = easy3d::Context::Instance();
         context.open(frame_idx);
@@ -127,7 +128,7 @@ int main()
             keypoint4solver.kp_knn = geometry_processor->ActiveKeyPoints()->SurfelKNNReadOnly();
             keypoint4solver.kp_knn_spatial_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNSpatialWeightReadOnly();
             keypoint4solver.kp_knn_connect_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNConnectWeightReadOnly();
-            
+
             // Solve
             opt_processor->ProcessFrame(
                 measure4solver,
@@ -142,22 +143,22 @@ int main()
 
             // Apply the warp
             geometry_processor->ProcessFrame(
-                *measure_processor->GetSurfelMapReadOnly(), 
+                *measure_processor->GetSurfelMapReadOnly(),
                 keypoint_processor->Get2DKeyPointsReadOnly(),
-                keypoint_processor->GetDescriptorsReadOnly(), 
-                opt_processor->SolvedSE3(), 
-                frame_idx, 
+                keypoint_processor->GetDescriptorsReadOnly(),
+                opt_processor->SolvedSE3(),
+                frame_idx,
                 0); // Dynamic geometry process
         }
         else if (frame_idx == 0)
         {
             GArrayView<DualQuaternion> empty_se3;
             geometry_processor->ProcessFrame(
-                *measure_processor->GetSurfelMapReadOnly(), 
+                *measure_processor->GetSurfelMapReadOnly(),
                 keypoint_processor->Get2DKeyPointsReadOnly(),
                 keypoint_processor->GetDescriptorsReadOnly(),
-                empty_se3, 
-                frame_idx, 
+                empty_se3,
+                frame_idx,
                 0);
         }
         // Clean

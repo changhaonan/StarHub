@@ -60,6 +60,5 @@ namespace star
         void DebugResidual();
         // Jacobian method
         void BuildTerm2Jacobian(cudaStream_t stream);
-        void ComputerJacobianTermsFixedIndex(cudaStream_t stream);
     };
 }

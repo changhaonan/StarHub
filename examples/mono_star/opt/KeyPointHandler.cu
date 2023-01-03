@@ -181,6 +181,7 @@ void star::KeyPointHandler::UpdateInputs(
     const GArrayView<DualQuaternion> &node_se3,
     cudaStream_t stream)
 {
+    if (m_num_match == 0) return;
     // Update node se3
     m_node_se3 = node_se3;
     // Update knn patch dq array
@@ -196,6 +197,7 @@ void star::KeyPointHandler::UpdateInputs(
 
 void star::KeyPointHandler::InitKNNSync(cudaStream_t stream)
 {
+    if (m_num_match == 0) return;
     // Check valid
     dim3 blk(128);
     dim3 grid(divUp(m_num_match, blk.x));
@@ -254,6 +256,7 @@ void star::KeyPointHandler::DebugResidual()
 
 void star::KeyPointHandler::BuildTerm2Jacobian(cudaStream_t stream)
 {
+    if (m_num_match == 0) return;
     // Compute the term gradient and term residual
     dim3 blk(128);
     dim3 grid(divUp(m_num_match, blk.x));
@@ -275,9 +278,4 @@ void star::KeyPointHandler::BuildTerm2Jacobian(cudaStream_t stream)
 
     // Debug
     DebugResidual();
-}
-
-void star::KeyPointHandler::ComputerJacobianTermsFixedIndex(cudaStream_t stream)
-{
-    // To be implemented
 }
