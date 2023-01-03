@@ -58,6 +58,8 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     m_enable_vis = config.enable_vis();
     m_pcd_size = config.pcd_size();
     m_node_graph_size = config.graph_node_size();
+    // Eval
+    m_eval_node_list.AllocateBuffer(d_max_num_nodes);
 }
 
 star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
@@ -70,6 +72,8 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
         m_renderer->UnmapSolverMapsFromCuda();
     if (m_observation_maps_mapped)
         m_renderer->UnmapObservationMapsFromCuda();
+    // Eval
+    m_eval_node_list.ReleaseBuffer();
 }
 
 void star::DynamicGeometryProcessor::ProcessFrame(
@@ -80,6 +84,10 @@ void star::DynamicGeometryProcessor::ProcessFrame(
     const unsigned frame_idx,
     cudaStream_t stream)
 {
+    // Assign
+    m_solved_se3 = solved_se3;
+
+    // Update geometry
     if (frame_idx == 0)
     {
         initGeometry(surfel_map, m_cam2world, frame_idx, stream);
@@ -195,6 +203,11 @@ void star::DynamicGeometryProcessor::updateGeometry(
     SurfelNodeDeformer::ForwardWarpSurfelsAndNodes(
         m_node_graph[m_buffer_idx]->DeformAccess(), *m_model_keypoints[m_buffer_idx], solved_se3, stream);
 
+#ifdef ENABLE_POSE_EVAL
+    // Update eval-related data
+    m_node_graph[m_buffer_idx]->UpdateNodeDeformAcc(solved_se3, stream);
+#endif
+
     // Init data geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
         *m_data_geometry,
@@ -266,27 +279,17 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_model_geometry[vis_buffer_idx]->ColorTimeReadOnly(),
         context.at(live_color_name));
 
-    // Save keypoints
-    // context.addPointCloud("ref_keypoints", "", m_cam2world.inverse(), m_pcd_size);
-    // visualize::SavePointCloud(
-    //     m_model_keypoints[vis_buffer_idx]->ReferenceVertexConfidenceReadOnly(),
-    //     context.at("ref_keypoints"));
-    // context.addPointCloud("live_keypoints", "", m_cam2world.inverse(), m_pcd_size);
-    // visualize::SavePointCloud(
-    //     m_model_keypoints[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
-    //     context.at("live_keypoints"));
-
     // Save node graph
     context.addGraph("ref_graph", "", m_cam2world.inverse(), m_node_graph_size);
     visualize::SaveGraph(
-        m_node_graph[vis_buffer_idx]->GetReferenceNodeCoordinate(),
-        m_node_graph[vis_buffer_idx]->GetNodeKnn(),
+        m_node_graph[vis_buffer_idx]->ReferenceNodeCoordinateReadOnly(),
+        m_node_graph[vis_buffer_idx]->NodeKnnReadOnly(),
         context.at("ref_graph"));
 
     context.addGraph("live_graph", "", m_cam2world.inverse(), m_node_graph_size);
     visualize::SaveGraph(
-        m_node_graph[vis_buffer_idx]->GetLiveNodeCoordinate(),
-        m_node_graph[vis_buffer_idx]->GetNodeKnn(),
+        m_node_graph[vis_buffer_idx]->LiveNodeCoordinateReadOnly(),
+        m_node_graph[vis_buffer_idx]->NodeKnnReadOnly(),
         context.at("live_graph"));
 
     // Save semantic
@@ -311,26 +314,39 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
             visualize::default_semantic_color_dict,
             node_vertex_color);
         std::vector<float4> h_node_vertex;
-        m_node_graph[vis_buffer_idx]->GetLiveNodeCoordinate().Download(h_node_vertex);
+        m_node_graph[vis_buffer_idx]->LiveNodeCoordinateReadOnly().Download(h_node_vertex);
         std::vector<ushortX<d_node_knn_size>> h_edges;
-        m_node_graph[vis_buffer_idx]->GetNodeKnn().Download(h_edges);
+        m_node_graph[vis_buffer_idx]->NodeKnnReadOnly().Download(h_edges);
         std::vector<floatX<d_node_knn_size>> h_node_connect;
-        m_node_graph[vis_buffer_idx]->GetNodeKnnConnectWeight().Download(h_node_connect);
+        m_node_graph[vis_buffer_idx]->NodeKnnConnectWeightReadOnly().Download(h_node_connect);
         visualize::SaveGraph(h_node_vertex, node_vertex_color, h_edges, h_node_connect, context.at(segmentation_graph_name));
     }
 
     // Debug
     // Save valid skinning
-    context.addPointCloud("valid_skinning", "", m_cam2world.inverse(), m_pcd_size);
-    visualize::SaveValidSkinning<d_surfel_knn_size>(
-        m_model_geometry[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
-        m_node_graph[vis_buffer_idx]->GetLiveNodeCoordinate(),
-        m_model_geometry[vis_buffer_idx]->SurfelKNNReadOnly(),
-        m_model_geometry[vis_buffer_idx]->SurfelKNNConnectWeightReadOnly(),
-        0.5,
-        0.1,
-        context.at("valid_skinning"));
+    // context.addPointCloud("valid_skinning", "", m_cam2world.inverse(), m_pcd_size);
+    // visualize::SaveValidSkinning<d_surfel_knn_size>(
+    //     m_model_geometry[vis_buffer_idx]->LiveVertexConfidenceReadOnly(),
+    //     m_node_graph[vis_buffer_idx]->LiveNodeCoordinateReadOnly(),
+    //     m_model_geometry[vis_buffer_idx]->SurfelKNNReadOnly(),
+    //     m_model_geometry[vis_buffer_idx]->SurfelKNNConnectWeightReadOnly(),
+    //     0.5,
+    //     0.1,
+    //     context.at("valid_skinning"));
 
+#ifdef ENABLE_POSE_EVAL
+    if (frame_idx > 0)
+    {
+        // Evaluate average dq when there is only one moving object
+        unsigned short semantic_id = 3;
+        DualQuaternion average_dq;
+        float3 average_pos;
+        computeAverageNodeDeform(vis_buffer_idx, semantic_id, average_dq, average_pos, stream);
+        auto average_mat = average_dq.se3_matrix();
+        average_mat.trans = average_pos;
+        context.addCoord("average_dq", "", m_cam2world.inverse() * Eigen::Matrix4f(average_mat), 0.3);
+    }
+#endif
     // Save images
     context.addImage("ref-rgb");
     context.addImage("ref-depth");
@@ -350,6 +366,36 @@ void star::DynamicGeometryProcessor::drawRenderMaps(
     drawObservationMaps(
         frame_idx,
         m_buffer_idx,
+        stream);
+}
+
+void star::DynamicGeometryProcessor::computeAverageNodeDeform(
+    const unsigned buffer_idx,
+    const unsigned short semantic_selected,
+    DualQuaternion &average_node_deform,
+    float3 &average_node_pos,
+    cudaStream_t stream)
+{
+    // Fetch node list
+    unsigned num_node_selected = 0;
+    NodeGraphManipulator::SelectNodeBySemanticAtomic(
+        m_node_graph[buffer_idx]->GetNodeSemanticProbReadOnly(),
+        semantic_selected,
+        m_eval_node_list.Slice(),
+        num_node_selected,
+        stream);
+
+    STAR_CHECK_NE(num_node_selected, 0); // Make sure there is at least one node selected
+    m_eval_node_list.ResizeArrayOrException(num_node_selected);
+
+    // Compute average dq
+    NodeGraphManipulator::AvergeNodeMovementAndPos(
+        m_node_graph[buffer_idx]->LiveNodeCoordinateReadOnly(),
+        m_solved_se3,
+        m_eval_node_list.View(),
+        m_node_graph[buffer_idx]->NodeDeformAcc(),
+        average_node_deform,
+        average_node_pos,
         stream);
 }
 

@@ -60,33 +60,41 @@ namespace star
 		void UpdateNodeDistance(const bool use_ref, cudaStream_t stream);
 		void ResetNodeGraphConnection(cudaStream_t stream);
 		void ComputeNodeGraphConnectionFromSemantic(const floatX<d_max_num_semantic> &dynamic_regulation, cudaStream_t stream);
+		/* Update auxiliary data
+		 */
+		void UpdateNodeDeformAcc(const GArrayView<DualQuaternion> &delta_node_se3, cudaStream_t stream);
 
 		// Access API
-		GArrayView<float4> GetReferenceNodeCoordinate() const
+		GArrayView<float4> ReferenceNodeCoordinateReadOnly() const
 		{
 			return m_reference_node_coords.DeviceArrayReadOnly();
 		}
-		GArrayView<float4> GetLiveNodeCoordinate() const
+		GArrayView<float4> LiveNodeCoordinateReadOnly() const
 		{
 			return m_live_node_coords.DeviceArrayReadOnly();
 		}
-		GArrayView<ushortX<d_node_knn_size>> GetNodeKnn() const
+		GArrayView<ushortX<d_node_knn_size>> NodeKnnReadOnly() const
 		{
 			return m_node_knn.DeviceArrayReadOnly();
 		}
-		GArrayView<floatX<d_node_knn_size>> GetNodeKnnConnectWeight() const
+		GArrayView<floatX<d_node_knn_size>> NodeKnnConnectWeightReadOnly() const
 		{
 			return m_node_knn_connect_weight.DeviceArrayReadOnly();
 		}
-		GArrayView<floatX<d_node_knn_size>> GetNodeKnnSpatialWeight() const
+		GArrayView<floatX<d_node_knn_size>> NodeKnnSpatialWeightReadOnly() const
 		{
 			return m_node_knn_spatial_weight.DeviceArrayReadOnly();
+		}
+		GArraySlice<DualQuaternion> NodeDeformAcc()
+		{
+			return m_node_deform_acc.Slice();
 		}
 		unsigned GetNodeSize() const { return m_node_size; }
 		unsigned GetPrevNodeSize() const { return m_prev_node_size; }
 
 		// Solver API
-		struct NodeGraph4Solver {
+		struct NodeGraph4Solver
+		{
 			// Used for reg term
 			GArrayView<float4> reference_node_coords;
 			GArrayView<ushort3> node_graph;
@@ -127,12 +135,14 @@ namespace star
 			std::vector<float4> &reference_node,
 			std::vector<float4> &live_node,
 			cudaStream_t stream);
+
 	private:
-		void updateNodeCoordinate(const GArrayView<float4> &node_coords, const unsigned current_time, cudaStream_t stream = 0);
-		void updateNodeCoordinate(const std::vector<float4> &node_coords, const unsigned current_time, cudaStream_t stream = 0);
+		void updateNodeCoordinate(const GArrayView<float4> &node_coords, const unsigned current_time, cudaStream_t stream);
+		void updateNodeCoordinate(const std::vector<float4> &node_coords, const unsigned current_time, cudaStream_t stream);
 		void updateAppendNodeInitialTime(
-			const unsigned current_time, const unsigned prev_node_size, const unsigned append_node_size, cudaStream_t stream = 0);
-		void buildNodeGraphPair(cudaStream_t stream = 0);
+			const unsigned current_time, const unsigned prev_node_size, const unsigned append_node_size, cudaStream_t stream);
+		void updateAppendNodeDeformAcc(const unsigned prev_node_size, const unsigned append_node_size, cudaStream_t stream);
+		void buildNodeGraphPair(cudaStream_t stream);
 		void resizeNodeSize(unsigned node_size);
 
 		// Sampling
@@ -156,7 +166,8 @@ namespace star
 		// Auxilary
 		GBufferArray<uint2> m_node_status; // (compression, frozen_time)
 		GBufferArray<unsigned> m_counter_node_outtrack;
-		GBufferArray<unsigned> m_node_initial_time; // At which time, new nodes are appended
-		GArray<half> m_node_distance;				// Use this to maintain inner distance
+		GBufferArray<unsigned> m_node_initial_time;		// At which time, new nodes are appended
+		GArray<half> m_node_distance;					// Use this to maintain inner distance
+		GBufferArray<DualQuaternion> m_node_deform_acc; // Accumulated deformation
 	};
 }

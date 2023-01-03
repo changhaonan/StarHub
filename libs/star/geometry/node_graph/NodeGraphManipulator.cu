@@ -4,7 +4,6 @@
 
 namespace star::device
 {
-
 	__global__ void ComputeSurfelSupporterKernel(
 		const float4 *__restrict__ vertex_confid_candidate, // Candidate
 		const float4 *__restrict__ node_coord,
@@ -166,7 +165,25 @@ namespace star::device
 
 		node_semantic_prob[(idx + num_node_offset)] = node_semantic_prob_idx;
 	}
- 
+
+	__global__ void FilterNodeBySemanticAtomicKernel(
+		const ucharX<d_max_num_semantic> *__restrict__ node_semantic_prob,
+		const unsigned short semantic_selected,
+		unsigned short *__restrict__ node_list_filtered,
+		int *__restrict__ count,
+		const unsigned num_nodes)
+	{
+		const auto idx = threadIdx.x + blockDim.x * blockIdx.x;
+		if (idx >= num_nodes)
+			return;
+		ucharX<d_max_num_semantic> node_semantic_prob_idx = node_semantic_prob[idx];
+		auto semantic_id = max_id(node_semantic_prob_idx);
+		if (semantic_id == semantic_selected)
+		{
+			auto old_count = atomicAdd(count, 1);
+			node_list_filtered[old_count] = idx;
+		}
+	}
 }
 
 void star::NodeGraphManipulator::CheckSurfelCandidateSupportStatus(
@@ -308,4 +325,65 @@ void star::NodeGraphManipulator::UpdateIncNodeSemanticProb(
 		node_semantic_prob.Ptr(),
 		node_size,
 		num_prev_node);
+}
+
+void star::NodeGraphManipulator::AvergeNodeMovementAndPos(
+	const GArrayView<float4> &node_coord,
+	const GArrayView<DualQuaternion> &delta_node_deform,
+	const GArrayView<unsigned short> &node_list,
+	GArraySlice<DualQuaternion> node_deform,
+	DualQuaternion &average_node_se3,
+	float3 &average_node_pos,
+	cudaStream_t stream)
+{
+	// Average the selected nodes
+	std::vector<float4> h_node_coord;
+	node_coord.Download(h_node_coord);
+	std::vector<unsigned short> h_node_list;
+	node_list.Download(h_node_list);
+	std::vector<DualQuaternion> h_dq;
+	node_deform.DownloadSync(h_dq);
+
+	average_node_se3.set_zero();
+	average_node_pos = make_float3(0, 0, 0);
+	float num_nodes_selected = 0;
+	for (auto i = 0; i < h_node_list.size(); i++)
+	// for (auto i = 0; i < 1; i++) // I use one for debug
+	{
+		average_node_se3 += h_dq[h_node_list[i]];
+		average_node_pos += make_float3(h_node_coord[h_node_list[i]].x, h_node_coord[h_node_list[i]].y, h_node_coord[h_node_list[i]].z);
+		num_nodes_selected += 1.f;
+	}
+	average_node_se3.normalize();
+	auto norm_inv = 1.f / num_nodes_selected;
+	average_node_pos.x = average_node_pos.x * norm_inv;
+	average_node_pos.y = average_node_pos.y * norm_inv;
+	average_node_pos.z = average_node_pos.z * norm_inv;
+}
+
+void star::NodeGraphManipulator::SelectNodeBySemanticAtomic(
+	const GArrayView<ucharX<d_max_num_semantic>> &node_semantic_prob,
+	const unsigned short semantic_id,
+	GArraySlice<unsigned short> node_list_selected,
+	unsigned &num_node_selected,
+	cudaStream_t stream)
+{
+	const auto node_size = node_semantic_prob.Size();
+	int *count;
+	cudaSafeCall(cudaMallocAsync(&count, sizeof(int), stream));
+	cudaSafeCall(cudaMemsetAsync(count, 0, sizeof(int), stream));
+
+	dim3 blk(128);
+	dim3 grid(divUp(node_size, blk.x));
+	device::FilterNodeBySemanticAtomicKernel<<<grid, blk, 0, stream>>>(
+		node_semantic_prob.Ptr(),
+		semantic_id,
+		node_list_selected.Ptr(),
+		count,
+		node_size);
+
+	// Sync before exist
+	cudaSafeCall(cudaStreamSynchronize(stream));
+	cudaSafeCall(cudaMemcpy(&num_node_selected, count, sizeof(int), cudaMemcpyDeviceToHost));
+	cudaSafeCall(cudaFree(count));
 }

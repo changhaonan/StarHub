@@ -61,6 +61,13 @@ namespace star
         void saveContext(const unsigned frame_idx, cudaStream_t stream);
         // Render-related
         void drawRenderMaps(const unsigned frame_idx, cudaStream_t stream);
+        // Evaluate
+        void computeAverageNodeDeform(
+            const unsigned buffer_idx, 
+            const unsigned short semantic_selected, 
+            DualQuaternion& average_node_deform,
+            float3& average_node_pos,
+            cudaStream_t stream);
 
     private:
         // Render-related
@@ -101,5 +108,8 @@ namespace star
 
         // Operator
         GeometryFusor::Ptr m_geometry_fusor;
+        // Evaluation
+        GBufferArray<unsigned short> m_eval_node_list;
+        GArrayView<DualQuaternion> m_solved_se3;  // Ref to solved se3
     };
 }

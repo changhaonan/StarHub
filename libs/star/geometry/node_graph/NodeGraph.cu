@@ -129,6 +129,29 @@ namespace star::device
 		node_inital_time[prev_node_size + idx] = current_time;
 	}
 
+	__global__ void UpdateAppendNodeDeformAccKernel(
+		DualQuaternion *__restrict__ node_deform_acc,
+		const unsigned prev_node_size,
+		const unsigned append_node_size)
+	{
+		const auto idx = threadIdx.x + blockIdx.x * blockDim.x;
+		if (idx >= append_node_size)
+			return;
+		node_deform_acc[prev_node_size + idx].set_identity();
+	}
+
+	__global__ void UpdateNodeDeformKernel(
+		const DualQuaternion *__restrict__ delta_node_deform,
+		DualQuaternion *__restrict__ node_deform,
+		const unsigned num_nodes)
+	{
+		const auto idx = threadIdx.x + blockDim.x * blockIdx.x;
+		if (idx >= num_nodes)
+			return;
+		auto prev_node_trans = mat34(node_deform[idx]).trans;
+		node_deform[idx] = delta_node_deform[idx] * node_deform[idx];
+	}
+
 	__global__ void ResetNodeConnectionKernel(
 		floatX<d_node_knn_size> *__restrict__ node_knn_connect_weight,
 		const unsigned node_size)
@@ -212,6 +235,7 @@ void star::NodeGraph::updateNodeCoordinate(
 	if (node_coords.Size() != m_node_size)
 	{
 		updateAppendNodeInitialTime(current_time, m_node_size, node_coords.Size() - m_node_size, stream);
+		updateAppendNodeDeformAcc(m_node_size, node_coords.Size() - m_node_size, stream);
 	}
 	// Sync on device
 	cudaSafeCall(cudaStreamSynchronize(stream));
@@ -226,6 +250,7 @@ void star::NodeGraph::updateNodeCoordinate(
 	if (node_coords.size() != m_node_size)
 	{
 		updateAppendNodeInitialTime(current_time, m_node_size, node_coords.size() - m_node_size, stream);
+		updateAppendNodeDeformAcc(m_node_size, node_coords.size() - m_node_size, stream);
 	}
 	// Check the size
 	STAR_CHECK(node_coords.size() <= d_max_num_nodes);
@@ -336,6 +361,32 @@ void star::NodeGraph::updateAppendNodeInitialTime(
 	return;
 }
 
+void star::NodeGraph::updateAppendNodeDeformAcc(
+	const unsigned prev_node_size, const unsigned append_node_size, cudaStream_t stream)
+{
+	dim3 blk(128);
+	dim3 grid(divUp(append_node_size, blk.x));
+	device::UpdateAppendNodeDeformAccKernel<<<grid, blk, 0, stream>>>(
+		m_node_deform_acc.Ptr(),
+		prev_node_size,
+		append_node_size);
+	m_node_deform_acc.ResizeArrayOrException(prev_node_size + append_node_size);
+}
+
+void star::NodeGraph::UpdateNodeDeformAcc(
+	const GArrayView<DualQuaternion> &delta_node_se3,
+	cudaStream_t stream)
+{
+	STAR_CHECK_EQ(delta_node_se3.Size(), m_node_size);
+	// Update node deform
+	dim3 blk(128);
+	dim3 grid(divUp(m_node_size, blk.x));
+	device::UpdateNodeDeformKernel<<<grid, blk, 0, stream>>>(
+		delta_node_se3.Ptr(),
+		m_node_deform_acc.Ptr(),
+		m_node_size);
+}
+
 void star::NodeGraph::BuildNodeGraphFromDistance(
 	cudaStream_t stream)
 {
@@ -403,6 +454,9 @@ star::NodeGraph::NodeGraph(const float node_radius) : m_node_size(0), m_node_rad
 	// Node removal
 	m_counter_node_outtrack.AllocateBuffer(d_max_num_nodes);
 	m_node_initial_time.AllocateBuffer(d_max_num_nodes);
+
+	// Auxilary
+	m_node_deform_acc.AllocateBuffer(d_max_num_nodes);
 }
 
 star::NodeGraph::~NodeGraph()
@@ -431,6 +485,9 @@ star::NodeGraph::~NodeGraph()
 
 	// Opt-related
 	m_node_graph_pair.ReleaseBuffer();
+
+	// Auxilary
+	m_node_deform_acc.ReleaseBuffer();
 }
 
 void star::NodeGraph::resizeNodeSize(unsigned node_size)
@@ -455,6 +512,9 @@ void star::NodeGraph::resizeNodeSize(unsigned node_size)
 	m_counter_node_outtrack.ResizeArrayOrException(node_size);
 	m_node_initial_time.ResizeArrayOrException(node_size);
 	m_node_status.ResizeArrayOrException(node_size);
+
+	// Auxilary
+	m_node_deform_acc.ResizeArrayOrException(node_size);
 }
 
 void star::NodeGraph::InitializeNodeGraphFromVertex(
@@ -491,6 +551,7 @@ void star::NodeGraph::InitializeNodeGraphFromVertex(
 
 	// 5. Compute graph
 	updateAppendNodeInitialTime(current_time, 0, m_node_size, stream);
+	updateAppendNodeDeformAcc(0, m_node_size, stream);
 	BuildNodeGraphFromScratch(use_ref, stream); // Use live & ref are the same here, use live
 
 	// 6. Sync & resize
@@ -527,8 +588,9 @@ void star::NodeGraph::NaiveExpandNodeGraphFromVertexUnsupported(
 	m_live_node_coords.SyncToDevice(stream);
 	resizeNodeSize(m_reference_node_coords.DeviceArraySize());
 
-	// 5. Update graph time
+	// 5. Update Auxilary
 	updateAppendNodeInitialTime(current_time, prev_node_size, m_node_size - prev_node_size, stream);
+	updateAppendNodeDeformAcc(prev_node_size, m_node_size - prev_node_size, stream);
 }
 
 star::NodeGraph4Skinner star::NodeGraph::GenerateNodeGraph4Skinner() const
@@ -635,6 +697,13 @@ void star::NodeGraph::ReAnchor(
 			src_node_graph->m_node_distance.ptr(),
 			src_node_graph->m_node_distance.size() * sizeof(half),
 			cudaMemcpyDeviceToDevice, stream));
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_node_graph->m_node_deform_acc.Ptr(),
+			src_node_graph->m_node_deform_acc.Ptr(),
+			src_node_graph->m_node_deform_acc.ArrayByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+
 	// Geometry
 	cudaSafeCall(
 		cudaMemcpyAsync(

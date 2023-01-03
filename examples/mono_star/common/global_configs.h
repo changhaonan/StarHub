@@ -71,3 +71,6 @@ constexpr unsigned d_max_num_semantic = 19;
 
 // Geometry debug
 #define DYNAMIC_GEOMETRY_DEBUG
+
+// Eval
+#define ENABLE_POSE_EVAL

@@ -90,7 +90,7 @@ int main()
             std::string nodemotion_name = "node_motion";
             context.addPointCloud(nodemotion_name, nodemotion_name, config.extrinsic()[0].inverse(), config.pcd_size());
             visualize::SavePointCloudWithNormal(
-                geometry_processor->ActiveNodeGraph()->GetReferenceNodeCoordinate(),
+                geometry_processor->ActiveNodeGraph()->ReferenceNodeCoordinateReadOnly(),
                 node_motion_processor->GetNodeMotionPred(),
                 context.at(nodemotion_name));
 

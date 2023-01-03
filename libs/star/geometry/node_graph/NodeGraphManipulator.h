@@ -57,5 +57,25 @@ namespace star
 			GArraySlice<float> node_semantic_prob_vote_buffer,
 			unsigned num_prev_node,
 			cudaStream_t stream);
+
+		// Utility function
+		// Compute the average node movement for the choose node
+		// Metric method
+		static void AvergeNodeMovementAndPos(
+			const GArrayView<float4> &node_coord,
+			const GArrayView<DualQuaternion> &delta_node_deform,
+			const GArrayView<unsigned short> &node_list,
+			GArraySlice<DualQuaternion> node_deform,
+			DualQuaternion &average_node_se3,
+			float3 &average_node_pos,
+			cudaStream_t stream);
+
+		// Select by semantic
+		static void SelectNodeBySemanticAtomic(
+			const GArrayView<ucharX<d_max_num_semantic>> &node_semantic_prob,
+			const unsigned short semantic_id,
+			GArraySlice<unsigned short> node_list_selected,
+			unsigned& num_node_selected,
+			cudaStream_t stream);
 	};
 }

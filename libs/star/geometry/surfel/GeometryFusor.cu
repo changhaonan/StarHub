@@ -214,7 +214,7 @@ void star::GeometryFusor::geometryRemoval(
         stream);
     unsigned num_node_remove_count;
     NodeGraphManipulator::RemoveNodeOutTrackSync(
-        m_node_graph[current_node_graph_idx]->GetNodeKnn(),
+        m_node_graph[current_node_graph_idx]->NodeKnnReadOnly(),
         m_node_graph[current_node_graph_idx]->GetCounterNodeOuttrackReadOnly(),
         m_node_graph[current_node_graph_idx]->GetNodeStatus(),
         m_node_graph[current_node_graph_idx]->GetNodeDistance(),
@@ -284,7 +284,7 @@ void star::GeometryFusor::geometryRemovalSurfelWarp(
     //);
     // unsigned num_node_remove_count;
     // NodeGraphManipulator::RemoveNodeOutTrackSync(
-    //	m_node_graph[current_node_graph_idx]->GetNodeKnn(),
+    //	m_node_graph[current_node_graph_idx]->NodeKnnReadOnly(),
     //	m_node_graph[current_node_graph_idx]->GetCounterNodeOuttrackReadOnly(),
     //	m_node_graph[current_node_graph_idx]->GetNodeStatus(),
     //	m_node_graph[current_node_graph_idx]->GetNodeDistance(),
@@ -410,7 +410,7 @@ void star::GeometryFusor::geometryAppend(
     // 1. Compute support node
     NodeGraphManipulator::CheckSurfelCandidateSupportStatus(
         geometry4geometry_append.vertex_confid_append_candidate,
-        m_node_graph[current_node_graph_idx]->GetLiveNodeCoordinate(),
+        m_node_graph[current_node_graph_idx]->LiveNodeCoordinateReadOnly(),
         m_node_graph[current_node_graph_idx]->GetNodeStatusReadOnly(),
         geometry_candidate_indicator.candidate_validity_indicator,
         geometry_candidate_indicator.candidate_unsupported_indicator,
