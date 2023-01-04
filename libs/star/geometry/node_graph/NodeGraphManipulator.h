@@ -64,18 +64,16 @@ namespace star
 		static void AvergeNodeMovementAndPos(
 			const GArrayView<float4> &node_coord,
 			const GArrayView<DualQuaternion> &delta_node_deform,
-			const GArrayView<unsigned short> &node_list,
+			const std::vector<unsigned short> &node_list,
 			GArraySlice<DualQuaternion> node_deform,
 			DualQuaternion &average_node_se3,
-			float3 &average_node_pos,
-			cudaStream_t stream);
+			float3 &average_node_pos);
 
 		// Select by semantic
-		static void SelectNodeBySemanticAtomic(
+		static void SelectNodeBySemantic(
 			const GArrayView<ucharX<d_max_num_semantic>> &node_semantic_prob,
 			const unsigned short semantic_id,
-			GArraySlice<unsigned short> node_list_selected,
-			unsigned& num_node_selected,
-			cudaStream_t stream);
+			const unsigned num_node_selected,
+			std::vector<unsigned short>& node_list_selected);
 	};
 }

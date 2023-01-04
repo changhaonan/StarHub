@@ -58,8 +58,6 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     m_enable_vis = config.enable_vis();
     m_pcd_size = config.pcd_size();
     m_node_graph_size = config.graph_node_size();
-    // Eval
-    m_eval_node_list.AllocateBuffer(d_max_num_nodes);
 }
 
 star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
@@ -72,8 +70,6 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
         m_renderer->UnmapSolverMapsFromCuda();
     if (m_observation_maps_mapped)
         m_renderer->UnmapObservationMapsFromCuda();
-    // Eval
-    m_eval_node_list.ReleaseBuffer();
 }
 
 void star::DynamicGeometryProcessor::ProcessFrame(
@@ -326,10 +322,12 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
     if (frame_idx > 0)
     {
         // Evaluate average dq when there is only one moving object
+        // Select the first 6 nodes from semantic 3.
         unsigned short semantic_id = 3;
+        unsigned num_node_selected = 6;
         DualQuaternion average_dq;
         float3 average_pos;
-        computeAverageNodeDeform(vis_buffer_idx, semantic_id, average_dq, average_pos, stream);
+        computeAverageNodeDeform(vis_buffer_idx, semantic_id, num_node_selected, average_dq, average_pos, stream);
         auto average_mat = average_dq.se3_matrix();
         average_mat.trans = average_pos;
         context.addCoord("average_dq", "", m_cam2world.inverse() * Eigen::Matrix4f(average_mat), 0.3);
@@ -360,31 +358,27 @@ void star::DynamicGeometryProcessor::drawRenderMaps(
 void star::DynamicGeometryProcessor::computeAverageNodeDeform(
     const unsigned buffer_idx,
     const unsigned short semantic_selected,
+    const unsigned num_node_selected, 
     DualQuaternion &average_node_deform,
     float3 &average_node_pos,
     cudaStream_t stream)
 {
     // Fetch node list
-    unsigned num_node_selected = 0;
-    NodeGraphManipulator::SelectNodeBySemanticAtomic(
+    std::vector<unsigned short> node_list_selected;
+    NodeGraphManipulator::SelectNodeBySemantic(
         m_node_graph[buffer_idx]->GetNodeSemanticProbReadOnly(),
         semantic_selected,
-        m_eval_node_list.Slice(),
         num_node_selected,
-        stream);
-
-    STAR_CHECK_NE(num_node_selected, 0); // Make sure there is at least one node selected
-    m_eval_node_list.ResizeArrayOrException(num_node_selected);
+        node_list_selected);
 
     // Compute average dq
     NodeGraphManipulator::AvergeNodeMovementAndPos(
         m_node_graph[buffer_idx]->LiveNodeCoordinateReadOnly(),
         m_solved_se3,
-        m_eval_node_list.View(),
+        node_list_selected,
         m_node_graph[buffer_idx]->NodeDeformAcc(),
         average_node_deform,
-        average_node_pos,
-        stream);
+        average_node_pos);
 }
 
 void star::DynamicGeometryProcessor::drawSolverMaps(

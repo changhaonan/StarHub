@@ -330,28 +330,25 @@ void star::NodeGraphManipulator::UpdateIncNodeSemanticProb(
 void star::NodeGraphManipulator::AvergeNodeMovementAndPos(
 	const GArrayView<float4> &node_coord,
 	const GArrayView<DualQuaternion> &delta_node_deform,
-	const GArrayView<unsigned short> &node_list,
+	const std::vector<unsigned short> &node_list,
 	GArraySlice<DualQuaternion> node_deform,
 	DualQuaternion &average_node_se3,
-	float3 &average_node_pos,
-	cudaStream_t stream)
+	float3 &average_node_pos)
 {
 	// Average the selected nodes
 	std::vector<float4> h_node_coord;
 	node_coord.Download(h_node_coord);
-	std::vector<unsigned short> h_node_list;
-	node_list.Download(h_node_list);
 	std::vector<DualQuaternion> h_dq;
 	node_deform.DownloadSync(h_dq);
 
 	average_node_se3.set_zero();
 	average_node_pos = make_float3(0, 0, 0);
 	float num_nodes_selected = 0;
-	for (auto i = 0; i < h_node_list.size(); i++)
+	for (auto i = 0; i < node_list.size(); i++)
 	// for (auto i = 0; i < 1; i++) // I use one for debug
 	{
-		average_node_se3 += h_dq[h_node_list[i]];
-		average_node_pos += make_float3(h_node_coord[h_node_list[i]].x, h_node_coord[h_node_list[i]].y, h_node_coord[h_node_list[i]].z);
+		average_node_se3 += h_dq[node_list[i]];
+		average_node_pos += make_float3(h_node_coord[node_list[i]].x, h_node_coord[node_list[i]].y, h_node_coord[node_list[i]].z);
 		num_nodes_selected += 1.f;
 	}
 	average_node_se3.normalize();
@@ -361,29 +358,28 @@ void star::NodeGraphManipulator::AvergeNodeMovementAndPos(
 	average_node_pos.z = average_node_pos.z * norm_inv;
 }
 
-void star::NodeGraphManipulator::SelectNodeBySemanticAtomic(
+void star::NodeGraphManipulator::SelectNodeBySemantic(
 	const GArrayView<ucharX<d_max_num_semantic>> &node_semantic_prob,
 	const unsigned short semantic_id,
-	GArraySlice<unsigned short> node_list_selected,
-	unsigned &num_node_selected,
-	cudaStream_t stream)
+	const unsigned num_node_selected,
+	std::vector<unsigned short> &node_list_selected)
 {
-	const auto node_size = node_semantic_prob.Size();
-	int *count;
-	cudaSafeCall(cudaMallocAsync(&count, sizeof(int), stream));
-	cudaSafeCall(cudaMemsetAsync(count, 0, sizeof(int), stream));
+	// Download
+	std::vector<ucharX<d_max_num_semantic>> h_node_semantic_prob;
+	node_semantic_prob.Download(h_node_semantic_prob);
 
-	dim3 blk(128);
-	dim3 grid(divUp(node_size, blk.x));
-	device::FilterNodeBySemanticAtomicKernel<<<grid, blk, 0, stream>>>(
-		node_semantic_prob.Ptr(),
-		semantic_id,
-		node_list_selected.Ptr(),
-		count,
-		node_size);
+	unsigned count = 0;
+	for (auto i = 0; i < h_node_semantic_prob.size(); i++)
+	{
+		if (max_id(h_node_semantic_prob[i]) == semantic_id)
+		{
+			node_list_selected.push_back((unsigned short)i);
+			count++;
+			if (count >= num_node_selected)
+				break;
+		}
+	}
 
-	// Sync before exist
-	cudaSafeCall(cudaStreamSynchronize(stream));
-	cudaSafeCall(cudaMemcpy(&num_node_selected, count, sizeof(int), cudaMemcpyDeviceToHost));
-	cudaSafeCall(cudaFree(count));
+	// Make sure we found more than required
+	STAR_CHECK_GE(count, num_node_selected);
 }
