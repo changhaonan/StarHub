@@ -73,11 +73,10 @@ void star::NodeMotionHandler::BuildTerm2Jacobian(cudaStream_t stream)
 #endif
 
 	// [Debug]
-	residualCheck();
 	jacobainTermCheck();
 }
 
-void star::NodeMotionHandler::residualCheck()
+float star::NodeMotionHandler::computeSOR()
 {
 	std::vector<float3> h_T_translation;
 	m_T_translation.View().Download(h_T_translation);
@@ -96,6 +95,7 @@ void star::NodeMotionHandler::residualCheck()
 	}
 
 	std::cout << "SOR [NodeTranslation]: " << sum_of_residual << std::endl;
+	return sum_of_residual;
 }
 
 void star::NodeMotionHandler::jacobainTermCheck()

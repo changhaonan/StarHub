@@ -2,11 +2,11 @@
 #include <mono_star/opt/DenseImageHandler.h>
 #include <mono_star/opt/PenaltyConstants.h>
 
-void star::DenseImageHandler::CheckPixelWiseResidual(const GArrayView<floatX<d_dense_image_residual_dim>> &residual) const
+float star::DenseImageHandler::computeSOR() const
 {
 	// 1. Prepare
 	std::vector<floatX<d_dense_image_residual_dim>> h_residual_pixel;
-	residual.Download(h_residual_pixel);
+	m_term_residual_merge.View().Download(h_residual_pixel);
 	float residual_depth_sum = 0.f;
 	float residual_opticalflow_sum = 0.f;
 	auto penalty = PenaltyConstants();
@@ -24,6 +24,7 @@ void star::DenseImageHandler::CheckPixelWiseResidual(const GArrayView<floatX<d_d
 	// 3. Log
 	std::cout << "SOR [Depth]: " << residual_depth_sum << std::endl;
 	std::cout << "SOR [OF]: " << residual_opticalflow_sum << std::endl;
+	return residual_depth_sum + residual_opticalflow_sum;
 }
 
 void star::DenseImageHandler::jacobianTermCheck()

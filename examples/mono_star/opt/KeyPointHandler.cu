@@ -238,7 +238,7 @@ star::FeatureTerm2Jacobian star::KeyPointHandler::Term2JacobianMap() const
     return feature_term2jacobian;
 }
 
-void star::KeyPointHandler::DebugResidual()
+float star::KeyPointHandler::computeSOR()
 {
     auto penalty = PenaltyConstants();
 
@@ -252,6 +252,7 @@ void star::KeyPointHandler::DebugResidual()
         residual_sum += h_residual[i] * h_residual[i] * penalty.FeatureSquared();
     }
     std::cout << "SOR [Feature]: " << residual_sum << std::endl;
+    return residual_sum;
 }
 
 void star::KeyPointHandler::BuildTerm2Jacobian(cudaStream_t stream)
@@ -275,7 +276,4 @@ void star::KeyPointHandler::BuildTerm2Jacobian(cudaStream_t stream)
         m_term_gradient.Ptr(),
         m_term_residual.Ptr(),
         m_num_match);
-
-    // Debug
-    DebugResidual();
 }

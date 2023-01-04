@@ -68,6 +68,7 @@ constexpr unsigned d_max_num_semantic = 19;
 
 // Opt debug
 // #define OPT_DEBUG_CHECK
+#define ENABLE_ROBUST_OPT  // Add opt robust check
 
 // Geometry debug
 #define DYNAMIC_GEOMETRY_DEBUG

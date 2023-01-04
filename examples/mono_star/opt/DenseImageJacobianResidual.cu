@@ -343,8 +343,6 @@ void star::DenseImageHandler::ComputeJacobianTermsFixedIndex(cudaStream_t stream
 	// cudaSafeCall(cudaStreamSynchronize(stream));
 	MergeTerm2Jacobian(stream);
 	cudaSafeCall(cudaStreamSynchronize(stream));
-	// [Debug] Check the residual
-	CheckPixelWiseResidual(m_term_residual_merge.View());
 
 #ifdef OPT_DEBUG_CHECK
 	jacobianTermCheck();

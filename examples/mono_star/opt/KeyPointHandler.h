@@ -57,7 +57,7 @@ namespace star
         FeatureTerm2Jacobian Term2JacobianMap() const;
         GArrayView<unsigned short> KNNPatchArray() const { return m_knn_patch_array.View(); };
         // Debug method
-        void DebugResidual();
+        float computeSOR();
         // Jacobian method
         void BuildTerm2Jacobian(cudaStream_t stream);
     };

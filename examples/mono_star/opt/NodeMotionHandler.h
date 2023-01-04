@@ -38,7 +38,7 @@ namespace star
 		NodeTranslationTerm2Jacobian Term2JacobianMap() const;
 		// Debug
 	public:
-		void residualCheck();
+		float computeSOR();
 		void jacobainTermCheck();
 
 	private:

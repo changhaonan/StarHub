@@ -89,7 +89,7 @@ namespace star
 		void ComputeJacobianTermsFixedIndex(cudaStream_t stream);
 		void MergeTerm2Jacobian(cudaStream_t stream);
 		DenseImageTerm2Jacobian Term2JacobianMap() const;
-		void CheckPixelWiseResidual(const GArrayView<floatX<d_dense_image_residual_dim>> &residual) const; // Debugging method
+		float computeSOR() const; // Debugging method
 
 	private:
 		GBufferArray<floatX<d_dense_image_residual_dim>> m_term_residual[d_max_cam];

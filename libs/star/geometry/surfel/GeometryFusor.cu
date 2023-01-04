@@ -92,12 +92,12 @@ void star::GeometryFusor::Fuse(
     // Remove geometry
     if (geometry_reinit)
     {
-        geometryRemovalSurfelWarp(
-            measure4gemetry_removal,
-            frame_idx,
-            current_geometry_idx,
-            current_node_graph_idx,
-            stream);
+        // geometryRemovalSurfelWarp(
+        //     measure4gemetry_removal,
+        //     frame_idx,
+        //     current_geometry_idx,
+        //     current_node_graph_idx,
+        //     stream);
     }
     unsigned num_surfel_after_removel = m_model_surfel_geometry[current_geometry_idx]->NumValidSurfels();
 
@@ -293,8 +293,8 @@ void star::GeometryFusor::geometryRemovalSurfelWarp(
     //	m_frozen_time,
     //	stream
     //);
+
     // 4. Compact
-    std::cout << "Before: " << m_model_surfel_geometry[current_geometry_idx]->NumValidSurfels() << std::endl;
     auto compact_buffer_idx = (current_geometry_idx + 1) % 2; // Type is important!!!
     m_geometry_compact_handler->SetInputs(
         m_model_surfel_geometry[current_geometry_idx],
@@ -303,7 +303,6 @@ void star::GeometryFusor::geometryRemovalSurfelWarp(
         empty_candidate_plus,
         geometry4geometry_remaining);
     m_geometry_compact_handler->CompactLiveSurfelToAnotherBufferRemainingOnlySync(m_use_semantic, stream);
-    std::cout << "After: " << m_model_surfel_geometry[current_geometry_idx]->NumValidSurfels() << std::endl;
 
     // 5. Log
     auto num_prev_surfel_size = m_model_surfel_geometry[current_geometry_idx]->NumValidSurfels();
@@ -311,7 +310,6 @@ void star::GeometryFusor::geometryRemovalSurfelWarp(
     std::cout << "[Info]: Surfel Removed by " << num_removed_surfel << ", remaining "
               << geometry4geometry_remaining.num_remaining_surfel
               << ", prev: " << num_prev_surfel_size << std::endl;
-    //	//<< "; Node remove by " << num_node_remove_count << "." << std::endl;
 
     // 6. Update idx
     current_geometry_idx = compact_buffer_idx;
@@ -404,6 +402,11 @@ void star::GeometryFusor::geometryAppend(
     unsigned &current_node_graph_idx,
     cudaStream_t stream)
 {
+    if (geometry4geometry_append.num_append_candidate == 0)
+    {
+        std::cout << "[Info]: No surfel to append." << std::endl;
+        return;
+    }
     m_geometry_append_handler->SetInputs(geometry4geometry_append.vertex_confid_append_candidate);
     m_geometry_append_handler->Initialize(stream);
     auto geometry_candidate_indicator = m_geometry_append_handler->GenerateGeometryCandidateIndicator();

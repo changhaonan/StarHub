@@ -47,7 +47,7 @@ namespace star::device
 	}
 }
 
-star::WarpSolver::WarpSolver()
+star::WarpSolver::WarpSolver() : m_whole_sor_init(0.f), m_whole_sor_final(0.f)
 {
 	// Initialize from config
 	auto &config = ConfigParser::Instance();
@@ -257,8 +257,14 @@ void star::WarpSolver::BuildNodePair2TermIndexBlocked(cudaStream_t stream)
 	m_nodepair2term_index->BuildSymmetricAndRowBlocksIndex(stream);
 }
 
-void star::WarpSolver::SolveStreamed()
+bool star::WarpSolver::SolveStreamed()
 {
+#ifdef ENABLE_ROBUST_OPT
+	m_opt_success = true;
+	m_whole_sor_init = 0.f;
+	m_whole_sor_final = 0.f;
+#endif
+
 	// 1 - Sync before solve
 	syncAllSolverStream();
 	// 2 - Bulid index
@@ -276,6 +282,13 @@ void star::WarpSolver::SolveStreamed()
 
 	// 4- Sync again before leave
 	syncAllSolverStream();
+
+#ifdef ENABLE_ROBUST_OPT
+	m_opt_success = m_whole_sor_init >= m_whole_sor_final;
+	return m_opt_success; // If the overall sor decreases
+#else
+	return true;
+#endif
 }
 
 void star::WarpSolver::solverIterationGlobalIterationStreamed()
@@ -305,6 +318,14 @@ void star::WarpSolver::solverIterationGlobalIterationStreamed()
 	// 5 - Update x
 	m_iteration_data.ApplyWarpFieldUpdate(m_solver_stream[0]);
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
+
+#ifdef ENABLE_ROBUST_OPT
+	// 6 - Compute SOR
+	float whole_sor = computeWholeSOR();
+	if (m_whole_sor_init == 0.f)
+		m_whole_sor_init = whole_sor;
+	m_whole_sor_final = whole_sor;
+#endif
 }
 
 void star::WarpSolver::solverIterationLocalIterationStreamed()
@@ -334,6 +355,14 @@ void star::WarpSolver::solverIterationLocalIterationStreamed()
 	// 5 - Update x
 	m_iteration_data.ApplyWarpFieldUpdate(m_solver_stream[0]);
 	cudaSafeCall(cudaStreamSynchronize(m_solver_stream[0]));
+
+#ifdef ENABLE_ROBUST_OPT
+	// 6 - Compute SOR
+	float whole_sor = computeWholeSOR();
+	if (m_whole_sor_init == 0.f)
+		m_whole_sor_init = whole_sor;
+	m_whole_sor_final = whole_sor;
+#endif
 }
 
 void star::WarpSolver::setTermHandlerInput()
@@ -386,6 +415,16 @@ void star::WarpSolver::computeNode2JacobianSync()
 	m_dense_image_handler->jacobianTermCheck();
 	m_node_graph_handler->jacobianTermCheck();
 #endif // OPT_DEBUG_CHECK
+}
+
+float star::WarpSolver::computeWholeSOR()
+{
+	// Compute SOR
+	float dense_image_sor = m_dense_image_handler->computeSOR();
+	float node_motion_sor = m_node_motion_handler->computeSOR();
+	float keypoint_sor = m_keypoint_handler->computeSOR();
+	// Currently node motion is not in the optimization, so don't count it
+	return dense_image_sor + keypoint_sor;
 }
 
 void star::WarpSolver::BuildPreconditioner(cudaStream_t stream)

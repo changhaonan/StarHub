@@ -42,14 +42,20 @@ namespace star
 			const Extrinsic *camera2world);
 
 		// Acess
+#ifdef ENABLE_ROBUST_OPT
+		GArrayView<DualQuaternion> SolvedNodeSE3() const { 
+			return m_opt_success? m_iteration_data.CurrentNodeSE3Input() : m_iteration_data.NodeSE3Init(); 
+		}
+#else
 		GArrayView<DualQuaternion> SolvedNodeSE3() const { return m_iteration_data.CurrentNodeSE3Input(); }
+#endif
 		GArrayView<ushort4> PotentialPixelPair(const int cam_idx) const
 		{
 			return m_image_term_knn_fetcher->GetImageTermPixelAndKNN().pixels[cam_idx];
 		}
 
-		// API: Solve the warp field using stream
-		void SolveStreamed();
+		// API: Solve the warp field using stream & return the success
+		bool SolveStreamed();
 
 		// KNN & Index builder
 		void QueryPixelKNN(cudaStream_t stream);
@@ -81,6 +87,7 @@ namespace star
 		void setTermHandlerInput();
 		void initTermHandler(cudaStream_t stream);
 		void computeNode2JacobianSync();
+		float computeWholeSOR();
 
 		// Input data
 		Measure4Solver m_measure4solver;
@@ -118,5 +125,10 @@ namespace star
 
 		// PCG-solver
 		BlockPCG<d_node_variable_dim>::Ptr m_pcg_solver;
+
+		// Robust OPT related
+		float m_whole_sor_init;
+		float m_whole_sor_final;
+		bool m_opt_success;
 	};
 }

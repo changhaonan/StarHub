@@ -566,7 +566,7 @@ void star::NodeGraph::NaiveExpandNodeGraphFromVertexUnsupported(
 	// 0. Pre-check
 	if (vertex_unsupported.Size() == 0)
 	{
-		printf("No unsupported vertex from measurement.\n");
+		printf("No unsupported vertex from measurement, so NodeGraph stays the same.\n");
 		return;
 	}
 	// 1. Get host node

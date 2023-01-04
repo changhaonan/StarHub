@@ -46,7 +46,8 @@ void star::OptimizationProcessorWarpSolver::ProcessFrame(
 		m_cam2world);
 
 	// Seperate test
-	m_warp_solver->SolveStreamed();
+	bool opt_success = m_warp_solver->SolveStreamed();
+	if (!opt_success) std::cout << "Optimization failed. Use previous result instead." << std::endl;
 
 	cudaSafeCall(cudaStreamSynchronize(stream));
 }

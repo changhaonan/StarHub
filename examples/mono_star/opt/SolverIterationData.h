@@ -58,6 +58,7 @@ namespace star
 
         // General fetch api
         GArrayView<DualQuaternion> CurrentNodeSE3Input() const;
+        GArrayView<DualQuaternion> NodeSE3Init() const { return m_node_se3_init.View(); }
         // Update Buffer
         GArraySlice<float> CurrentWarpFieldUpdateBuffer();
 
