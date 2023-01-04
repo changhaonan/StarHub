@@ -131,6 +131,15 @@ namespace star
 			SurfelGeometry::ConstPtr src_geometry,
 			SurfelGeometry::Ptr tar_geometry,
 			cudaStream_t stream);
+		// Copy is to copy everything from src to tar
+		static void Copy(
+			SurfelGeometry::ConstPtr src_geometry,
+			SurfelGeometry::Ptr tar_geometry,
+			cudaStream_t stream);
+		
+		/* Debug methods: print out all info for one surfel
+		*/
+		void PrintAt(const unsigned surfel_id) const;
 	};
 
 	class GLLiveSurfelGeometryVBO;

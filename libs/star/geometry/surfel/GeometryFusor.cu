@@ -1,6 +1,8 @@
 #include "GeometryFusor.h"
 #include <star/geometry/node_graph/NodeGraphManipulator.h>
 #include <star/geometry/node_graph/Skinner.h>
+// Vis
+#include <easy3d_viewer/context.hpp>
 
 star::GeometryFusor::GeometryFusor(
     SurfelGeometry::Ptr model_surfel_geometry[2],
@@ -92,12 +94,12 @@ void star::GeometryFusor::Fuse(
     // Remove geometry
     if (geometry_reinit)
     {
-        // geometryRemovalSurfelWarp(
-        //     measure4gemetry_removal,
-        //     frame_idx,
-        //     current_geometry_idx,
-        //     current_node_graph_idx,
-        //     stream);
+        geometryRemovalSurfelWarp(
+            measure4gemetry_removal,
+            frame_idx,
+            current_geometry_idx,
+            current_node_graph_idx,
+            stream);
     }
     unsigned num_surfel_after_removel = m_model_surfel_geometry[current_geometry_idx]->NumValidSurfels();
 
@@ -139,16 +141,14 @@ void star::GeometryFusor::Fuse(
     // thread-barrier
     cudaSafeCall(cudaStreamSynchronize(stream));
 
-    // Pointer-merging
-    if (current_geometry_idx != m_active_buffer_idx)
-    {
-        std::cout << "[DG] Geometry switching!" << std::endl;
-        m_model_surfel_geometry[m_active_buffer_idx].swap(m_model_surfel_geometry[current_geometry_idx]);
+    // Idx aligning
+    if (current_geometry_idx == current_node_graph_idx) {
+        m_active_buffer_idx = current_geometry_idx;
     }
-    if (current_node_graph_idx != m_active_buffer_idx)
-    {
-        std::cout << "[DG] NodeGraph switching!" << std::endl;
-        m_node_graph[m_active_buffer_idx].swap(m_node_graph[current_node_graph_idx]);
+    else {
+        m_active_buffer_idx = current_node_graph_idx;
+        SurfelGeometry::Copy(m_model_surfel_geometry[current_geometry_idx], m_model_surfel_geometry[m_active_buffer_idx], stream);
+        // TODO: May change this to nodegraph copy, because it cost less
     }
 }
 

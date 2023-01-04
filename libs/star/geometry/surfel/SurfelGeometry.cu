@@ -1,4 +1,5 @@
 #include <star/geometry/surfel/SurfelGeometry.h>
+#include <star/common/types/vecX_op.h>
 #include <device_launch_parameters.h>
 
 namespace star::device
@@ -165,6 +166,99 @@ void star::SurfelGeometry::ReAnchor(
 	// Sync & Resize
 	cudaSafeCall(cudaStreamSynchronize(stream));
 	tar_geometry->ResizeValidSurfelArrays(src_geometry->NumValidSurfels());
+}
+
+void star::SurfelGeometry::Copy(
+	SurfelGeometry::ConstPtr src_geometry,
+	SurfelGeometry::Ptr tar_geometry,
+	cudaStream_t stream)
+{
+	// Copy owned data
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_geometry->SurfelKNN(),
+			src_geometry->SurfelKNNReadOnly(),
+			src_geometry->SurfelKNNReadOnly().ByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_geometry->SurfelKNNSpatialWeight(),
+			src_geometry->SurfelKNNSpatialWeightReadOnly(),
+			src_geometry->SurfelKNNSpatialWeightReadOnly().ByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_geometry->SurfelKNNConnectWeight(),
+			src_geometry->SurfelKNNConnectWeightReadOnly(),
+			src_geometry->SurfelKNNConnectWeightReadOnly().ByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+	// Copy geometry data
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_geometry->ReferenceVertexConfidence(),
+			src_geometry->ReferenceVertexConfidenceReadOnly(),
+			src_geometry->ReferenceVertexConfidenceReadOnly().ByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_geometry->ReferenceNormalRadius(),
+			src_geometry->ReferenceNormalRadiusReadOnly(),
+			src_geometry->ReferenceNormalRadiusReadOnly().ByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_geometry->LiveVertexConfidence(),
+			src_geometry->LiveVertexConfidenceReadOnly(),
+			src_geometry->LiveVertexConfidenceReadOnly().ByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_geometry->LiveNormalRadius(),
+			src_geometry->LiveNormalRadiusReadOnly(),
+			src_geometry->LiveNormalRadiusReadOnly().ByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_geometry->ColorTime(),
+			src_geometry->ColorTimeReadOnly(),
+			src_geometry->ColorTimeReadOnly().ByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+	// Optional
+	cudaSafeCall(
+		cudaMemcpyAsync(
+			tar_geometry->SemanticProb(),
+			src_geometry->SemanticProbReadOnly(),
+			src_geometry->SemanticProbReadOnly().ByteSize(),
+			cudaMemcpyDeviceToDevice, stream));
+
+	// Sync & Resize
+	cudaSafeCall(cudaStreamSynchronize(stream));
+	tar_geometry->ResizeValidSurfelArrays(src_geometry->NumValidSurfels());
+}
+
+void star::SurfelGeometry::PrintAt(const unsigned surfel_id) const {
+	// Down load to host
+	std::vector<float4> h_reference_vertex_confid;
+	std::vector<float4> h_reference_normal_radius;
+	std::vector<float4> h_live_vertex_confid;
+	std::vector<float4> h_live_normal_radius;
+	std::vector<float4> h_color_time;
+	std::vector<ucharX<d_max_num_semantic>> h_semantic_prob;
+	m_reference_vertex_confid.View().Download(h_reference_vertex_confid);
+	m_reference_normal_radius.View().Download(h_reference_normal_radius);
+	m_live_vertex_confid.View().Download(h_live_vertex_confid);
+	m_live_normal_radius.View().Download(h_live_normal_radius);
+	m_color_time.View().Download(h_color_time);
+	m_semantic_prob.View().Download(h_semantic_prob);
+
+	// Print out
+	std::cout << "[Surfel] " << surfel_id << " : " << std::endl;
+	std::cout << "Reference Vertex : " << h_reference_vertex_confid[surfel_id].x << " " << h_reference_vertex_confid[surfel_id].y << " " << h_reference_vertex_confid[surfel_id].z << std::endl;
+	std::cout << "Reference Normal : " << h_reference_normal_radius[surfel_id].x << " " << h_reference_normal_radius[surfel_id].y << " " << h_reference_normal_radius[surfel_id].z << std::endl;
+	std::cout << "Live Vertex : " << h_live_vertex_confid[surfel_id].x << " " << h_live_vertex_confid[surfel_id].y << " " << h_live_vertex_confid[surfel_id].z << std::endl;
+	std::cout << "Live Normal : " << h_live_normal_radius[surfel_id].x << " " << h_live_normal_radius[surfel_id].y << " " << h_live_normal_radius[surfel_id].z << std::endl;
+	std::cout << "ColorTime : " << h_color_time[surfel_id].x << " " << h_color_time[surfel_id].y << " " << h_color_time[surfel_id].z << std::endl;
+	std::cout << "Semantic: " << max_id(h_semantic_prob[surfel_id]) << std::endl;
 }
 
 /*
