@@ -119,8 +119,8 @@ namespace star::device
             gradient[idx] = term_gradient;
         }
         else {
-            // Regarded as outlier
-            residual[idx] = 0.0f;
+            // Regarded as outlier: saturate kernel
+            residual[idx] = d_kp_outlier_threshold;
             gradient[idx] = GradientOfScalarCost();
         }
     }

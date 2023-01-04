@@ -285,6 +285,7 @@ bool star::WarpSolver::SolveStreamed()
 
 #ifdef ENABLE_ROBUST_OPT
 	m_opt_success = m_whole_sor_init >= m_whole_sor_final;
+	std::cout << "SOR init: " << m_whole_sor_init << ", SOR final: " << m_whole_sor_final << std::endl;
 	return m_opt_success; // If the overall sor decreases
 #else
 	return true;
