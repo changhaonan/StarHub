@@ -3,6 +3,7 @@
 
 star::NodeMotionProcessor::NodeMotionProcessor()
 {
+    std::cout << "NodeMotionProcessor..." << std::endl;
     auto &config = ConfigParser::Instance();
     m_node_motion_pred.AllocateBuffer(d_max_num_nodes);
 

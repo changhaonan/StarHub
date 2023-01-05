@@ -1,14 +1,17 @@
 #include <mono_star/opt/DenseImageHandler.h>
 
-star::DenseImageHandler::DenseImageHandler()
+star::DenseImageHandler::DenseImageHandler(
+	const unsigned num_cam,
+	const unsigned *image_height,
+	const unsigned *image_width,
+	const Intrinsic *project_intrinsic)
 {
-	const auto &config = ConfigParser::Instance();
-	m_num_cam = config.num_cam();
+	m_num_cam = num_cam;
 	for (auto cam_idx = 0; cam_idx < m_num_cam; ++cam_idx)
 	{
-		m_image_height[cam_idx] = config.downsample_img_rows(cam_idx);
-		m_image_width[cam_idx] = config.downsample_img_cols(cam_idx);
-		m_project_intrinsic[cam_idx] = config.rgb_intrinsic_downsample(cam_idx);
+		m_image_height[cam_idx] = image_height[cam_idx];
+		m_image_width[cam_idx] = image_width[cam_idx];
+		m_project_intrinsic[cam_idx] = project_intrinsic[cam_idx];
 	}
 	memset(&m_depth_observation, 0, sizeof(m_depth_observation));
 	memset(&m_geometry_maps, 0, sizeof(m_geometry_maps));

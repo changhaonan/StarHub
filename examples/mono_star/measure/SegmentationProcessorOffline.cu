@@ -36,6 +36,7 @@ namespace star::device
 
 star::SegmentationProcessorOffline::SegmentationProcessorOffline()
 {
+    std::cout << "Initilize SegmentationProcessorOffline..." << std::endl;
     auto &config = ConfigParser::Instance();
 
     // Reader-related
@@ -138,8 +139,10 @@ void star::SegmentationProcessorOffline::loadSegmentation(
 
 void star::SegmentationProcessorOffline::saveContext(const unsigned frame_idx, cudaStream_t stream)
 {
+#ifndef ENABLE_EFFICIENCY_MODE
     // Save image
     auto &context = easy3d::Context::Instance();
     context.addImage("seg");
     visualize::SaveSemanticMap(m_segmentation_ref, visualize::default_semantic_color_dict, context.at("seg"));
+#endif
 }

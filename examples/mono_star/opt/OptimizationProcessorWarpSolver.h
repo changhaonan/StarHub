@@ -29,9 +29,13 @@ namespace star
 			return m_warp_solver->SolvedNodeSE3();
 		}
 	private:
+	
+		WarpSolver::Ptr m_warp_solver;
+		// Camera-related
 		unsigned m_num_cam;
 		Extrinsic m_cam2world[d_max_cam];
-
-		WarpSolver::Ptr m_warp_solver;
+		unsigned m_image_width[d_max_cam];
+		unsigned m_image_height[d_max_cam];
+		Intrinsic m_intrinsic[d_max_cam];
 	};
 }

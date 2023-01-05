@@ -58,7 +58,11 @@ namespace star
 
 	public:
 		using Ptr = std::shared_ptr<DenseImageHandler>;
-		DenseImageHandler();
+		DenseImageHandler(
+			const unsigned num_cam, 
+			const unsigned *image_height,
+			const unsigned *image_width,
+			const Intrinsic *project_intrinsic);
 		~DenseImageHandler() = default;
 		STAR_NO_COPY_ASSIGN_MOVE(DenseImageHandler);
 

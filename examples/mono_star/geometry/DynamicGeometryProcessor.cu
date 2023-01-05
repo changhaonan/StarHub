@@ -7,6 +7,7 @@
 
 star::DynamicGeometryProcessor::DynamicGeometryProcessor()
 {
+    std::cout << "Initilize DynamicGeometryProcessor..." << std::endl;
     auto &config = ConfigParser::Instance();
 
     m_data_geometry = std::make_shared<star::SurfelGeometry>();
@@ -288,6 +289,7 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_node_graph[vis_buffer_idx]->NodeKnnReadOnly(),
         context.at("live_graph"));
 
+#ifndef ENABLE_EFFICIENCY_MODE
     // Save semantic
     if (m_enable_semantic_surfel)
     {
@@ -317,6 +319,7 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_node_graph[vis_buffer_idx]->NodeKnnConnectWeightReadOnly().Download(h_node_connect);
         visualize::SaveGraph(h_node_vertex, node_vertex_color, h_edges, h_node_connect, context.at(segmentation_graph_name));
     }
+#endif
 
 #ifdef ENABLE_POSE_EVAL
     if (frame_idx > 0)

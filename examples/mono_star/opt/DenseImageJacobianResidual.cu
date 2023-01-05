@@ -200,16 +200,14 @@ namespace star::device
 		{
 			if (d_node_knn_size == 8)
 			{
-				// printf("Meet zero averge at term %d, spatial_weight: (%f, %f, %f, %f, %f, %f, %f, %f), connect_weight: (%f, %f, %f, %f, %f, %f, %f, %f).\n",
-				//	idx,
-				//	knn_patch_spatial_weight_ptr[0], knn_patch_spatial_weight_ptr[1], knn_patch_spatial_weight_ptr[2], knn_patch_spatial_weight_ptr[3],
-				//	knn_patch_spatial_weight_ptr[4], knn_patch_spatial_weight_ptr[5], knn_patch_spatial_weight_ptr[6], knn_patch_spatial_weight_ptr[7],
-				//	knn_patch_connect_weight_ptr[0], knn_patch_connect_weight_ptr[1], knn_patch_connect_weight_ptr[2], knn_patch_connect_weight_ptr[3],
-				//	knn_patch_connect_weight_ptr[4], knn_patch_connect_weight_ptr[5], knn_patch_connect_weight_ptr[6], knn_patch_connect_weight_ptr[7]);
-				printf("idx: %d, nn: (%d, %d, %d, %d, %d, %d, %d, %d).\n",
-					   idx,
+				printf("(%d, %d), nn: (%d, %d, %d, %d, %d, %d, %d, %d).\n",
+					   potential_pixel.x, potential_pixel.y,
 					   knn_patch_ptr[0], knn_patch_ptr[1], knn_patch_ptr[2], knn_patch_ptr[3],
 					   knn_patch_ptr[4], knn_patch_ptr[5], knn_patch_ptr[6], knn_patch_ptr[7]);
+			}
+			else if (d_node_knn_size == 4) {
+				printf("(%d, %d), nn: (%d, %d, %d, %d).\n",
+					   potential_pixel.x, potential_pixel.y, knn_patch_ptr[0], knn_patch_ptr[1], knn_patch_ptr[2], knn_patch_ptr[3]);
 			}
 		}
 #else
@@ -289,14 +287,16 @@ namespace star::device
 			{
 				if (gradient_array[i] > 1e3f || isnan(gradient_array[i]))
 				{
-					printf("Dense Jacobian Redisual: term: %d, channel: %d, jacobian: (%f, %f, %f, %f, %f, %f).\n",
+					printf("Dense Jacobian Redisual: term: %d, channel: %d, jacobian: (%f, %f, %f, %f, %f, %f), can: (%f, %f, %f), warp: (%f, %f, %f).\n",
 						   idx, c,
 						   pixel_gradient.gradient[c].rotation.x,
 						   pixel_gradient.gradient[c].rotation.y,
 						   pixel_gradient.gradient[c].rotation.z,
 						   pixel_gradient.gradient[c].translation.x,
 						   pixel_gradient.gradient[c].translation.y,
-						   pixel_gradient.gradient[c].translation.z);
+						   pixel_gradient.gradient[c].translation.z,
+						   can_vertex4.x, can_vertex4.y, can_vertex4.z,
+						   warped_vertex_world.x, warped_vertex_world.y, warped_vertex_world.z);
 				}
 			}
 		}

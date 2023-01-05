@@ -3,15 +3,19 @@
 
 star::OptimizationProcessorWarpSolver::OptimizationProcessorWarpSolver()
 {
-	m_warp_solver = std::make_shared<WarpSolver>();
-
+	std::cout << "Initialize OptimizationProcessorWarpSolver..." << std::endl;
 	auto &config = ConfigParser::Instance();
 	m_num_cam = config.num_cam();
 
 	for (auto cam_idx = 0; cam_idx < m_num_cam; ++cam_idx)
 	{
 		m_cam2world[cam_idx] = config.extrinsic()[cam_idx];
+		m_image_height[cam_idx] = config.downsample_img_rows(cam_idx);
+		m_image_width[cam_idx] = config.downsample_img_cols(cam_idx);
+		m_intrinsic[cam_idx] = config.rgb_intrinsic_downsample(cam_idx);
 	}
+
+	m_warp_solver = std::make_shared<WarpSolver>(m_num_cam, m_image_height, m_image_width, m_intrinsic);
 }
 
 star::OptimizationProcessorWarpSolver::~OptimizationProcessorWarpSolver()
@@ -26,7 +30,7 @@ void star::OptimizationProcessorWarpSolver::ProcessFrame(
 	NodeGraph4Solver &node_graph4solver,
 	NodeFlow4Solver &nodeflow4solver,
 	OpticalFlow4Solver &opticalflow4solver,
-	KeyPoint4Solver& keypoint4solver,
+	KeyPoint4Solver &keypoint4solver,
 	const unsigned frame_idx,
 	cudaStream_t stream)
 {
@@ -47,7 +51,8 @@ void star::OptimizationProcessorWarpSolver::ProcessFrame(
 
 	// Seperate test
 	bool opt_success = m_warp_solver->SolveStreamed();
-	if (!opt_success) std::cout << "Optimization failed. Use previous result instead." << std::endl;
+	if (!opt_success)
+		std::cout << "Optimization failed. Use previous result instead." << std::endl;
 
 	cudaSafeCall(cudaStreamSynchronize(stream));
 }

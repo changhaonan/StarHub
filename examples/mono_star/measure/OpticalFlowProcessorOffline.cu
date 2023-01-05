@@ -121,6 +121,7 @@ void star::OpticalFlowProcessorOffline::loadOpticalFlow(
 
 void star::OpticalFlowProcessorOffline::saveContext(const unsigned frame_idx, cudaStream_t stream)
 {
+#ifndef ENABLE_EFFICIENCY_MODE
     auto &context = easy3d::Context::Instance();
     std::string optical_name = "of";
     // Save images
@@ -128,6 +129,7 @@ void star::OpticalFlowProcessorOffline::saveContext(const unsigned frame_idx, cu
     visualize::SaveOpticalFlowMap(
         m_opticalflow.texture,
         context.at(optical_name));
+#endif
 }
 
 void star::OpticalFlowProcessorOffline::computeSurfelFlowVisible(

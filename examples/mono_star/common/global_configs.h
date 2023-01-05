@@ -75,3 +75,6 @@ constexpr unsigned d_max_num_semantic = 19;
 
 // Eval
 #define ENABLE_POSE_EVAL
+
+// Efficiency Mode
+#define ENABLE_EFFICIENCY_MODE

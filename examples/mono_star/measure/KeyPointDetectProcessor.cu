@@ -27,6 +27,7 @@ namespace star::device
 star::KeyPointDetectProcessor::KeyPointDetectProcessor()
     : m_buffer_idx(0), m_num_valid_matches(0)
 {
+    std::cout << "Initilize KeyPointDetectProcessor..." << std::endl;
     auto &config = ConfigParser::Instance();
     m_keypoint_type = config.keypoint_type();
 

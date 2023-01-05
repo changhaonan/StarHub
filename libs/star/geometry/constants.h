@@ -3,7 +3,7 @@
 namespace star
 {
     // Structure
-    constexpr unsigned d_node_knn_size = 8;
+    constexpr unsigned d_node_knn_size = 4;
     constexpr unsigned d_surfel_knn_size = d_node_knn_size;
     constexpr unsigned d_surfel_knn_pair_size = d_surfel_knn_size * (d_surfel_knn_size - 1) / 2;
 

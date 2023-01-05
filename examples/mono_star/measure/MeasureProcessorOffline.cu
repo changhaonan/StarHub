@@ -5,6 +5,7 @@
 
 star::MeasureProcessorOffline::MeasureProcessorOffline()
 {
+	std::cout << "Initialize MeasureProcessorOffline..." << std::endl;
 	auto &config = ConfigParser::Instance();
 
 	m_fetcher = std::make_shared<VolumeDeformFileFetch>(config.data_path());

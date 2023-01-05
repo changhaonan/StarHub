@@ -22,7 +22,11 @@ namespace star
 	{
 	public:
 		using Ptr = std::shared_ptr<WarpSolver>;
-		WarpSolver();
+		WarpSolver(
+			const unsigned num_cam,
+			const unsigned *image_height,
+			const unsigned *image_width,
+			const Intrinsic *project_intrinsic);
 		~WarpSolver();
 		STAR_NO_COPY_ASSIGN_MOVE(WarpSolver);
 		void AllocateBuffer();
@@ -43,11 +47,15 @@ namespace star
 
 		// Acess
 #ifdef ENABLE_ROBUST_OPT
-		GArrayView<DualQuaternion> SolvedNodeSE3() const { 
-			return m_opt_success? m_iteration_data.CurrentNodeSE3Input() : m_iteration_data.NodeSE3Init(); 
+		GArrayView<DualQuaternion> SolvedNodeSE3() const
+		{
+			return m_opt_success ? m_iteration_data.CurrentNodeSE3Input() : m_iteration_data.NodeSE3Init();
 		}
 #else
-		GArrayView<DualQuaternion> SolvedNodeSE3() const { return m_iteration_data.CurrentNodeSE3Input(); }
+		GArrayView<DualQuaternion> SolvedNodeSE3() const
+		{
+			return m_iteration_data.CurrentNodeSE3Input();
+		}
 #endif
 		GArrayView<ushort4> PotentialPixelPair(const int cam_idx) const
 		{

@@ -47,20 +47,24 @@ namespace star::device
 	}
 }
 
-star::WarpSolver::WarpSolver() : m_whole_sor_init(0.f), m_whole_sor_final(0.f)
+star::WarpSolver::WarpSolver(
+	const unsigned num_cam,
+	const unsigned *image_height,
+	const unsigned *image_width,
+	const Intrinsic *project_intrinsic) : m_whole_sor_init(0.f), m_whole_sor_final(0.f)
 {
-	// Initialize from config
-	auto &config = ConfigParser::Instance();
-	m_num_cam = config.num_cam();
+	m_num_cam = num_cam;
 	for (auto cam_idx = 0; cam_idx < m_num_cam; ++cam_idx)
 	{
-		m_image_width[cam_idx] = config.downsample_img_cols(cam_idx);
-		m_image_height[cam_idx] = config.downsample_img_rows(cam_idx);
+		m_image_width[cam_idx] = image_width[cam_idx];
+		m_image_height[cam_idx] = image_height[cam_idx];
 	}
 
 	m_image_term_knn_fetcher = std::make_shared<ImageTermKNNFetcher>();
 	// Handlers
-	m_dense_image_handler = std::make_shared<DenseImageHandler>();
+	m_dense_image_handler = std::make_shared<DenseImageHandler>(
+		m_num_cam, m_image_height, m_image_width, project_intrinsic
+	);
 	m_node_graph_handler = std::make_shared<NodeGraphHandler>();
 	m_node_motion_handler = std::make_shared<NodeMotionHandler>();
 	m_keypoint_handler = std::make_shared<KeyPointHandler>();
