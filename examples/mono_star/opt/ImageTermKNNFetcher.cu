@@ -105,20 +105,22 @@ namespace star::device
 	}
 }
 
-star::ImageTermKNNFetcher::ImageTermKNNFetcher() : m_image_height_max(0), m_image_width_max(0)
+star::ImageTermKNNFetcher::ImageTermKNNFetcher(
+	const unsigned num_cam,
+	const unsigned *img_height,
+	const unsigned *img_width) : m_image_height_max(0), m_image_width_max(0)
 {
 	// The initialization part
-	const auto &config = ConfigParser::Instance();
-	m_num_cam = config.num_cam();
+	m_num_cam = num_cam;
 	for (auto cam_idx = 0; cam_idx < m_num_cam; ++cam_idx)
 	{
-		m_image_height[cam_idx] = config.downsample_img_rows(cam_idx);
-		m_image_width[cam_idx] = config.downsample_img_cols(cam_idx);
+		m_image_height[cam_idx] = img_height[cam_idx];
+		m_image_width[cam_idx] = img_width[cam_idx];
 		m_image_height_max = (m_image_height_max > m_image_height[cam_idx]) ? m_image_height_max : m_image_height[cam_idx];
 		m_image_width_max = (m_image_width_max > m_image_width[cam_idx]) ? m_image_width_max : m_image_width[cam_idx];
 	}
 
-	m_resample_prob = config.resample_prob();
+	m_resample_prob = 1.f;  // FIX at 1.f for now
 	memset(&m_geometry_maps, 0, sizeof(m_geometry_maps));
 
 	// The malloc part

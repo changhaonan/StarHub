@@ -60,11 +60,11 @@ star::WarpSolver::WarpSolver(
 		m_image_height[cam_idx] = image_height[cam_idx];
 	}
 
-	m_image_term_knn_fetcher = std::make_shared<ImageTermKNNFetcher>();
+	m_image_term_knn_fetcher = std::make_shared<ImageTermKNNFetcher>(
+		m_num_cam, m_image_height, m_image_width);
 	// Handlers
 	m_dense_image_handler = std::make_shared<DenseImageHandler>(
-		m_num_cam, m_image_height, m_image_width, project_intrinsic
-	);
+		m_num_cam, m_image_height, m_image_width, project_intrinsic);
 	m_node_graph_handler = std::make_shared<NodeGraphHandler>();
 	m_node_motion_handler = std::make_shared<NodeMotionHandler>();
 	m_keypoint_handler = std::make_shared<KeyPointHandler>();

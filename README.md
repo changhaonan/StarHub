@@ -38,6 +38,10 @@ A unified library shared by all Star-related projects.
 - [x] Add the simulation.
 - [x] Test on the simulation data.
 
+### TODO
+
+- [ ] Need to further fasten the performance when stay still
+
 ## Problem
 
 Can not be statically determinted. What is the problem??

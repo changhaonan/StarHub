@@ -17,7 +17,11 @@ namespace star
 	public:
 		// The contructor group
 		using Ptr = std::shared_ptr<ImageTermKNNFetcher>;
-		ImageTermKNNFetcher();
+		ImageTermKNNFetcher(
+			const unsigned num_cam,
+			const unsigned* img_height,
+			const unsigned* img_width
+		);
 		~ImageTermKNNFetcher();
 		STAR_NO_COPY_ASSIGN_MOVE(ImageTermKNNFetcher);
 
