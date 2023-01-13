@@ -54,6 +54,8 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
         m_enable_semantic_surfel,
         m_reinit_counter,
         m_dynamic_regulation);
+    const float kp_match_threshold = 0.1;
+    m_keypoint_fusor = std::make_shared<KeyPointFusor>(kp_match_threshold);
 
     // Vis
     m_enable_vis = config.enable_vis();
@@ -77,6 +79,7 @@ void star::DynamicGeometryProcessor::ProcessFrame(
     const SurfelMap &surfel_map,
     const GArrayView<float2> &keypoints,
     const GArrayView<float> &descriptors,
+    const GArrayView<int2> &kp_matches,
     const GArrayView<DualQuaternion> &solved_se3,
     const unsigned frame_idx,
     cudaStream_t stream)
@@ -92,11 +95,11 @@ void star::DynamicGeometryProcessor::ProcessFrame(
     }
     else if (frame_idx > 0)
     {
-        updateGeometry(surfel_map, solved_se3, frame_idx, stream); // Apply warp
+        updateGeometry(surfel_map, keypoints, descriptors, kp_matches, solved_se3, frame_idx, stream); // Apply warp
         // Update the keypoints 10 frames
         // TODO: test this in the future
-        if (frame_idx % 10 == 0)
-            initKeyPoints(surfel_map, keypoints, descriptors, m_cam2world, frame_idx, stream);
+        // if (frame_idx % 10 == 0)
+        //     initKeyPoints(surfel_map, keypoints, descriptors, m_cam2world, frame_idx, stream);
     }
 
     // Generate map from geometry
@@ -154,11 +157,23 @@ void star::DynamicGeometryProcessor::initKeyPoints(
     const unsigned frame_idx,
     cudaStream_t stream)
 {
+    initKeyPointsGeometry(surfel_map, keypoints, descriptors, cam2world, m_buffer_idx, stream);
+    updateKeyPointSkinning(stream);
+}
+
+void star::DynamicGeometryProcessor::initKeyPointsGeometry(
+    const SurfelMap &surfel_map,
+    const GArrayView<float2> &keypoints,
+    const GArrayView<float> &descriptors,
+    const Eigen::Matrix4f &cam2world,
+    const unsigned idle_buffer_idx,
+    cudaStream_t stream)
+{
     // Resize keypoints
-    m_model_keypoints[m_buffer_idx]->Resize(keypoints.Size());
+    m_model_keypoints[idle_buffer_idx]->Resize(keypoints.Size());
     // Init keypoint geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
-        *m_model_keypoints[m_buffer_idx],
+        *m_model_keypoints[idle_buffer_idx],
         surfel_map,
         keypoints,
         cam2world,
@@ -166,12 +181,16 @@ void star::DynamicGeometryProcessor::initKeyPoints(
         stream);
     // Init keypoint descriptor
     cudaSafeCall(cudaMemcpyAsync(
-        m_model_keypoints[m_buffer_idx]->Descriptor().Ptr(),
+        m_model_keypoints[idle_buffer_idx]->Descriptor().Ptr(),
         descriptors.Ptr(),
         descriptors.ByteSize(),
         cudaMemcpyDeviceToDevice,
         stream));
+}
 
+void star::DynamicGeometryProcessor::updateKeyPointSkinning(
+    cudaStream_t stream)
+{
     // Perform Skinning without semantic
     auto geometry4skinner = m_model_keypoints[m_buffer_idx]->GenerateGeometry4Skinner();
     auto node_graph4skinner = m_node_graph[m_buffer_idx]->GenerateNodeGraph4Skinner();
@@ -187,6 +206,9 @@ void star::DynamicGeometryProcessor::initKeyPoints(
 
 void star::DynamicGeometryProcessor::updateGeometry(
     const SurfelMap &surfel_map,
+    const GArrayView<float2> &keypoints,
+    const GArrayView<float> &descriptors,
+    const GArrayView<int2> &kp_matches,
     const GArrayView<DualQuaternion> &solved_se3,
     const unsigned frame_idx,
     cudaStream_t stream)
@@ -220,6 +242,16 @@ void star::DynamicGeometryProcessor::updateGeometry(
         surfel_map,
         m_data_geometry,
         stream);
+    // Apply the keypoint fusion
+    const auto idle_buffer_idx = (m_buffer_idx + 1) & 1;
+    initKeyPointsGeometry(surfel_map, keypoints, descriptors, m_cam2world, idle_buffer_idx, stream);
+    m_keypoint_fusor->Fuse(
+        m_model_keypoints[m_buffer_idx],
+        m_model_keypoints[idle_buffer_idx],
+        kp_matches,
+        (frame_idx % 10 == 0),
+        stream);
+    updateKeyPointSkinning(stream);
 
     // Reanchor the geometry
     auto next_buffer_idx = (m_buffer_idx + 1) & 1;
@@ -257,7 +289,7 @@ void star::DynamicGeometryProcessor::computeSurfelMapTex()
 void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaStream_t stream)
 {
     auto &context = easy3d::Context::Instance();
-    
+
     // Save Geometry
     unsigned last_buffer_idx = (m_buffer_idx + 1) % 2;
     unsigned vis_buffer_idx = (m_model_geometry[last_buffer_idx]->NumValidSurfels() > 0) ? last_buffer_idx : m_buffer_idx;
@@ -361,7 +393,7 @@ void star::DynamicGeometryProcessor::drawRenderMaps(
 void star::DynamicGeometryProcessor::computeAverageNodeDeform(
     const unsigned buffer_idx,
     const unsigned short semantic_selected,
-    const unsigned num_node_selected, 
+    const unsigned num_node_selected,
     DualQuaternion &average_node_deform,
     float3 &average_node_pos,
     cudaStream_t stream)

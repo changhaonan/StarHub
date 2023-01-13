@@ -19,5 +19,5 @@ namespace star
     constexpr int d_fusion_map_scale = 4;
 
     // Keypoint related
-    constexpr unsigned d_max_num_keypoints = 2000;
+    constexpr unsigned d_max_num_keypoints = 5000;
 }

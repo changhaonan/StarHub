@@ -188,6 +188,7 @@ void star::VoxelSubsamplerSorting::sortCompactVoxelKeys(
 	// cudaSafeCall(cudaStreamSynchronize(stream));
 
 	// Query the number of voxels
+	// FIXME: Async has to use page-locked memory
 	unsigned num_voxels;
 	const auto &prefixsum_label = m_voxel_label_prefixsum.valid_prefixsum_array;
 	cudaSafeCall(cudaMemcpyAsync(

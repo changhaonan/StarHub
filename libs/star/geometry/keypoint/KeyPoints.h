@@ -54,9 +54,6 @@ namespace star
         );
     protected:
         KeyPointType m_keypoint_type;
-        GBufferArray<float4> m_vertex_confid;
-        GBufferArray<float4> m_normal_radius;
-        GBufferArray<float4> m_color_time;
         GBufferArray<float> m_descriptor;
         size_t m_descriptor_dim;
     };

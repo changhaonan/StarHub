@@ -40,7 +40,8 @@ A unified library shared by all Star-related projects.
 
 ### TODO
 
-- [ ] Need to further fasten the performance when stay still
+- [ ] Implement the descriptor replacement.
+- [ ] Improve the wrapping for keypoints
 
 ## Problem
 

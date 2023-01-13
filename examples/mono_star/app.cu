@@ -146,6 +146,7 @@ int main()
                 *measure_processor->GetSurfelMapReadOnly(),
                 keypoint_processor->Get2DKeyPointsReadOnly(),
                 keypoint_processor->GetDescriptorsReadOnly(),
+                keypoint_processor->GetMatchedKeyPointsReadOnly(),
                 opt_processor->SolvedSE3(),
                 frame_idx,
                 0); // Dynamic geometry process
@@ -157,6 +158,7 @@ int main()
                 *measure_processor->GetSurfelMapReadOnly(),
                 keypoint_processor->Get2DKeyPointsReadOnly(),
                 keypoint_processor->GetDescriptorsReadOnly(),
+                keypoint_processor->GetMatchedKeyPointsReadOnly(),
                 empty_se3,
                 frame_idx,
                 0);

@@ -6,6 +6,7 @@
 #include <star/geometry/render/Renderer.h>
 #include <star/geometry/node_graph/NodeGraph.h>
 #include <star/geometry/keypoint/KeyPoints.h>
+#include <star/geometry/keypoint/KeyPointFusor.h>
 #include <star/geometry/surfel/GeometryFusor.h>
 // Viewer
 #include <easy3d_viewer/context.hpp>
@@ -20,9 +21,10 @@ namespace star
         DynamicGeometryProcessor();
         ~DynamicGeometryProcessor();
         void ProcessFrame(
-            const SurfelMap& surfel_map,
+            const SurfelMap &surfel_map,
             const GArrayView<float2> &keypoints,
             const GArrayView<float> &descriptors,
+             const GArrayView<int2> &kp_matches,
             const GArrayView<DualQuaternion> &solved_se3,
             const unsigned frame_idx,
             cudaStream_t stream);
@@ -38,8 +40,21 @@ namespace star
             const Eigen::Matrix4f &cam2world,
             const unsigned frame_idx,
             cudaStream_t stream);
+        // This init doesn't do skinning
+        void initKeyPointsGeometry(
+            const SurfelMap &surfel_map,
+            const GArrayView<float2> &keypoints,
+            const GArrayView<float> &descriptors,
+            const Eigen::Matrix4f &cam2world,
+            const unsigned idle_buffer_idx,
+            cudaStream_t stream);
+        void updateKeyPointSkinning(
+            cudaStream_t);
         void updateGeometry(
             const SurfelMap &surfel_map,
+            const GArrayView<float2> &keypoints,
+            const GArrayView<float> &descriptors,
+            const GArrayView<int2> &kp_matches,
             const GArrayView<DualQuaternion> &solved_se3,
             const unsigned frame_idx,
             cudaStream_t stream);
@@ -63,11 +78,11 @@ namespace star
         void drawRenderMaps(const unsigned frame_idx, cudaStream_t stream);
         // Evaluate
         void computeAverageNodeDeform(
-            const unsigned buffer_idx, 
+            const unsigned buffer_idx,
             const unsigned short semantic_selected,
-            const unsigned num_node_selected, 
-            DualQuaternion& average_node_deform,
-            float3& average_node_pos,
+            const unsigned num_node_selected,
+            DualQuaternion &average_node_deform,
+            float3 &average_node_pos,
             cudaStream_t stream);
 
     private:
@@ -109,7 +124,8 @@ namespace star
 
         // Operator
         GeometryFusor::Ptr m_geometry_fusor;
+        KeyPointFusor::Ptr m_keypoint_fusor;
         // Evaluation
-        GArrayView<DualQuaternion> m_solved_se3;  // Ref to solved se3
+        GArrayView<DualQuaternion> m_solved_se3; // Ref to solved se3
     };
 }

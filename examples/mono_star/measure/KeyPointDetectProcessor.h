@@ -32,8 +32,6 @@ namespace star
         star::KeyPoints::Ptr GetKeyPointsReadOnly() const { return m_detected_keypoints; }
         GArrayView<int2> GetMatchedKeyPointsReadOnly() const { return m_keypoint_matches.View(); }
     private:
-        void matchKeyPoints(
-            cudaStream_t stream);
         void getMatchedKeyPoints(
             const KeyPoints& keypoints_src,
             const KeyPoints& keypoints_dst,
