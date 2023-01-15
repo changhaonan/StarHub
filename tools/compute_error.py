@@ -1,4 +1,6 @@
-""" Compute the error between gt pose and estimated pose.
+""" 
+Compute the error between gt pose and estimated pose.
+Note: ycb data consists of (x, y, z, rx, ry, rz, angle) for each frame.
 """
 import json
 import numpy as np
@@ -14,20 +16,27 @@ def read_gt(gt_file):
 
 def get_gt_pose(gt_data, frame_index):
     info = gt_data[frame_index].split(" ")
-    gt_quat = np.zeros(4)
+    gt_axis_angle = np.zeros(4)
     gt_trans = np.zeros(3)
 
-    for i in range(len(gt_quat)):
-        gt_quat[i] = np.float32(info[i])
-
     for i in range(len(gt_trans)):
-        gt_trans[i] = np.float32(info[i + 4])
+        gt_trans[i] = np.float32(info[i])
 
-    return gt_quat, gt_trans
+    for i in range(len(gt_axis_angle)):
+        gt_axis_angle[i] = np.float32(info[i + 3])
+
+    return gt_axis_angle, gt_trans
 
 
 def get_rot_from_quat(gt_quat):
     r = R.from_quat(gt_quat)
+    rota_matrix = r.as_matrix()
+    return rota_matrix
+
+
+def get_rot_from_axis_angle(gt_axis_angle):
+    rot_vec = gt_axis_angle[:3] * gt_axis_angle[3]
+    r = R.from_rotvec(rot_vec)
     rota_matrix = r.as_matrix()
     return rota_matrix
 
@@ -50,29 +59,7 @@ def get_context_pose(data, obj_name="average_dq"):
 
     rota_matrix = trans_matrix[:3, :3]
     trans = trans_matrix[:3, -1]
-    r = R.from_matrix(rota_matrix)
-    quat = r.as_quat()
-
     return rota_matrix, trans
-
-
-def quaternion_rotation_matrix(Q):
-    q0, q1, q2, q3 = Q[0], Q[1], Q[2], Q[3]
-
-    r00 = 2 * (q0 * q0 + q1 * q1) - 1
-    r01 = 2 * (q1 * q2 - q0 * q3)
-    r02 = 2 * (q1 * q3 + q0 * q2)
-
-    r10 = 2 * (q1 * q2 + q0 * q3)
-    r11 = 2 * (q0 * q0 + q2 * q2) - 1
-    r12 = 2 * (q2 * q3 - q0 * q1)
-
-    r20 = 2 * (q1 * q3 - q0 * q2)
-    r21 = 2 * (q2 * q3 + q0 * q1)
-    r22 = 2 * (q0 * q0 + q3 * q3) - 1
-
-    rot_matrix = np.array([[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]])
-    return rot_matrix
 
 
 def compute_geodesic_dist(A, B):
@@ -88,8 +75,14 @@ def compute_mse_scalar(gt_trans, trans):
     return mse_trans
 
 
-def compute_error(est_data_dir, gt_file_name, output_file_name, obj_name="average_dq", est_frame_start=0):
-    """ 
+def compute_error(
+    est_data_dir,
+    gt_file_name,
+    output_file_name,
+    obj_name="average_dq",
+    est_frame_start=0,
+):
+    """
     Compute the error between gt pose and estimated pose.
     Note: the first frame is fixed to be identity for both gt and estimated pose.
     """
@@ -103,46 +96,47 @@ def compute_error(est_data_dir, gt_file_name, output_file_name, obj_name="averag
     context_trans_init = np.zeros(3)
     gt_rot_m_init = np.identity(3)
     gt_trans_init = np.zeros(3)
+    initialized = False
 
     # compute the error by frame
     for folder in folder_list[:]:
-        frame = folder.split("_")[1]
-        frame_int = int(frame)
-        if frame_int == 0 or frame_int == 1:
-            gt_quat, gt_trans_init = get_gt_pose(gt_data, est_frame_start + frame_int)
-            gt_rot_m_init = get_rot_from_quat(gt_quat)
-            if frame_int == 1:
-                context_file = os.path.join(os.path.join(est_data_dir, folder), test_file_name)
-                context_data = read_json(context_file)
-                context_rot_m_init, context_trans_init = get_context_pose(context_data, obj_name)
-            diff_list.append((np.float32(0), np.float32(0)))
+        context_file = os.path.join(os.path.join(est_data_dir, folder), test_file_name)
+        context_data = read_json(context_file)
+        real_frame_idx = int(context_data["extra_info"]["real_frame_idx"])
+        if obj_name in context_data:
+            if not initialized:
+                gt_axis_angle, gt_trans_init = get_gt_pose(gt_data, real_frame_idx)
+                gt_rot_m_init = get_rot_from_axis_angle(gt_axis_angle)
+                context_rot_m_init, context_trans_init = get_context_pose(
+                    context_data, obj_name
+                )
+                diff_list.append((np.float32(0), np.float32(0)))
+                initialized = True
+            else:
+                context_rot_m, context_trans = get_context_pose(context_data, obj_name)
+                gt_axis_angle, gt_trans = get_gt_pose(gt_data, real_frame_idx)
+                gt_rot_m = get_rot_from_axis_angle(gt_axis_angle)
+                # compute relative pose w.r.t. the initial pose
+                context_rot_m = context_rot_m.dot(np.linalg.inv(context_rot_m_init))
+                context_trans = context_trans - context_rot_m.dot(context_trans_init)
+                gt_rot_m = gt_rot_m.dot(np.linalg.inv(gt_rot_m_init))
+                gt_trans = gt_trans - gt_rot_m.dot(gt_trans_init)
+                # compute diff
+                mse_rot = compute_geodesic_dist(gt_rot_m, context_rot_m)
+                mse_trans = compute_mse_scalar(gt_trans, context_trans)
+                diff_list.append((mse_rot, mse_trans))
         else:
-            context_file = os.path.join(os.path.join(est_data_dir, folder), test_file_name)
-            context_data = read_json(context_file)
-            context_rot_m, context_trans = get_context_pose(context_data, obj_name)
-            gt_quat, gt_trans = get_gt_pose(gt_data, est_frame_start + frame_int)
-            gt_rot_m = get_rot_from_quat(gt_quat)
-            # compute relative pose w.r.t. the initial pose
-            context_rot_m = context_rot_m.dot(np.linalg.inv(context_rot_m_init))
-            context_trans = context_trans - context_rot_m.dot(context_trans_init)
-            gt_rot_m = gt_rot_m.dot(np.linalg.inv(gt_rot_m_init))
-            gt_trans = gt_trans - gt_rot_m.dot(gt_trans_init)
-            # compute diff
-            mse_rot = compute_geodesic_dist(
-                gt_rot_m, context_rot_m
-            )
-            mse_trans = compute_mse_scalar(gt_trans, context_trans)
-            diff_list.append((mse_rot, mse_trans))
+            continue
     # make summary
     diff_list = np.array(diff_list)
     average_diff = np.mean(diff_list, axis=0)
     print(f"MSE Rot: {average_diff[0]}, MSE Trans: {average_diff[1]}.")
-    
+
     # mkdir if not exist
     output_dir = os.path.dirname(output_file_name)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    
+
     # save mse to file
     with open(output_file_name, "w") as fp:
         [fp.write(str(item[0]) + " " + str(item[1]) + "\n") for item in diff_list]
@@ -152,6 +146,7 @@ def compute_error(est_data_dir, gt_file_name, output_file_name, obj_name="averag
 if __name__ == "__main__":
     # parse arguments
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="fastycb1")
     args = parser.parse_args()
@@ -159,7 +154,9 @@ if __name__ == "__main__":
     # generate path
     dataset = args.dataset
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    est_data_dir = os.path.join(project_root, "external/Easy3DViewer/public/test_data", dataset)
+    est_data_dir = os.path.join(
+        project_root, "external/Easy3DViewer/public/test_data", dataset
+    )
     gt_file_name = os.path.join(project_root, "data", dataset, "pose_gt.txt")
     output_file_name = os.path.join(project_root, "eval", dataset, "mse.txt")
     compute_error(est_data_dir, gt_file_name, output_file_name)

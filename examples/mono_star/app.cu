@@ -8,6 +8,7 @@
 #include "geometry/DynamicGeometryProcessor.h"
 #include "opt/OptimizationProcessorWarpSolver.h"
 #include <star/math/DualQuaternion.hpp>
+#include <star/io/YCBPoseReader.h>
 #include <star/visualization/Visualizer.h>
 // Viewer
 #include <easy3d_viewer/context.hpp>
@@ -47,6 +48,17 @@ int main()
     auto opticalflow_processor = std::make_shared<OpticalFlowProcessorGMA>();
     auto node_motion_processor = std::make_shared<NodeMotionProcessor>();
     auto opt_processor = std::make_shared<OptimizationProcessorWarpSolver>();
+
+    //  Evaluation-related
+    auto ycb_pose_reader = std::make_shared<YCBPoseReader>();
+    auto pose_gt_path = config_path_prefix / scene_name / "pose_gt.txt";
+    if (boost::filesystem::exists(pose_gt_path))
+    {
+        ycb_pose_reader->Parse(pose_gt_path.string());
+    }
+    Eigen::Matrix4f gt_pose_init = Eigen::Matrix4f::Identity();
+    Eigen::Matrix4f est_pose_init = Eigen::Matrix4f::Identity();
+    bool pose_inited = false;
 
     for (int frame_idx = 0; frame_idx < config.num_frames(); frame_idx++)
     {
@@ -163,6 +175,32 @@ int main()
                 frame_idx,
                 0);
         }
+        // Add gt pose if exists
+        if (ycb_pose_reader->GetNumPoses())
+        {
+            if (context.has("average_dq"))
+            {   
+                auto gt_pose = ycb_pose_reader->GetPoses()[frame_idx * config.step_frame() + config.start_frame_idx()];
+                if (!pose_inited) {
+                    auto pose_json = context.of("average_dq");
+                    auto est_pose_vec = pose_json["vis"]["coordinate"].get<std::vector<float>>();
+                    Eigen::Matrix4f est_pose_mat(est_pose_vec.data());
+                    est_pose_init = est_pose_mat;
+                    gt_pose_init = gt_pose;
+                    pose_inited = true;
+                }
+                auto transferred_gt_pose = config.extrinsic()[0].inverse() * (gt_pose * gt_pose_init.inverse()) * est_pose_init;
+                context.addCoord("gt_pose", "", transferred_gt_pose);
+                std::cout << "---- gt pose ----" << std::endl;
+                std::cout << gt_pose << std::endl;
+                std::cout << "---- transferred gt pose ----" << std::endl;
+                std::cout << transferred_gt_pose << std::endl;
+            }
+        }
+        // Add extra info
+        json extra_info;
+        extra_info["real_frame_idx"] = frame_idx + config.start_frame_idx();
+        context.addExtra("extra_info", extra_info);
         // Clean
         context.close();
     }

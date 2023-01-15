@@ -42,7 +42,8 @@ A unified library shared by all Star-related projects.
 - [ ] Polish the error computing scripts
 - [ ] Generate keypoints from rendered map
 - [ ] Improve the wrapping for keypoints
-
+- [ ] Better warpping evaluation module
+- [ ] Check why ref geometry has strange result?
 
 ## Problem
 
