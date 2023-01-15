@@ -39,9 +39,10 @@ A unified library shared by all Star-related projects.
 - [x] Test on the simulation data.
 
 ### TODO
-
-- [ ] Implement the descriptor replacement.
+- [ ] Polish the error computing scripts
+- [ ] Generate keypoints from rendered map
 - [ ] Improve the wrapping for keypoints
+
 
 ## Problem
 

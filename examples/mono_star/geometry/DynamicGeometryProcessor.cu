@@ -242,6 +242,9 @@ void star::DynamicGeometryProcessor::updateGeometry(
         surfel_map,
         m_data_geometry,
         stream);
+
+#define RESET_KEYPOINTS
+#ifndef RESET_KEYPOINTS
     // Apply the keypoint fusion
     const auto idle_buffer_idx = (m_buffer_idx + 1) & 1;
     initKeyPointsGeometry(surfel_map, keypoints, descriptors, m_cam2world, idle_buffer_idx, stream);
@@ -252,6 +255,13 @@ void star::DynamicGeometryProcessor::updateGeometry(
         (frame_idx % 10 == 0),
         stream);
     updateKeyPointSkinning(stream);
+#else
+    // Reset keypoints
+    if (frame_idx % 10 == 0)
+    {
+        initKeyPoints(surfel_map, keypoints, descriptors, m_cam2world, frame_idx, stream);
+    }
+#endif
 
     // Reanchor the geometry
     auto next_buffer_idx = (m_buffer_idx + 1) & 1;
