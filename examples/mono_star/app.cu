@@ -74,7 +74,10 @@ int main()
         semantic_processor->ProcessFrame(measure_processor->GetSurfelMap(), frame_idx, 0);
 
         // KeyPoint process (Expand Measurement)
-        keypoint_processor->ProcessFrame(*measure_processor->GetSurfelMapReadOnly(), *geometry_processor->ActiveKeyPoints(), frame_idx, 0);
+        keypoint_processor->ProcessFrame(
+            measure_processor->GetSurfelMapTex(), 
+            geometry_processor->GetSurfelMapTex(),
+            *geometry_processor->ActiveKeyPoints(), frame_idx, 0);
 
         if (frame_idx > 0)
         {
@@ -155,7 +158,7 @@ int main()
 
             // Apply the warp
             geometry_processor->ProcessFrame(
-                *measure_processor->GetSurfelMapReadOnly(),
+                measure_processor->GetSurfelMapTex(),
                 keypoint_processor->Get2DKeyPointsReadOnly(),
                 keypoint_processor->GetDescriptorsReadOnly(),
                 keypoint_processor->GetMatchedKeyPointsReadOnly(),
@@ -167,7 +170,7 @@ int main()
         {
             GArrayView<DualQuaternion> empty_se3;
             geometry_processor->ProcessFrame(
-                *measure_processor->GetSurfelMapReadOnly(),
+                measure_processor->GetSurfelMapTex(),
                 keypoint_processor->Get2DKeyPointsReadOnly(),
                 keypoint_processor->GetDescriptorsReadOnly(),
                 keypoint_processor->GetMatchedKeyPointsReadOnly(),
@@ -191,10 +194,6 @@ int main()
                 }
                 auto transferred_gt_pose = config.extrinsic()[0].inverse() * (gt_pose * gt_pose_init.inverse()) * est_pose_init;
                 context.addCoord("gt_pose", "", transferred_gt_pose);
-                std::cout << "---- gt pose ----" << std::endl;
-                std::cout << gt_pose << std::endl;
-                std::cout << "---- transferred gt pose ----" << std::endl;
-                std::cout << transferred_gt_pose << std::endl;
             }
         }
         // Add extra info

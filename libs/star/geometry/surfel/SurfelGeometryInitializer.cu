@@ -396,20 +396,20 @@ void star::SurfelGeometryInitializer::InitFromDataGeometry(
 
 void star::SurfelGeometryInitializer::initSurfelGeometry(
 	GeometryAttributes geometry,
-	const SurfelMap &surfel_map,
+	const SurfelMapTex &surfel_map,
 	const Eigen::Matrix4f &cam2world,
 	cudaStream_t stream)
 {
 	unsigned width, height;
-	query2DTextureExtent(surfel_map.VertexConfidReadOnly(), width, height);
+	query2DTextureExtent(surfel_map.vertex_confid, width, height);
 
 	dim3 blk(16, 16);
 	dim3 grid(divUp(width, blk.x), divUp(height, blk.y));
 	device::initializerSurfelKernel<<<grid, blk, 0, stream>>>(
-		surfel_map.VertexConfidReadOnly(),
-		surfel_map.NormalRadiusReadOnly(),
-		surfel_map.ColorTimeReadOnly(),
-		surfel_map.IndexReadOnly(),
+		surfel_map.vertex_confid,
+		surfel_map.normal_radius,
+		surfel_map.color_time,
+		surfel_map.index,
 		geometry.reference_vertex_confid,
 		geometry.reference_normal_radius,
 		geometry.live_vertex_confid,
@@ -422,21 +422,21 @@ void star::SurfelGeometryInitializer::initSurfelGeometry(
 
 void star::SurfelGeometryInitializer::initSurfelGeometryWithSemantic(
 	GeometryAttributes geometry,
-	const SurfelMap &surfel_map,
+	const SurfelMapTex &surfel_map,
 	const Eigen::Matrix4f &cam2world,
 	cudaStream_t stream)
 {
 	unsigned width, height;
-	query2DTextureExtent(surfel_map.VertexConfidReadOnly(), width, height);
+	query2DTextureExtent(surfel_map.vertex_confid, width, height);
 
 	dim3 blk(16, 16);
 	dim3 grid(divUp(width, blk.x), divUp(height, blk.y));
 	device::initializerSurfelKernel<<<grid, blk, 0, stream>>>(
-		surfel_map.VertexConfidReadOnly(),
-		surfel_map.NormalRadiusReadOnly(),
-		surfel_map.ColorTimeReadOnly(),
-		surfel_map.IndexReadOnly(),
-		surfel_map.SegmentationReadOnly(),
+		surfel_map.vertex_confid,
+		surfel_map.normal_radius,
+		surfel_map.color_time,
+		surfel_map.index,
+		surfel_map.segmentation,
 		geometry.reference_vertex_confid,
 		geometry.reference_normal_radius,
 		geometry.live_vertex_confid,
@@ -450,21 +450,21 @@ void star::SurfelGeometryInitializer::initSurfelGeometryWithSemantic(
 
 void star::SurfelGeometryInitializer::initSurfelGeometry(
 	GeometryAttributes geometry,
-	const SurfelMap &surfel_map,
+	const SurfelMapTex &surfel_map,
 	const GArrayView<float2> &keys,
 	const Eigen::Matrix4f &cam2world,
 	cudaStream_t stream)
 {
 	unsigned width, height;
-	query2DTextureExtent(surfel_map.VertexConfidReadOnly(), width, height);
+	query2DTextureExtent(surfel_map.vertex_confid, width, height);
 
 	dim3 blk(128);
 	dim3 grid(divUp(keys.Size(), blk.x));
 	device::initializerSurfelKernelWithKey<<<grid, blk, 0, stream>>>(
-		surfel_map.VertexConfidReadOnly(),
-		surfel_map.NormalRadiusReadOnly(),
-		surfel_map.ColorTimeReadOnly(),
-		surfel_map.IndexReadOnly(),
+		surfel_map.vertex_confid,
+		surfel_map.normal_radius,
+		surfel_map.color_time,
+		surfel_map.index,
 		geometry.reference_vertex_confid,
 		geometry.reference_normal_radius,
 		geometry.live_vertex_confid,
@@ -479,22 +479,22 @@ void star::SurfelGeometryInitializer::initSurfelGeometry(
 
 void star::SurfelGeometryInitializer::initSurfelGeometryWithSemantic(
 	GeometryAttributes geometry,
-	const SurfelMap &surfel_map,
+	const SurfelMapTex &surfel_map,
 	const GArrayView<float2> &keys,
 	const Eigen::Matrix4f &cam2world,
 	cudaStream_t stream)
 {
 	unsigned width, height;
-	query2DTextureExtent(surfel_map.VertexConfidReadOnly(), width, height);
+	query2DTextureExtent(surfel_map.vertex_confid, width, height);
 
 	dim3 blk(128);
 	dim3 grid(divUp(keys.Size(), blk.x));
 	device::initializerSurfelKernelWithKey<<<grid, blk, 0, stream>>>(
-		surfel_map.VertexConfidReadOnly(),
-		surfel_map.NormalRadiusReadOnly(),
-		surfel_map.ColorTimeReadOnly(),
-		surfel_map.IndexReadOnly(),
-		surfel_map.SegmentationReadOnly(),
+		surfel_map.vertex_confid,
+		surfel_map.normal_radius,
+		surfel_map.color_time,
+		surfel_map.index,
+		surfel_map.segmentation,
 		geometry.reference_vertex_confid,
 		geometry.reference_normal_radius,
 		geometry.live_vertex_confid,
@@ -597,12 +597,12 @@ void star::SurfelGeometryInitializer::initSurfelGeometry(
 
 void star::SurfelGeometryInitializer::InitFromGeometryMap(
 	SurfelGeometry &geometry,
-	const SurfelMap &surfel_map,
+	const SurfelMapTex &surfel_map,
 	const Eigen::Matrix4f &cam2world,
 	const bool use_semantic,
 	cudaStream_t stream)
 {
-	geometry.ResizeValidSurfelArrays(surfel_map.NumValidSurfels());
+	geometry.ResizeValidSurfelArrays(surfel_map.num_valid_surfel);
 
 	// Init the geometry
 	const auto geometry_attributes = geometry.Geometry();
@@ -618,7 +618,7 @@ void star::SurfelGeometryInitializer::InitFromGeometryMap(
 
 void star::SurfelGeometryInitializer::InitFromGeometryMap(
 	SurfelGeometry &geometry,
-	const SurfelMap &surfel_map,
+	const SurfelMapTex &surfel_map,
 	const GArrayView<float2> &keys,
 	const Eigen::Matrix4f &cam2world,
 	const bool use_semantic,

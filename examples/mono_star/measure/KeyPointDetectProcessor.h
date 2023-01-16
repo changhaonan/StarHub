@@ -4,6 +4,7 @@
 #include <star/geometry/keypoint/KeyPoints.h>
 #include <star/geometry/geometry_map/SurfelMap.h>
 #include <mono_star/common/ConfigParser.h>
+#include <opencv2/features2d.hpp>
 // Viewer
 #include <easy3d_viewer/context.hpp>
 
@@ -22,7 +23,8 @@ namespace star
         KeyPointDetectProcessor();
         ~KeyPointDetectProcessor();
         void ProcessFrame(
-            const SurfelMap &surfel_map,
+            const SurfelMapTex &measure_surfel_map,
+            const SurfelMapTex &model_surfel_map,
             const KeyPoints &model_keypoints,
             const unsigned frame_idx,
             cudaStream_t stream);
@@ -31,14 +33,26 @@ namespace star
         GArrayView<float> GetDescriptorsReadOnly() const { return m_detected_keypoints->DescriptorReadOnly(); }
         star::KeyPoints::Ptr GetKeyPointsReadOnly() const { return m_detected_keypoints; }
         GArrayView<int2> GetMatchedKeyPointsReadOnly() const { return m_keypoint_matches.View(); }
+
     private:
         void getMatchedKeyPoints(
-            const KeyPoints& keypoints_src,
-            const KeyPoints& keypoints_dst,
+            const KeyPoints &keypoints_src,
+            const KeyPoints &keypoints_dst,
             cudaStream_t stream);
         void saveContext(
-            const KeyPoints& model_keypoints,
+            const KeyPoints &model_keypoints,
             unsigned frame_idx,
+            cudaStream_t stream);
+        // KeyPoint Online Detection
+        void detectFeature(
+            const SurfelMapTex &surfel_map,
+            cv::Mat &keypoint,
+            cv::Mat &descriptor,
+            cudaStream_t stream);
+        void detectORBFeature(
+            cudaTextureObject_t rgbd_tex,
+            cv::Mat &keypoint,
+            cv::Mat &descriptor,
             cudaStream_t stream);
 
         // Camera parameters
@@ -48,6 +62,8 @@ namespace star
         Extrinsic m_cam2world;
         bool m_enable_semantic_surfel;
         float m_downsample_scale;
+        unsigned m_image_width;
+        unsigned m_image_height;
 
         // Matching-related
         float m_kp_match_ratio_thresh;
@@ -59,10 +75,15 @@ namespace star
         KeyPoints::Ptr m_detected_keypoints;
 
         // Buffer
-        cv::Mat m_keypoint_mat;
-        cv::Mat m_descriptor_mat;
+        cv::Mat m_keypoint_src;  // Model
+        cv::Mat m_descriptor_src;
+        cv::Mat m_keypoint_tar;  // Measure
+        cv::Mat m_descriptor_tar;
         void *m_keypoint_buffer;
         void *m_descriptor_buffer;
+        // Buffer for detect
+        GArray<uchar3> m_g_rgb;
+        uchar3* m_h_rgb;
         // Buffer for vis
         GBufferArray<float4> m_matched_vertex_src;
         GBufferArray<float4> m_matched_vertex_dst;

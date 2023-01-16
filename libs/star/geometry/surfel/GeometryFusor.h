@@ -37,7 +37,7 @@ namespace star
         void Fuse(
             const unsigned active_buffer_idx,
             const unsigned frame_idx,
-            const SurfelMap& surfel_map,
+            const SurfelMapTex& surfel_map,
             SurfelGeometry::Ptr measure_surfel_geometry,
             cudaStream_t stream);
 

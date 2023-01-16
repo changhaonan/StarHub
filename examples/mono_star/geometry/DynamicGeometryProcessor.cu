@@ -76,7 +76,7 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
 }
 
 void star::DynamicGeometryProcessor::ProcessFrame(
-    const SurfelMap &surfel_map,
+    const SurfelMapTex &surfel_map,
     const GArrayView<float2> &keypoints,
     const GArrayView<float> &descriptors,
     const GArrayView<int2> &kp_matches,
@@ -112,7 +112,7 @@ void star::DynamicGeometryProcessor::ProcessFrame(
 }
 
 void star::DynamicGeometryProcessor::initGeometry(
-    const SurfelMap &surfel_map, const Eigen::Matrix4f &cam2world, const unsigned frame_idx, cudaStream_t stream)
+    const SurfelMapTex &surfel_map, const Eigen::Matrix4f &cam2world, const unsigned frame_idx, cudaStream_t stream)
 {
     // Init Surfel geometry
     SurfelGeometryInitializer::InitFromGeometryMap(
@@ -150,7 +150,7 @@ void star::DynamicGeometryProcessor::initGeometry(
 }
 
 void star::DynamicGeometryProcessor::initKeyPoints(
-    const SurfelMap &surfel_map,
+    const SurfelMapTex &surfel_map,
     const GArrayView<float2> &keypoints,
     const GArrayView<float> &descriptors,
     const Eigen::Matrix4f &cam2world,
@@ -162,7 +162,7 @@ void star::DynamicGeometryProcessor::initKeyPoints(
 }
 
 void star::DynamicGeometryProcessor::initKeyPointsGeometry(
-    const SurfelMap &surfel_map,
+    const SurfelMapTex &surfel_map,
     const GArrayView<float2> &keypoints,
     const GArrayView<float> &descriptors,
     const Eigen::Matrix4f &cam2world,
@@ -205,7 +205,7 @@ void star::DynamicGeometryProcessor::updateKeyPointSkinning(
 }
 
 void star::DynamicGeometryProcessor::updateGeometry(
-    const SurfelMap &surfel_map,
+    const SurfelMapTex &surfel_map,
     const GArrayView<float2> &keypoints,
     const GArrayView<float> &descriptors,
     const GArrayView<int2> &kp_matches,

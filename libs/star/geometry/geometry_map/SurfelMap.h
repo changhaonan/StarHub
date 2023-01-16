@@ -45,7 +45,18 @@ namespace star
         cudaSurfaceObject_t Index() { return m_index.surface; }
         cudaSurfaceObject_t Segmentation() { return m_segmentation.surface; }
         unsigned NumValidSurfels() const { return m_num_valid_surfel; }
-        SurfelMapTex Texture() const { return {m_vertex_confid.texture, m_normal_radius.texture, m_color_time.texture, m_rgbd.texture, m_index.texture, m_segmentation.texture, m_num_valid_surfel}; }
+        SurfelMapTex Texture() const
+        {
+            return {
+                m_vertex_confid.texture,
+                m_normal_radius.texture,
+                m_color_time.texture,
+                m_rgbd.texture,
+                m_depth.texture,
+                m_index.texture,
+                m_segmentation.texture,
+                m_num_valid_surfel};
+        }
 
     private:
         // Surfel-related

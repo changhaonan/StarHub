@@ -60,7 +60,7 @@ star::GeometryFusor::~GeometryFusor()
 void star::GeometryFusor::Fuse(
     const unsigned active_buffer_idx,
     const unsigned frame_idx,
-    const SurfelMap &surfel_map,
+    const SurfelMapTex &surfel_map,
     SurfelGeometry::Ptr measure_surfel_geometry,
     cudaStream_t stream)
 {
@@ -72,17 +72,17 @@ void star::GeometryFusor::Fuse(
     // Only support mono camera for now
     STAR_CHECK_EQ(m_num_cam, 1);
     Measure4Fusion measure4fusion{};
-    measure4fusion.vertex_confid_map[0] = surfel_map.VertexConfidReadOnly();
-    measure4fusion.normal_radius_map[0] = surfel_map.NormalRadiusReadOnly();
-    measure4fusion.color_time_map[0] = surfel_map.ColorTimeReadOnly();
-    measure4fusion.index_map[0] = surfel_map.IndexReadOnly();
-    measure4fusion.num_valid_surfel = surfel_map.NumValidSurfels();
+    measure4fusion.vertex_confid_map[0] = surfel_map.vertex_confid;
+    measure4fusion.normal_radius_map[0] = surfel_map.normal_radius;
+    measure4fusion.color_time_map[0] = surfel_map.color_time;
+    measure4fusion.index_map[0] = surfel_map.index;
+    measure4fusion.num_valid_surfel = surfel_map.num_valid_surfel;
 
     Segmentation4SemanticFusion segmentation4semantic_fusion{};
-    segmentation4semantic_fusion.segmentation[0] = surfel_map.SegmentationReadOnly();
+    segmentation4semantic_fusion.segmentation[0] = surfel_map.segmentation;
 
     Measure4GeometryRemoval measure4gemetry_removal{};
-    measure4gemetry_removal.depth4removal_map[0] = surfel_map.DepthReadOnly();
+    measure4gemetry_removal.depth4removal_map[0] = surfel_map.depth;
 
     unsigned current_geometry_idx = m_active_buffer_idx; // Pointer de-coupling
     unsigned current_node_graph_idx = m_active_buffer_idx;

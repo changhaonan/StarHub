@@ -21,7 +21,7 @@ namespace star
         DynamicGeometryProcessor();
         ~DynamicGeometryProcessor();
         void ProcessFrame(
-            const SurfelMap &surfel_map,
+            const SurfelMapTex &surfel_map,
             const GArrayView<float2> &keypoints,
             const GArrayView<float> &descriptors,
              const GArrayView<int2> &kp_matches,
@@ -29,12 +29,12 @@ namespace star
             const unsigned frame_idx,
             cudaStream_t stream);
         void initGeometry(
-            const SurfelMap &surfel_map,
+            const SurfelMapTex &surfel_map,
             const Eigen::Matrix4f &cam2world,
             const unsigned frame_idx,
             cudaStream_t stream);
         void initKeyPoints(
-            const SurfelMap &surfel_map,
+            const SurfelMapTex &surfel_map,
             const GArrayView<float2> &keypoints,
             const GArrayView<float> &descriptors,
             const Eigen::Matrix4f &cam2world,
@@ -42,7 +42,7 @@ namespace star
             cudaStream_t stream);
         // This init doesn't do skinning
         void initKeyPointsGeometry(
-            const SurfelMap &surfel_map,
+            const SurfelMapTex &surfel_map,
             const GArrayView<float2> &keypoints,
             const GArrayView<float> &descriptors,
             const Eigen::Matrix4f &cam2world,
@@ -51,7 +51,7 @@ namespace star
         void updateKeyPointSkinning(
             cudaStream_t);
         void updateGeometry(
-            const SurfelMap &surfel_map,
+            const SurfelMapTex &surfel_map,
             const GArrayView<float2> &keypoints,
             const GArrayView<float> &descriptors,
             const GArrayView<int2> &kp_matches,
