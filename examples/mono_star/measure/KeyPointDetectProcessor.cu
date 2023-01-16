@@ -62,7 +62,7 @@ star::KeyPointDetectProcessor::KeyPointDetectProcessor()
     m_image_height = config.downsample_img_rows();
 
     // Create host buffer
-    cudaSafeCall(cudaMallocHost(&m_keypoint_buffer, sizeof(float) * 2 * d_max_num_keypoints));
+    cudaSafeCall(cudaMallocHost(&m_keypoint_buffer, sizeof(float2) * d_max_num_keypoints));
     cudaSafeCall(cudaMallocHost(&m_descriptor_buffer, sizeof(float) * d_max_num_keypoints * KeyPoints::GetDescriptorDim(m_keypoint_type)));
 
     unsigned num_pixels = m_image_width * m_image_height;
@@ -72,7 +72,8 @@ star::KeyPointDetectProcessor::KeyPointDetectProcessor()
     m_g_keypoints.AllocateBuffer(d_max_num_keypoints);
     m_keypoint_matches.AllocateBuffer(d_max_num_keypoints);
 
-    m_detected_keypoints = std::make_shared<star::KeyPoints>(config.keypoint_type());
+    m_measure_keypoints = std::make_shared<star::KeyPoints>(config.keypoint_type());
+    m_model_keypoints = std::make_shared<star::KeyPoints>(config.keypoint_type());
 
     m_matched_vertex_src.AllocateBuffer(d_max_num_keypoints);
     m_matched_vertex_dst.AllocateBuffer(d_max_num_keypoints);
@@ -109,9 +110,11 @@ void star::KeyPointDetectProcessor::ProcessFrame(
 {
     // Detect Feature
     detectFeature(measure_surfel_map, m_keypoint_tar, m_descriptor_tar, stream);
+    buildKeyPoints(measure_surfel_map, m_keypoint_tar, m_descriptor_tar, m_measure_keypoints, stream);
     if (frame_idx > 0)
     {
         detectFeature(model_surfel_map, m_keypoint_src, m_descriptor_src, stream);
+        buildKeyPoints(model_surfel_map, m_keypoint_src, m_descriptor_src, m_model_keypoints, stream);
         // Match Feature
         float kp_match_pixel_dist = 20.f;
         MatchKeyPointsBFOpenCVHostOnly(
@@ -127,53 +130,11 @@ void star::KeyPointDetectProcessor::ProcessFrame(
         m_keypoint_matches.ResizeArrayOrException(m_num_valid_matches);
     }
 
-    const auto image_idx = size_t(frame_idx) * m_step_frame + m_start_frame_idx;
-    m_fetcher->FetchKeypoint(0, image_idx, m_keypoint_tar, m_descriptor_tar, m_keypoint_type);
-
-    // Scale keypoints according to downsample ratio
-    m_keypoint_tar = m_keypoint_tar * m_downsample_scale;
-
-    // Load the keypoint and descriptor into gpu
-    unsigned num_keypoints_detected = m_keypoint_tar.rows;
-    // CPU copy
-    memcpy(m_keypoint_buffer, m_keypoint_tar.data,
-           sizeof(float) * m_keypoint_tar.total());
-    memcpy(m_descriptor_buffer, m_descriptor_tar.data,
-           sizeof(float) * m_descriptor_tar.total());
-
-    // Copy to GPU
-    cudaSafeCall(cudaMemcpyAsync(
-        m_g_keypoints.Ptr(),
-        m_keypoint_buffer,
-        m_keypoint_tar.total() * sizeof(float),
-        cudaMemcpyHostToDevice,
-        stream));
-    cudaSafeCall(cudaMemcpyAsync(
-        m_detected_keypoints->Descriptor().Ptr(),
-        m_descriptor_buffer,
-        m_descriptor_tar.total() * sizeof(float),
-        cudaMemcpyHostToDevice,
-        stream));
-
-    // Resize
-    m_g_keypoints.ResizeArrayOrException(num_keypoints_detected);
-    m_detected_keypoints->Resize(num_keypoints_detected);
-
-    // Build 3d keypoint
-    // Init keypoint geometry
-    SurfelGeometryInitializer::InitFromGeometryMap(
-        *m_detected_keypoints,
-        measure_surfel_map,
-        m_g_keypoints.View(),
-        m_cam2world,
-        m_enable_semantic_surfel,
-        stream);
-
-    if (frame_idx != 0 && m_detected_keypoints->NumKeyPoints() > 0 && model_keypoints.NumKeyPoints() > 0)
+    if (frame_idx != 0 && m_measure_keypoints->NumKeyPoints() > 0 && model_keypoints.NumKeyPoints() > 0)
     {
         // Apply matching between model keypoints and detected keypoints
         MatchKeyPointsBFOpenCV(
-            *m_detected_keypoints,
+            *m_measure_keypoints,
             model_keypoints,
             m_keypoint_matches.Slice(),
             m_num_valid_matches,
@@ -197,7 +158,7 @@ void star::KeyPointDetectProcessor::saveContext(
     auto &context = easy3d::Context::Instance();
     context.addPointCloud("d_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
     visualize::SavePointCloud(
-        m_detected_keypoints->LiveVertexConfidenceReadOnly(),
+        m_measure_keypoints->LiveVertexConfidenceReadOnly(),
         context.at("d_keypoints"));
 
     if (model_keypoints.NumKeyPoints() > 0)
@@ -211,7 +172,7 @@ void star::KeyPointDetectProcessor::saveContext(
     // Draw the matched keypoints
     if (m_num_valid_matches > 0)
     {
-        getMatchedKeyPoints(*m_detected_keypoints, model_keypoints, stream);
+        getMatchedKeyPoints(*m_measure_keypoints, model_keypoints, stream);
         context.addPointCloud("matched_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
         visualize::SaveMatchedPointCloud(
             m_matched_vertex_src.View(),
@@ -244,6 +205,7 @@ void star::KeyPointDetectProcessor::getMatchedKeyPoints(
 void star::KeyPointDetectProcessor::detectFeature(
     const SurfelMapTex &surfel_map, cv::Mat &keypoint, cv::Mat &descriptor, cudaStream_t stream)
 {
+    // Detect feature
     if (m_keypoint_type == KeyPointType::ORB)
     {
         detectORBFeature(surfel_map.rgbd, keypoint, descriptor, stream);
@@ -287,4 +249,48 @@ void star::KeyPointDetectProcessor::detectORBFeature(
 
     // Log info
     LOG(INFO) << "Number of keypoints detected: " << keypoints.size();
+}
+
+void star::KeyPointDetectProcessor::buildKeyPoints(
+    const SurfelMapTex &surfel_map,
+    const cv::Mat &keypoint,
+    const cv::Mat &descriptor,
+    KeyPoints::Ptr keypoints,
+    cudaStream_t stream)
+{
+    // Load the keypoint and descriptor into gpu
+    unsigned num_keypoints_detected = keypoint.rows;
+    // CPU copy
+    memcpy(m_keypoint_buffer, keypoint.data,
+           sizeof(float2) * keypoint.total());
+    memcpy(m_descriptor_buffer, descriptor.data,
+           sizeof(unsigned char) * descriptor.total());
+
+    // Copy to GPU
+    cudaSafeCall(cudaMemcpyAsync(
+        m_g_keypoints.Ptr(),
+        m_keypoint_buffer,
+        keypoint.total() * sizeof(float2),
+        cudaMemcpyHostToDevice,
+        stream));
+    cudaSafeCall(cudaMemcpyAsync(
+        keypoints->Descriptor().Ptr(),
+        m_descriptor_buffer,
+        descriptor.total() * sizeof(unsigned char),
+        cudaMemcpyHostToDevice,
+        stream));
+
+    // Resize
+    m_g_keypoints.ResizeArrayOrException(num_keypoints_detected);
+    keypoints->Resize(num_keypoints_detected);
+
+    // Build 3d keypoint
+    // Init keypoint geometry
+    SurfelGeometryInitializer::InitFromGeometryMap(
+        *keypoints,
+        surfel_map,
+        m_g_keypoints.View(),
+        m_cam2world,
+        m_enable_semantic_surfel,
+        stream);
 }

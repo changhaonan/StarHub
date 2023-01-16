@@ -22,8 +22,8 @@ namespace star
         size_t DescriptorDim() const { return m_descriptor_dim; }
         void Resize(size_t size);
         // Fetch API
-        GArraySlice<float> Descriptor() { return m_descriptor.Slice(); }
-        GArrayView<float> DescriptorReadOnly() const { return m_descriptor.View(); }
+        GArraySlice<unsigned char> Descriptor() { return m_descriptor.Slice(); }
+        GArrayView<unsigned char> DescriptorReadOnly() const { return m_descriptor.View(); }
 
         // Static API
         static unsigned GetDescriptorDim(KeyPointType keypoint_type)
@@ -54,7 +54,7 @@ namespace star
         );
     protected:
         KeyPointType m_keypoint_type;
-        GBufferArray<float> m_descriptor;
+        GBufferArray<unsigned char> m_descriptor;
         size_t m_descriptor_dim;
     };
 

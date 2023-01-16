@@ -23,7 +23,7 @@ namespace star
         void ProcessFrame(
             const SurfelMapTex &surfel_map,
             const GArrayView<float2> &keypoints,
-            const GArrayView<float> &descriptors,
+            const GArrayView<unsigned char> &descriptors,
              const GArrayView<int2> &kp_matches,
             const GArrayView<DualQuaternion> &solved_se3,
             const unsigned frame_idx,
@@ -36,7 +36,7 @@ namespace star
         void initKeyPoints(
             const SurfelMapTex &surfel_map,
             const GArrayView<float2> &keypoints,
-            const GArrayView<float> &descriptors,
+            const GArrayView<unsigned char> &descriptors,
             const Eigen::Matrix4f &cam2world,
             const unsigned frame_idx,
             cudaStream_t stream);
@@ -44,7 +44,7 @@ namespace star
         void initKeyPointsGeometry(
             const SurfelMapTex &surfel_map,
             const GArrayView<float2> &keypoints,
-            const GArrayView<float> &descriptors,
+            const GArrayView<unsigned char> &descriptors,
             const Eigen::Matrix4f &cam2world,
             const unsigned idle_buffer_idx,
             cudaStream_t stream);
@@ -53,7 +53,7 @@ namespace star
         void updateGeometry(
             const SurfelMapTex &surfel_map,
             const GArrayView<float2> &keypoints,
-            const GArrayView<float> &descriptors,
+            const GArrayView<unsigned char> &descriptors,
             const GArrayView<int2> &kp_matches,
             const GArrayView<DualQuaternion> &solved_se3,
             const unsigned frame_idx,

@@ -11,8 +11,8 @@ void star::MatchKeyPointsBFOpenCV(
     cudaStream_t stream)
 {
     // Download descriptorss
-    std::vector<float> descriptor_query_vec;
-    std::vector<float> descriptor_train_vec;
+    std::vector<unsigned char> descriptor_query_vec;
+    std::vector<unsigned char> descriptor_train_vec;
     keypoints_query.DescriptorReadOnly().Download(descriptor_query_vec);
     keypoints_train.DescriptorReadOnly().Download(descriptor_train_vec);
 
@@ -23,24 +23,27 @@ void star::MatchKeyPointsBFOpenCV(
     keypoints_train.ReferenceVertexConfidenceReadOnly().Download(vertex_confid_train_vec);
 
     // Create cv::Mat from std::vector<float>
-    cv::Mat descriptor_query_mat(keypoints_query.NumKeyPoints(), keypoints_query.DescriptorDim(), CV_32F, descriptor_query_vec.data());
-    cv::Mat descriptor_train_mat(keypoints_train.NumKeyPoints(), keypoints_train.DescriptorDim(), CV_32F, descriptor_train_vec.data());
+    cv::Mat descriptor_query_mat(keypoints_query.NumKeyPoints(), keypoints_query.DescriptorDim(), CV_8U, descriptor_query_vec.data());
+    cv::Mat descriptor_train_mat(keypoints_train.NumKeyPoints(), keypoints_train.DescriptorDim(), CV_8U, descriptor_train_vec.data());
 
     // Match
-    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
+    cv::FlannBasedMatcher matcher = cv::FlannBasedMatcher(cv::makePtr<cv::flann::LshIndexParams>(12, 20, 2));
     std::vector<std::vector<cv::DMatch>> knn_matches;
-    matcher->knnMatch(descriptor_query_mat, descriptor_train_mat, knn_matches, 2);
+    matcher.knnMatch(descriptor_query_mat, descriptor_train_mat, knn_matches, 2);
 
     // Filter matches using the Lowe's ratio test
     std::vector<int2> good_matches_int2;
     for (auto j = 0; j < knn_matches.size(); j++)
     {
-        if (knn_matches[j][0].distance < ratio_thresh * knn_matches[j][1].distance &&
-            vertex_confid_query_vec[knn_matches[j][0].queryIdx].w > 0.0f &&
-            vertex_confid_train_vec[knn_matches[j][0].trainIdx].w > 0.0f &&
-            norm(vertex_confid_query_vec[knn_matches[j][0].queryIdx] - vertex_confid_train_vec[knn_matches[j][0].trainIdx]) < dist_thresh)
+        if (knn_matches[j].size() >= 2)
         {
-            good_matches_int2.push_back(make_int2(knn_matches[j][0].queryIdx, knn_matches[j][0].trainIdx));
+            if (knn_matches[j][0].distance < ratio_thresh * knn_matches[j][1].distance &&
+                vertex_confid_query_vec[knn_matches[j][0].queryIdx].w > 0.0f &&
+                vertex_confid_train_vec[knn_matches[j][0].trainIdx].w > 0.0f &&
+                norm(vertex_confid_query_vec[knn_matches[j][0].queryIdx] - vertex_confid_train_vec[knn_matches[j][0].trainIdx]) < dist_thresh)
+            {
+                good_matches_int2.push_back(make_int2(knn_matches[j][0].queryIdx, knn_matches[j][0].trainIdx));
+            }
         }
     }
 

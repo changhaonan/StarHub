@@ -30,9 +30,17 @@ namespace star
             cudaStream_t stream);
         // Fetch-API
         GArrayView<float2> Get2DKeyPointsReadOnly() const { return m_g_keypoints.View(); }
-        GArrayView<float> GetDescriptorsReadOnly() const { return m_detected_keypoints->DescriptorReadOnly(); }
-        star::KeyPoints::Ptr GetKeyPointsReadOnly() const { return m_detected_keypoints; }
+        GArrayView<unsigned char> GetDescriptorsReadOnly() const { return m_measure_keypoints->DescriptorReadOnly(); }
+        star::KeyPoints::Ptr GetKeyPointsReadOnly() const { return m_measure_keypoints; }
         GArrayView<int2> GetMatchedKeyPointsReadOnly() const { return m_keypoint_matches.View(); }
+        // Build Solver
+        // KeyPoint4Solver GenerateKeyPoint4Solver(
+        //     const SurfelMapTex &measure_surfel_map,
+        //     const SurfelMapTex &model_surfel_map,
+        //     const SurfelGeometry& model_geometry,
+        //     const Renderer::SolverMaps &solver_maps,
+        //     const unsigned frame_idx,
+        //     cudaStream_t stream);
 
     private:
         void getMatchedKeyPoints(
@@ -54,6 +62,13 @@ namespace star
             cv::Mat &keypoint,
             cv::Mat &descriptor,
             cudaStream_t stream);
+        // Keypoint Build
+        void buildKeyPoints(
+            const SurfelMapTex &surfel_map,
+            const cv::Mat &keypoint,
+            const cv::Mat &descriptor,
+            KeyPoints::Ptr keypoints,
+            cudaStream_t stream);
 
         // Camera parameters
         unsigned m_step_frame;
@@ -72,18 +87,19 @@ namespace star
         GBufferArray<int2> m_keypoint_matches;
 
         // Keypoint
-        KeyPoints::Ptr m_detected_keypoints;
+        KeyPoints::Ptr m_measure_keypoints;
+        KeyPoints::Ptr m_model_keypoints;
 
         // Buffer
-        cv::Mat m_keypoint_src;  // Model
+        cv::Mat m_keypoint_src; // Model
         cv::Mat m_descriptor_src;
-        cv::Mat m_keypoint_tar;  // Measure
+        cv::Mat m_keypoint_tar; // Measure
         cv::Mat m_descriptor_tar;
         void *m_keypoint_buffer;
         void *m_descriptor_buffer;
         // Buffer for detect
         GArray<uchar3> m_g_rgb;
-        uchar3* m_h_rgb;
+        uchar3 *m_h_rgb;
         // Buffer for vis
         GBufferArray<float4> m_matched_vertex_src;
         GBufferArray<float4> m_matched_vertex_dst;

@@ -16,8 +16,8 @@ namespace star::device
     __global__ void MarkMatchAndReplaceKernel(
         const float4 *__restrict__ old_kp_vertrex,
         const float4 *__restrict__ new_kp_vertrex,
-        float *__restrict__ old_kp_descriptor,
-        const float *__restrict__ new_kp_descriptor,
+        unsigned char *__restrict__ old_kp_descriptor,
+        const unsigned char *__restrict__ new_kp_descriptor,
         const int2 *__restrict__ potential_matches,
         unsigned *__restrict__ not_matched_indicator,
         const float kp_match_threshold,
@@ -28,11 +28,11 @@ namespace star::device
         if (idx >= num_matches)
             return;
         // Prepare
-        const auto match = potential_matches[idx];  // (new, old)
+        const auto match = potential_matches[idx]; // (new, old)
         const auto old_kp = old_kp_vertrex[match.y];
         const auto new_kp = new_kp_vertrex[match.x];
-        float *old_kp_desc_ptr = old_kp_descriptor + match.y * dim_descriptor;
-        const float *new_kp_desc_ptr = new_kp_descriptor + match.x * dim_descriptor;
+        unsigned char *old_kp_desc_ptr = old_kp_descriptor + match.y * dim_descriptor;
+        const unsigned char *new_kp_desc_ptr = new_kp_descriptor + match.x * dim_descriptor;
         const auto dist = norm(old_kp - new_kp);
 
         // Update indicator
@@ -53,12 +53,12 @@ namespace star::device
         const float4 *__restrict__ new_kp_vertrex_confid,
         float4 *__restrict__ old_kp_normal_radius,
         const float4 *__restrict__ new_kp_normal_radius,
-        float4* __restrict__ old_kp_color_time,
-        const float4* __restrict__ new_kp_color_time,
+        float4 *__restrict__ old_kp_color_time,
+        const float4 *__restrict__ new_kp_color_time,
         ucharX<d_max_num_semantic> *__restrict__ old_kp_semantic_prob,
         const ucharX<d_max_num_semantic> *__restrict__ new_kp_semantic_prob,
-        float *__restrict__ old_kp_descriptor,
-        const float *__restrict__ new_kp_descriptor,
+        unsigned char *__restrict__ old_kp_descriptor,
+        const unsigned char *__restrict__ new_kp_descriptor,
         const unsigned *__restrict__ not_matched_indicator,
         const unsigned *__restrict__ not_matched_offset,
         const unsigned num_new_kp,
@@ -164,7 +164,7 @@ void star::KeyPointFusor::appendNewKeyPoints(
     m_not_matched_prefix_sum.InclusiveSum(m_not_matched_indicator.View(), stream);
     const auto &prefixsum_label = m_not_matched_prefix_sum.valid_prefixsum_array;
     cudaSafeCall(cudaMemcpyAsync(
-        (void*)m_host_num_not_matches,
+        (void *)m_host_num_not_matches,
         prefixsum_label.ptr() + prefixsum_label.size() - 1,
         sizeof(unsigned),
         cudaMemcpyDeviceToHost,

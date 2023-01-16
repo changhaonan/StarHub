@@ -78,7 +78,7 @@ star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
 void star::DynamicGeometryProcessor::ProcessFrame(
     const SurfelMapTex &surfel_map,
     const GArrayView<float2> &keypoints,
-    const GArrayView<float> &descriptors,
+    const GArrayView<unsigned char> &descriptors,
     const GArrayView<int2> &kp_matches,
     const GArrayView<DualQuaternion> &solved_se3,
     const unsigned frame_idx,
@@ -96,10 +96,6 @@ void star::DynamicGeometryProcessor::ProcessFrame(
     else if (frame_idx > 0)
     {
         updateGeometry(surfel_map, keypoints, descriptors, kp_matches, solved_se3, frame_idx, stream); // Apply warp
-        // Update the keypoints 10 frames
-        // TODO: test this in the future
-        // if (frame_idx % 10 == 0)
-        //     initKeyPoints(surfel_map, keypoints, descriptors, m_cam2world, frame_idx, stream);
     }
 
     // Generate map from geometry
@@ -152,7 +148,7 @@ void star::DynamicGeometryProcessor::initGeometry(
 void star::DynamicGeometryProcessor::initKeyPoints(
     const SurfelMapTex &surfel_map,
     const GArrayView<float2> &keypoints,
-    const GArrayView<float> &descriptors,
+    const GArrayView<unsigned char> &descriptors,
     const Eigen::Matrix4f &cam2world,
     const unsigned frame_idx,
     cudaStream_t stream)
@@ -164,7 +160,7 @@ void star::DynamicGeometryProcessor::initKeyPoints(
 void star::DynamicGeometryProcessor::initKeyPointsGeometry(
     const SurfelMapTex &surfel_map,
     const GArrayView<float2> &keypoints,
-    const GArrayView<float> &descriptors,
+    const GArrayView<unsigned char> &descriptors,
     const Eigen::Matrix4f &cam2world,
     const unsigned idle_buffer_idx,
     cudaStream_t stream)
@@ -207,7 +203,7 @@ void star::DynamicGeometryProcessor::updateKeyPointSkinning(
 void star::DynamicGeometryProcessor::updateGeometry(
     const SurfelMapTex &surfel_map,
     const GArrayView<float2> &keypoints,
-    const GArrayView<float> &descriptors,
+    const GArrayView<unsigned char> &descriptors,
     const GArrayView<int2> &kp_matches,
     const GArrayView<DualQuaternion> &solved_se3,
     const unsigned frame_idx,
