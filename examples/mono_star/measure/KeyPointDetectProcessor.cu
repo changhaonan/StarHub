@@ -112,6 +112,8 @@ void star::KeyPointDetectProcessor::ProcessFrame(
     if (frame_idx > 0)
     {
         detectFeature(model_surfel_map, m_keypoint_src, m_descriptor_src, stream);
+        // Match Feature
+        float kp_match_pixel_dist = 20.f;
         MatchKeyPointsBFOpenCVHostOnly(
             m_keypoint_src,   // Model
             m_keypoint_tar,   // Measure
@@ -120,7 +122,7 @@ void star::KeyPointDetectProcessor::ProcessFrame(
             m_keypoint_matches.Slice(),
             m_num_valid_matches,
             m_kp_match_ratio_thresh,
-            m_kp_match_dist_thresh,
+            kp_match_pixel_dist,
             stream);
         m_keypoint_matches.ResizeArrayOrException(m_num_valid_matches);
     }
