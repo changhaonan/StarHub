@@ -278,7 +278,6 @@ namespace star::device
 		float4 color_time_ = tex2D<float4>(color_time_map, x, y);
 		color_time[idx] = color_time_;
 		int semantic_label = tex2D<int>(segmentation_map, x, y);
-		printf("fetch sematic.\n");
 		ucharX<d_max_num_semantic> semantic_prob_val;
 		semantic_prob_val[semantic_label] = 2; // Semantic initialized as 2
 		semantic_prob[idx] = semantic_prob_val;

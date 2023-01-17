@@ -143,16 +143,20 @@ void star::KeyPointDetectProcessor::saveContext(
     unsigned frame_idx, cudaStream_t stream)
 {
     auto &context = easy3d::Context::Instance();
-    context.addPointCloud("d_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
-    visualize::SavePointCloud(
+    context.addPointCloud("measure_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
+    visualize::SaveSemanticPointCloud(
         m_measure_keypoints->LiveVertexConfidenceReadOnly(),
-        context.at("d_keypoints"));
+        m_measure_keypoints->SemanticProbReadOnly(),
+        visualize::default_semantic_color_dict,
+        context.at("measure_keypoints"));
 
     if (m_model_keypoints->NumKeyPoints() > 0)
     {
         context.addPointCloud("model_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
-        visualize::SavePointCloud(
-            m_model_keypoints->LiveVertexConfidenceReadOnly(),
+        visualize::SaveSemanticPointCloud(
+            m_measure_keypoints->LiveVertexConfidenceReadOnly(),
+            m_measure_keypoints->SemanticProbReadOnly(),
+            visualize::default_semantic_color_dict,
             context.at("model_keypoints"));
     }
 
