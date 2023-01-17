@@ -8,6 +8,7 @@ namespace star
     /**
      * @brief Match keypoints from two images
      * @note Currently, we uses the brute-force matching method from opencv
+     * @return matches: (query_idx, train_idx)
      */
     void MatchKeyPointsBFOpenCV(
         const KeyPoints &keypoints_query,
@@ -21,6 +22,7 @@ namespace star
     /**
      * @brief Match keypoints from two images on host only
      * @note Currently, we uses the brute-force matching method from opencv
+     * @return matches: (query_idx, train_idx)
      */
     void MatchKeyPointsBFOpenCVHostOnly(
         const cv::Mat &keypoints_query,
@@ -36,6 +38,7 @@ namespace star
     /**
      * @brief Match keypoints from two images on host only
      * @note Currently, we uses the brute-force matching method from opencv
+     * @return matches: (query_idx, train_idx)
      */
     void MatchKeyPointsBFOpenCVHostOnly(
         const cv::Mat &keypoints_query,

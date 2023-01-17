@@ -53,8 +53,8 @@ namespace star
         // Match
         GArrayView<int2> kp_match;
         // Measurement
-        GArrayView<float4> d_kp_vertex_confid;
-        GArrayView<float4> d_kp_normal_radius;
+        GArrayView<float4> kp_measure_vertex_confid;
+        GArrayView<float4> kp_measure_normal_radius;
         // Model
         GArrayView<float4> kp_vertex_confid;
         GArrayView<float4> kp_normal_radius;

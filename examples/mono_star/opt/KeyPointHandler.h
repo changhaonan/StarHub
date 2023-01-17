@@ -14,10 +14,10 @@ namespace star
         GArrayView<float4> m_kp_vertex_confid;
         GArrayView<float4> m_kp_normal_radius;
         // The input data from detected keypoint
-        GArrayView<float4> m_d_kp_vertex_confid;
-        GArrayView<float4> m_d_kp_normal_radius;
+        GArrayView<float4> m_kp_measure_vertex_confid;
+        GArrayView<float4> m_kp_measure_normal_radius;
         // Match-related
-        GArrayView<int2> m_kp_match; // match = (id_measure, id_model)
+        GArrayView<int2> m_kp_match; // match = (id_model, id_measure)
         unsigned m_num_match;
 
         // KNN structure

@@ -29,14 +29,14 @@ namespace star::device
             return;
         // Prepare
         const auto match = potential_matches[idx]; // (new, old)
-        const auto old_kp = old_kp_vertrex[match.y];
-        const auto new_kp = new_kp_vertrex[match.x];
-        unsigned char *old_kp_desc_ptr = old_kp_descriptor + match.y * dim_descriptor;
-        const unsigned char *new_kp_desc_ptr = new_kp_descriptor + match.x * dim_descriptor;
+        const auto old_kp = old_kp_vertrex[match.x];
+        const auto new_kp = new_kp_vertrex[match.y];
+        unsigned char *old_kp_desc_ptr = old_kp_descriptor + match.x * dim_descriptor;
+        const unsigned char *new_kp_desc_ptr = new_kp_descriptor + match.y * dim_descriptor;
         const auto dist = norm(old_kp - new_kp);
 
         // Update indicator
-        not_matched_indicator[match.x] = 0;
+        not_matched_indicator[match.y] = 0;
 
         // Update descriptor
         if (dist < kp_match_threshold)

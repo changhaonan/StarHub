@@ -57,10 +57,10 @@ namespace star::device
 
     // Keypoints should be all in world coordinate
     __global__ void ComputeKPJacobianResidual(
-        const float4 *__restrict__ kp_vertex_confid_src,
-        const float4 *__restrict__ kp_vertex_confid_dst,
-        const float4 *__restrict__ kp_normal_radius_src,
-        const float4 *__restrict__ kp_normal_radius_dst,
+        const float4 *__restrict__ kp_model_vertex_confid,
+        const float4 *__restrict__ kp_measure_vertex_confid,
+        const float4 *__restrict__ kp_model_normal_radius,
+        const float4 *__restrict__ kp_measure_normal_radius,
         const int2 *__restrict__ kp_match,
         // KNN structure
         const unsigned short *__restrict__ knn_patch_array,
@@ -87,18 +87,17 @@ namespace star::device
             node_se3, knn_patch_ptr, knn_patch_spatial_weight_ptr, knn_patch_connect_weight_ptr, d_node_knn_size);
         const mat34 se3 = dq_average.se3_matrix();
 
-        
         // TODO: currently normal is not used
-        const float4 target_vertex4 = kp_vertex_confid_dst[match.x]; // The first one is measure
-        const float4 target_normal4 = kp_normal_radius_dst[match.x];
-        const float3 target_vertex = make_float3(target_vertex4.x, target_vertex4.y, target_vertex4.z);
-        const float3 target_normal = make_float3(target_normal4.x, target_normal4.y, target_normal4.z);
-
         // Warp
-        const float4 can_vertex4 = kp_vertex_confid_src[match.y]; // The second one is model
-        const float4 can_normal4 = kp_normal_radius_src[match.y];
+        const float4 can_vertex4 = kp_model_vertex_confid[match.x]; // The first one is model
+        const float4 can_normal4 = kp_model_normal_radius[match.x];
         const float3 warped_vertex_world = se3.rot * can_vertex4 + se3.trans;
         const float3 warped_normal_world = se3.rot * can_normal4;
+
+        const float4 target_vertex4 = kp_measure_vertex_confid[match.y]; // The second one is measure
+        const float4 target_normal4 = kp_measure_normal_radius[match.y];
+        const float3 target_vertex = make_float3(target_vertex4.x, target_vertex4.y, target_vertex4.z);
+        const float3 target_normal = make_float3(target_normal4.x, target_normal4.y, target_normal4.z);
 
         // Compute Jacobian, assume all is valid
         float3 e = warped_vertex_world - target_vertex;
@@ -106,7 +105,7 @@ namespace star::device
         float e_norm_inv = 1.f / (e_norm + 1e-8f);
         term_residual = e_norm;
         term_gradient.translation = e * e_norm_inv * 0.5f;
-        term_gradient.rotation = cross(warped_vertex_world, e)* e_norm_inv * 0.5f;
+        term_gradient.rotation = cross(warped_vertex_world, e) * e_norm_inv * 0.5f;
 
         // printf("can: %f, %f, %f, warped: %f %f %f, target: %f %f %f, term: %f.\n",
         //        can_vertex4.x, can_vertex4.y, can_vertex4.z,
@@ -114,11 +113,13 @@ namespace star::device
         //        target_vertex.x, target_vertex.y, target_vertex.z, term_residual);
 
         // Assign to output
-        if (e_norm < d_kp_outlier_threshold) {
+        if (e_norm < d_kp_outlier_threshold)
+        {
             residual[idx] = term_residual;
             gradient[idx] = term_gradient;
         }
-        else {
+        else
+        {
             // Regarded as outlier: saturate kernel
             residual[idx] = d_kp_outlier_threshold;
             gradient[idx] = GradientOfScalarCost();
@@ -164,8 +165,8 @@ void star::KeyPointHandler::SetInputs(
     m_kp_vertex_confid = keypoint4solver.kp_vertex_confid;
     m_kp_normal_radius = keypoint4solver.kp_normal_radius;
 
-    m_d_kp_vertex_confid = keypoint4solver.d_kp_vertex_confid;
-    m_d_kp_normal_radius = keypoint4solver.d_kp_normal_radius;
+    m_kp_measure_vertex_confid = keypoint4solver.kp_measure_vertex_confid;
+    m_kp_measure_normal_radius = keypoint4solver.kp_measure_normal_radius;
 
     m_kp_match = keypoint4solver.kp_match;
 
@@ -181,7 +182,8 @@ void star::KeyPointHandler::UpdateInputs(
     const GArrayView<DualQuaternion> &node_se3,
     cudaStream_t stream)
 {
-    if (m_num_match == 0) return;
+    if (m_num_match == 0)
+        return;
     // Update node se3
     m_node_se3 = node_se3;
     // Update knn patch dq array
@@ -197,7 +199,8 @@ void star::KeyPointHandler::UpdateInputs(
 
 void star::KeyPointHandler::InitKNNSync(cudaStream_t stream)
 {
-    if (m_num_match == 0) return;
+    if (m_num_match == 0)
+        return;
     // Check valid
     dim3 blk(128);
     dim3 grid(divUp(m_num_match, blk.x));
@@ -257,15 +260,16 @@ float star::KeyPointHandler::computeSOR()
 
 void star::KeyPointHandler::BuildTerm2Jacobian(cudaStream_t stream)
 {
-    if (m_num_match == 0) return;
+    if (m_num_match == 0)
+        return;
     // Compute the term gradient and term residual
     dim3 blk(128);
     dim3 grid(divUp(m_num_match, blk.x));
     device::ComputeKPJacobianResidual<<<grid, blk, 0, stream>>>(
         m_kp_vertex_confid.Ptr(),
-        m_d_kp_vertex_confid.Ptr(),
+        m_kp_measure_vertex_confid.Ptr(),
         m_kp_normal_radius.Ptr(),
-        m_d_kp_normal_radius.Ptr(),
+        m_kp_measure_normal_radius.Ptr(),
         m_kp_match.Ptr(),
         // KNN structure
         m_knn_patch_array.Ptr(),

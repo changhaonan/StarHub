@@ -146,8 +146,8 @@ int main()
 
             KeyPoint4Solver keypoint4solver;
             keypoint4solver.kp_match = keypoint_processor->GetMatchedKeyPointsReadOnly();
-            keypoint4solver.d_kp_vertex_confid = keypoint_processor->MeasureKeyPoints()->ReferenceVertexConfidenceReadOnly();
-            keypoint4solver.d_kp_normal_radius = keypoint_processor->MeasureKeyPoints()->ReferenceNormalRadiusReadOnly();
+            keypoint4solver.kp_measure_vertex_confid = keypoint_processor->MeasureKeyPoints()->ReferenceVertexConfidenceReadOnly();
+            keypoint4solver.kp_measure_normal_radius = keypoint_processor->MeasureKeyPoints()->ReferenceNormalRadiusReadOnly();
             keypoint4solver.kp_vertex_confid = keypoint_processor->ModelKeyPoints()->ReferenceVertexConfidenceReadOnly();
             keypoint4solver.kp_normal_radius = keypoint_processor->ModelKeyPoints()->ReferenceNormalRadiusReadOnly();
             keypoint4solver.kp_knn = keypoint_processor->ModelKeyPoints()->SurfelKNNReadOnly();
