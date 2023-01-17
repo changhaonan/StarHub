@@ -21,8 +21,8 @@ int main()
     using namespace star;
     // std::string scene_name = "move_dragon";
     // std::string scene_name = "home1";
-    std::string scene_name = "fastycb1";
-    // std::string scene_name = "fastycb2";
+    // std::string scene_name = "fastycb1";
+    std::string scene_name = "fastycb2";
     auto root_path_prefix = boost::filesystem::path(__FILE__).parent_path().parent_path().parent_path();
     auto config_path_prefix = root_path_prefix / "data";
     auto output_path = root_path_prefix / "external/Easy3DViewer/public/test_data" / scene_name;
@@ -52,7 +52,7 @@ int main()
 
     //  Evaluation-related
     auto ycb_pose_reader = std::make_shared<YCBPoseReader>();
-    auto pose_gt_path = config_path_prefix / scene_name / "pose_gt.txt";
+    auto pose_gt_path = config_path_prefix / scene_name / "poses_gt.txt";
     if (boost::filesystem::exists(pose_gt_path))
     {
         ycb_pose_reader->Parse(pose_gt_path.string());

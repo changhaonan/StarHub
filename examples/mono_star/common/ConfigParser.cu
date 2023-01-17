@@ -195,6 +195,9 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
     // Process related
     m_reinit_counter = config_json.at("reinit_counter");
 
+    // Eval related
+    m_track_semantic_label = config_json.at("track_semantic_label");
+
     // Log out information
     Log();
 }

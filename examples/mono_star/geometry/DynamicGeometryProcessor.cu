@@ -83,6 +83,9 @@ star::DynamicGeometryProcessor::DynamicGeometryProcessor()
     m_enable_vis = config.enable_vis();
     m_pcd_size = config.pcd_size();
     m_node_graph_size = config.graph_node_size();
+
+    // Eval
+    m_track_semantic_label = config.track_semantic_label();
 }
 
 star::DynamicGeometryProcessor::~DynamicGeometryProcessor()
@@ -294,21 +297,19 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
     }
 #endif
 
-#ifdef ENABLE_POSE_EVAL
-    if (frame_idx > 0)
+    if (frame_idx > 0 && m_track_semantic_label > 0)
     {
         // Evaluate average dq when there is only one moving object
         // Select the first 6 nodes from semantic 3.
-        unsigned short semantic_id = 3;
         unsigned num_node_selected = 6;
         DualQuaternion average_dq;
         float3 average_pos;
-        computeAverageNodeDeform(vis_buffer_idx, semantic_id, num_node_selected, average_dq, average_pos, stream);
+        computeAverageNodeDeform(vis_buffer_idx, m_track_semantic_label, num_node_selected, average_dq, average_pos, stream);
         auto average_mat = average_dq.se3_matrix();
         average_mat.trans = average_pos;
         context.addCoord("average_dq", "", m_cam2world.inverse() * Eigen::Matrix4f(average_mat), 0.3);
     }
-#endif
+
     // Save images
     context.addImage("ref-rgb");
     context.addImage("ref-depth");

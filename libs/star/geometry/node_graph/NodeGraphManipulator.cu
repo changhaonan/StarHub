@@ -364,14 +364,18 @@ void star::NodeGraphManipulator::SelectNodeBySemantic(
 	const unsigned num_node_selected,
 	std::vector<unsigned short> &node_list_selected)
 {
-	// Download
 	std::vector<ucharX<d_max_num_semantic>> h_node_semantic_prob;
 	node_semantic_prob.Download(h_node_semantic_prob);
-
+	std::vector<int> existed_label;
+	node_list_selected.clear();
 	unsigned count = 0;
 	for (auto i = 0; i < h_node_semantic_prob.size(); i++)
 	{
-		if (max_id(h_node_semantic_prob[i]) == semantic_id)
+		auto node_semantic_label = max_id(h_node_semantic_prob[i]);
+		// Log existed label
+		if (std::find(existed_label.begin(), existed_label.end(), node_semantic_label) == existed_label.end())
+			existed_label.push_back(node_semantic_label);
+		if (node_semantic_label == semantic_id)
 		{
 			node_list_selected.push_back((unsigned short)i);
 			count++;
@@ -380,6 +384,14 @@ void star::NodeGraphManipulator::SelectNodeBySemantic(
 		}
 	}
 
-	// Make sure we found more than required
-	STAR_CHECK_GE(count, num_node_selected);
+	// Post-check
+	if (count == 0)
+	{
+		std::cout << "Label not found!" << std::endl;
+		std::cout << "Existed labels: ";
+		for (auto i = 0; i < existed_label.size(); i++)
+			std::cout << existed_label[i] << " ";
+		std::cout << std::endl;
+		throw std::exception();
+	}
 }

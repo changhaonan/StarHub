@@ -204,7 +204,14 @@ namespace star
 
     private:
         unsigned m_reinit_counter = 10;
-        
+
+        // Eval-related
+    public:
+        int track_semantic_label() const { return m_track_semantic_label; }
+
+    private:
+        int m_track_semantic_label = -1;
+
         // Visualization related
     public:
         void loadVisConfigFromJson(const void *json_ptr);

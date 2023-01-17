@@ -102,5 +102,6 @@ namespace star
         GeometryFusor::Ptr m_geometry_fusor;
         // Evaluation
         GArrayView<DualQuaternion> m_solved_se3; // Ref to solved se3
+        int m_track_semantic_label;
     };
 }
