@@ -256,7 +256,6 @@ namespace star::device
 		float4 vertex_confid = tex2D<float4>(vertex_confid_map, x, y);
 		if (fabs(vertex_confid.z) < 1e-6f)
 			is_valid = false;
-
 		float3 vertex_confid_world = cam2world.rot * vertex_confid + cam2world.trans;
 		vertex_confid = make_float4(
 			vertex_confid_world.x,
@@ -278,8 +277,8 @@ namespace star::device
 
 		float4 color_time_ = tex2D<float4>(color_time_map, x, y);
 		color_time[idx] = color_time_;
-
 		int semantic_label = tex2D<int>(segmentation_map, x, y);
+		printf("fetch sematic.\n");
 		ucharX<d_max_num_semantic> semantic_prob_val;
 		semantic_prob_val[semantic_label] = 2; // Semantic initialized as 2
 		semantic_prob[idx] = semantic_prob_val;

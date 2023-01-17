@@ -74,22 +74,23 @@ int main()
         // Semantic process (Expand Measurement)
         semantic_processor->ProcessFrame(measure_processor->GetSurfelMap(), frame_idx, 0);
 
-        // KeyPoint process (Expand Measurement)
-        keypoint_processor->ProcessFrame(
-            measure_processor->GetSurfelMapTex(),
-            geometry_processor->GetSurfelMapTex(),
-            frame_idx, 0);
-        // Bind keypoint to node graph
-        auto geometry4skinner = keypoint_processor->ModelKeyPoints()->GenerateGeometry4Skinner();
-        auto nodegraph4skinner = geometry_processor->ActiveNodeGraph()->GenerateNodeGraph4Skinner();
-        Skinner::PerformSkinningFromLive(geometry4skinner, nodegraph4skinner, 0);
-        if (config.enable_semantic_surfel())
-        {
-            Skinner::UpdateSkinnningConnection(geometry4skinner, nodegraph4skinner, 0);
-        }
-
         if (frame_idx > 0)
         {
+            // KeyPoint process (Expand Measurement)
+            keypoint_processor->ProcessFrame(
+                measure_processor->GetSurfelMapTex(),
+                geometry_processor->GetSurfelMapTex(),
+                frame_idx, 0);
+
+            // Bind keypoint to node graph
+            auto geometry4skinner = keypoint_processor->ModelKeyPoints()->GenerateGeometry4Skinner();
+            auto nodegraph4skinner = geometry_processor->ActiveNodeGraph()->GenerateNodeGraph4Skinner();
+            Skinner::PerformSkinningFromLive(geometry4skinner, nodegraph4skinner, 0);
+            if (config.enable_semantic_surfel())
+            {
+                Skinner::UpdateSkinnningConnection(geometry4skinner, nodegraph4skinner, 0);
+            }
+
             // Optical flow process
             auto surfel_map_this = measure_processor->GetSurfelMapTex();
             auto surfel_map_prev = geometry_processor->GetSurfelMapTex();
@@ -168,9 +169,6 @@ int main()
             // Apply the warp
             geometry_processor->ProcessFrame(
                 measure_processor->GetSurfelMapTex(),
-                keypoint_processor->Get2DKeyPointsReadOnly(),
-                keypoint_processor->MeasureDescriptorsReadOnly(),
-                keypoint_processor->GetMatchedKeyPointsReadOnly(),
                 opt_processor->SolvedSE3(),
                 frame_idx,
                 0); // Dynamic geometry process
@@ -180,9 +178,6 @@ int main()
             GArrayView<DualQuaternion> empty_se3;
             geometry_processor->ProcessFrame(
                 measure_processor->GetSurfelMapTex(),
-                keypoint_processor->Get2DKeyPointsReadOnly(),
-                keypoint_processor->MeasureDescriptorsReadOnly(),
-                keypoint_processor->GetMatchedKeyPointsReadOnly(),
                 empty_se3,
                 frame_idx,
                 0);

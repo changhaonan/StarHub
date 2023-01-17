@@ -110,10 +110,12 @@ void star::KeyPointDetectProcessor::ProcessFrame(
     // Detect Feature
     detectFeature(measure_surfel_map, m_keypoint_tar, m_descriptor_tar, stream);
     buildKeyPoints(measure_surfel_map, m_keypoint_tar, m_descriptor_tar, m_measure_keypoints, stream);
+    cudaSafeCall(cudaStreamSynchronize(stream));
     if (frame_idx > 0)
     {
         detectFeature(model_surfel_map, m_keypoint_src, m_descriptor_src, stream);
         buildKeyPoints(model_surfel_map, m_keypoint_src, m_descriptor_src, m_model_keypoints, stream);
+        cudaSafeCall(cudaStreamSynchronize(stream));
         // Match Feature
         float kp_match_pixel_dist = 20.f;
         MatchKeyPointsBFOpenCVHostOnly(
@@ -264,7 +266,7 @@ void star::KeyPointDetectProcessor::buildKeyPoints(
         descriptor.total() * sizeof(unsigned char),
         cudaMemcpyHostToDevice,
         stream));
-
+    cudaSafeCall(cudaStreamSynchronize(stream));
     // Resize
     m_g_keypoints.ResizeArrayOrException(num_keypoints_detected);
     keypoints->Resize(num_keypoints_detected);
@@ -278,4 +280,5 @@ void star::KeyPointDetectProcessor::buildKeyPoints(
         m_cam2world,
         m_enable_semantic_surfel,
         stream);
+    cudaSafeCall(cudaStreamSynchronize(stream));
 }
