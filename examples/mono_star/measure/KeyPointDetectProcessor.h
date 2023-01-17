@@ -25,14 +25,15 @@ namespace star
         void ProcessFrame(
             const SurfelMapTex &measure_surfel_map,
             const SurfelMapTex &model_surfel_map,
-            const KeyPoints &model_keypoints,
             const unsigned frame_idx,
             cudaStream_t stream);
         // Fetch-API
         GArrayView<float2> Get2DKeyPointsReadOnly() const { return m_g_keypoints.View(); }
-        GArrayView<unsigned char> GetDescriptorsReadOnly() const { return m_measure_keypoints->DescriptorReadOnly(); }
-        star::KeyPoints::Ptr GetKeyPointsReadOnly() const { return m_measure_keypoints; }
+        GArrayView<unsigned char> MeasureDescriptorsReadOnly() const { return m_measure_keypoints->DescriptorReadOnly(); }
+        star::KeyPoints::Ptr MeasureKeyPoints() const { return m_measure_keypoints; }
+        star::KeyPoints::Ptr ModelKeyPoints() const { return m_model_keypoints; }
         GArrayView<int2> GetMatchedKeyPointsReadOnly() const { return m_keypoint_matches.View(); }
+
         // Build Solver
         // KeyPoint4Solver GenerateKeyPoint4Solver(
         //     const SurfelMapTex &measure_surfel_map,
@@ -48,7 +49,6 @@ namespace star
             const KeyPoints &keypoints_dst,
             cudaStream_t stream);
         void saveContext(
-            const KeyPoints &model_keypoints,
             unsigned frame_idx,
             cudaStream_t stream);
         // KeyPoint Online Detection

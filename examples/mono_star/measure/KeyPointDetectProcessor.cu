@@ -104,7 +104,6 @@ star::KeyPointDetectProcessor::~KeyPointDetectProcessor()
 void star::KeyPointDetectProcessor::ProcessFrame(
     const SurfelMapTex &measure_surfel_map,
     const SurfelMapTex &model_surfel_map,
-    const KeyPoints &model_keypoints,
     const unsigned frame_idx,
     cudaStream_t stream)
 {
@@ -130,30 +129,16 @@ void star::KeyPointDetectProcessor::ProcessFrame(
         m_keypoint_matches.ResizeArrayOrException(m_num_valid_matches);
     }
 
-    if (frame_idx != 0 && m_measure_keypoints->NumKeyPoints() > 0 && model_keypoints.NumKeyPoints() > 0)
-    {
-        // Apply matching between model keypoints and detected keypoints
-        MatchKeyPointsBFOpenCV(
-            *m_measure_keypoints,
-            model_keypoints,
-            m_keypoint_matches.Slice(),
-            m_num_valid_matches,
-            m_kp_match_ratio_thresh,
-            m_kp_match_dist_thresh,
-            stream);
-        m_keypoint_matches.ResizeArrayOrException(m_num_valid_matches);
-    }
-
     // Sync stream
     cudaSafeCall(cudaStreamSynchronize(stream));
 
     // Save context
     if (m_enable_vis)
-        saveContext(model_keypoints, frame_idx, stream);
+        saveContext(frame_idx, stream);
 }
 
 void star::KeyPointDetectProcessor::saveContext(
-    const KeyPoints &model_keypoints, unsigned frame_idx, cudaStream_t stream)
+    unsigned frame_idx, cudaStream_t stream)
 {
     auto &context = easy3d::Context::Instance();
     context.addPointCloud("d_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
@@ -161,18 +146,18 @@ void star::KeyPointDetectProcessor::saveContext(
         m_measure_keypoints->LiveVertexConfidenceReadOnly(),
         context.at("d_keypoints"));
 
-    if (model_keypoints.NumKeyPoints() > 0)
+    if (m_model_keypoints->NumKeyPoints() > 0)
     {
         context.addPointCloud("model_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
         visualize::SavePointCloud(
-            model_keypoints.LiveVertexConfidenceReadOnly(),
+            m_model_keypoints->LiveVertexConfidenceReadOnly(),
             context.at("model_keypoints"));
     }
 
     // Draw the matched keypoints
     if (m_num_valid_matches > 0)
     {
-        getMatchedKeyPoints(*m_measure_keypoints, model_keypoints, stream);
+        getMatchedKeyPoints(*m_model_keypoints, *m_measure_keypoints, stream);
         context.addPointCloud("matched_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
         visualize::SaveMatchedPointCloud(
             m_matched_vertex_src.View(),

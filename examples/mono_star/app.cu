@@ -9,6 +9,7 @@
 #include "opt/OptimizationProcessorWarpSolver.h"
 #include <star/math/DualQuaternion.hpp>
 #include <star/io/YCBPoseReader.h>
+#include <star/geometry/node_graph/Skinner.h>
 #include <star/visualization/Visualizer.h>
 // Viewer
 #include <easy3d_viewer/context.hpp>
@@ -75,9 +76,17 @@ int main()
 
         // KeyPoint process (Expand Measurement)
         keypoint_processor->ProcessFrame(
-            measure_processor->GetSurfelMapTex(), 
+            measure_processor->GetSurfelMapTex(),
             geometry_processor->GetSurfelMapTex(),
-            *geometry_processor->ActiveKeyPoints(), frame_idx, 0);
+            frame_idx, 0);
+        // Bind keypoint to node graph
+        auto geometry4skinner = keypoint_processor->ModelKeyPoints()->GenerateGeometry4Skinner();
+        auto nodegraph4skinner = geometry_processor->ActiveNodeGraph()->GenerateNodeGraph4Skinner();
+        Skinner::PerformSkinningFromLive(geometry4skinner, nodegraph4skinner, 0);
+        if (config.enable_semantic_surfel())
+        {
+            Skinner::UpdateSkinnningConnection(geometry4skinner, nodegraph4skinner, 0);
+        }
 
         if (frame_idx > 0)
         {
@@ -136,13 +145,13 @@ int main()
 
             KeyPoint4Solver keypoint4solver;
             keypoint4solver.kp_match = keypoint_processor->GetMatchedKeyPointsReadOnly();
-            keypoint4solver.d_kp_vertex_confid = keypoint_processor->GetKeyPointsReadOnly()->ReferenceVertexConfidenceReadOnly();
-            keypoint4solver.d_kp_normal_radius = keypoint_processor->GetKeyPointsReadOnly()->ReferenceNormalRadiusReadOnly();
-            keypoint4solver.kp_vertex_confid = geometry_processor->ActiveKeyPoints()->ReferenceVertexConfidenceReadOnly();
-            keypoint4solver.kp_normal_radius = geometry_processor->ActiveKeyPoints()->ReferenceNormalRadiusReadOnly();
-            keypoint4solver.kp_knn = geometry_processor->ActiveKeyPoints()->SurfelKNNReadOnly();
-            keypoint4solver.kp_knn_spatial_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNSpatialWeightReadOnly();
-            keypoint4solver.kp_knn_connect_weight = geometry_processor->ActiveKeyPoints()->SurfelKNNConnectWeightReadOnly();
+            keypoint4solver.d_kp_vertex_confid = keypoint_processor->MeasureKeyPoints()->ReferenceVertexConfidenceReadOnly();
+            keypoint4solver.d_kp_normal_radius = keypoint_processor->MeasureKeyPoints()->ReferenceNormalRadiusReadOnly();
+            keypoint4solver.kp_vertex_confid = keypoint_processor->ModelKeyPoints()->ReferenceVertexConfidenceReadOnly();
+            keypoint4solver.kp_normal_radius = keypoint_processor->ModelKeyPoints()->ReferenceNormalRadiusReadOnly();
+            keypoint4solver.kp_knn = keypoint_processor->ModelKeyPoints()->SurfelKNNReadOnly();
+            keypoint4solver.kp_knn_spatial_weight = keypoint_processor->ModelKeyPoints()->SurfelKNNSpatialWeightReadOnly();
+            keypoint4solver.kp_knn_connect_weight = keypoint_processor->ModelKeyPoints()->SurfelKNNConnectWeightReadOnly();
 
             // Solve
             opt_processor->ProcessFrame(
@@ -160,7 +169,7 @@ int main()
             geometry_processor->ProcessFrame(
                 measure_processor->GetSurfelMapTex(),
                 keypoint_processor->Get2DKeyPointsReadOnly(),
-                keypoint_processor->GetDescriptorsReadOnly(),
+                keypoint_processor->MeasureDescriptorsReadOnly(),
                 keypoint_processor->GetMatchedKeyPointsReadOnly(),
                 opt_processor->SolvedSE3(),
                 frame_idx,
@@ -172,7 +181,7 @@ int main()
             geometry_processor->ProcessFrame(
                 measure_processor->GetSurfelMapTex(),
                 keypoint_processor->Get2DKeyPointsReadOnly(),
-                keypoint_processor->GetDescriptorsReadOnly(),
+                keypoint_processor->MeasureDescriptorsReadOnly(),
                 keypoint_processor->GetMatchedKeyPointsReadOnly(),
                 empty_se3,
                 frame_idx,
@@ -182,9 +191,10 @@ int main()
         if (ycb_pose_reader->GetNumPoses())
         {
             if (context.has("average_dq"))
-            {   
+            {
                 auto gt_pose = ycb_pose_reader->GetPoses()[frame_idx * config.step_frame() + config.start_frame_idx()];
-                if (!pose_inited) {
+                if (!pose_inited)
+                {
                     auto pose_json = context.of("average_dq");
                     auto est_pose_vec = pose_json["vis"]["coordinate"].get<std::vector<float>>();
                     Eigen::Matrix4f est_pose_mat(est_pose_vec.data());
