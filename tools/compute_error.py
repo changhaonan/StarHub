@@ -157,6 +157,6 @@ if __name__ == "__main__":
     est_data_dir = os.path.join(
         project_root, "external/Easy3DViewer/public/test_data", dataset
     )
-    gt_file_name = os.path.join(project_root, "data", dataset, "pose_gt.txt")
+    gt_file_name = os.path.join(project_root, "data", dataset, "poses_gt.txt")
     output_file_name = os.path.join(project_root, "eval", dataset, "mse.txt")
     compute_error(est_data_dir, gt_file_name, output_file_name)

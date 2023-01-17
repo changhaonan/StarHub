@@ -265,7 +265,7 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_node_graph[vis_buffer_idx]->NodeKnnReadOnly(),
         context.at("live_graph"));
 
-#ifndef ENABLE_EFFICIENCY_MODE
+// #ifndef ENABLE_EFFICIENCY_MODE
     // Save semantic
     if (m_enable_semantic_surfel)
     {
@@ -295,7 +295,7 @@ void star::DynamicGeometryProcessor::saveContext(const unsigned frame_idx, cudaS
         m_node_graph[vis_buffer_idx]->NodeKnnConnectWeightReadOnly().Download(h_node_connect);
         visualize::SaveGraph(h_node_vertex, node_vertex_color, h_edges, h_node_connect, context.at(segmentation_graph_name));
     }
-#endif
+// #endif
 
     if (frame_idx > 0 && m_track_semantic_label > 0)
     {

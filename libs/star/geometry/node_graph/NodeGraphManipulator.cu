@@ -344,8 +344,8 @@ void star::NodeGraphManipulator::AvergeNodeMovementAndPos(
 	average_node_se3.set_zero();
 	average_node_pos = make_float3(0, 0, 0);
 	float num_nodes_selected = 0;
-	for (auto i = 0; i < node_list.size(); i++)
-	// for (auto i = 0; i < 1; i++) // I use one for debug
+	// for (auto i = 0; i < node_list.size(); i++)
+	for (auto i = 0; i < 1; i++) // I use one for debug
 	{
 		average_node_se3 += h_dq[node_list[i]];
 		average_node_pos += make_float3(h_node_coord[node_list[i]].x, h_node_coord[node_list[i]].y, h_node_coord[node_list[i]].z);
@@ -393,5 +393,12 @@ void star::NodeGraphManipulator::SelectNodeBySemantic(
 			std::cout << existed_label[i] << " ";
 		std::cout << std::endl;
 		throw std::exception();
+	}
+	else
+	{
+		std::cout << "Selected: ";
+		for (auto i = 0; i < node_list_selected.size(); i++)
+			std::cout << node_list_selected[i] << " ";
+		std::cout << std::endl;
 	}
 }
