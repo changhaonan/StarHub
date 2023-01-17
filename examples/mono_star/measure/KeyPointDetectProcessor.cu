@@ -123,10 +123,13 @@ void star::KeyPointDetectProcessor::ProcessFrame(
             m_keypoint_tar,   // Measure
             m_descriptor_src, // Model
             m_descriptor_tar, // Measure
+            m_model_keypoints->LiveVertexConfidenceReadOnly(),
+            m_measure_keypoints->LiveVertexConfidenceReadOnly(),
             m_keypoint_matches.Slice(),
             m_num_valid_matches,
             m_kp_match_ratio_thresh,
             kp_match_pixel_dist,
+            m_kp_match_dist_thresh,
             stream);
         m_keypoint_matches.ResizeArrayOrException(m_num_valid_matches);
     }
