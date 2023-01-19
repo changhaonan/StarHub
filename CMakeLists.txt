@@ -41,7 +41,7 @@ find_package(OpenCV 4.6 REQUIRED COMPONENTS core imgproc highgui features2d)
 include_directories(${OpenCV_INCLUDE_DIR})
 
 # Boost
-find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(Boost REQUIRED COMPONENTS system filesystem program_options)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # FLANN

@@ -50,7 +50,6 @@ namespace star
         GArraySlice<int2> matches,
         unsigned &num_valid_match,
         const float ratio_thresh,
-        const float pixel_dist_thresh,
         const float vertex_dist_thresh,
         cudaStream_t stream);
 }

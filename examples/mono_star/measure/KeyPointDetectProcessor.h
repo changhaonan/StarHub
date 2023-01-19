@@ -62,12 +62,13 @@ namespace star
             cv::Mat &keypoint,
             cv::Mat &descriptor,
             cudaStream_t stream);
-        // Keypoint Build
+        // Build keypoints in world coordinate
         void buildKeyPoints(
             const SurfelMapTex &surfel_map,
             const cv::Mat &keypoint,
             const cv::Mat &descriptor,
             KeyPoints::Ptr keypoints,
+            const Extrinsic& T_to_world,
             cudaStream_t stream);
 
         // Camera parameters

@@ -14,7 +14,8 @@ target_link_libraries(mono_star
     common_lib 
     geometry_lib 
     io_lib
-    visualization_lib)
+    visualization_lib
+    ${Boost_PROGRAM_OPTIONS_LIBRARIES})
 
 add_executable(mono_star_wo_kp app_wo_kp.cu)
 target_link_libraries(mono_star_wo_kp 

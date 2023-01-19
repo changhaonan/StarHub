@@ -27,6 +27,12 @@
   "monitor_mode": "r_star",
   "monitor_save_counter": 10,
   "nn_device": "cuda:0",
+  "reinit_counter": 20,
+  "use_keypoint": true,
+  "keypoint_type": "ORB",
+  "kp_match_ratio_thresh": 0.7,
+  "kp_match_dist_thresh": 0.1,
+  "track_semantic_label": -1,
   "semantic_prior": {
     "people": {
       "label": 0,

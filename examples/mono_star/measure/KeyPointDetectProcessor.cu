@@ -109,15 +109,14 @@ void star::KeyPointDetectProcessor::ProcessFrame(
 {
     // Detect Feature
     detectFeature(measure_surfel_map, m_keypoint_tar, m_descriptor_tar, stream);
-    buildKeyPoints(measure_surfel_map, m_keypoint_tar, m_descriptor_tar, m_measure_keypoints, stream);
+    buildKeyPoints(measure_surfel_map, m_keypoint_tar, m_descriptor_tar, m_measure_keypoints, m_cam2world, stream);
     cudaSafeCall(cudaStreamSynchronize(stream));
     if (frame_idx > 0)
     {
         detectFeature(model_surfel_map, m_keypoint_src, m_descriptor_src, stream);
-        buildKeyPoints(model_surfel_map, m_keypoint_src, m_descriptor_src, m_model_keypoints, stream);
+        buildKeyPoints(model_surfel_map, m_keypoint_src, m_descriptor_src, m_model_keypoints, Eigen::Matrix4f::Identity(), stream);
         cudaSafeCall(cudaStreamSynchronize(stream));
         // Match Feature
-        float kp_match_pixel_dist = 20.f;
         MatchKeyPointsBFOpenCVHostOnly(
             m_keypoint_src,   // Model
             m_keypoint_tar,   // Measure
@@ -128,7 +127,6 @@ void star::KeyPointDetectProcessor::ProcessFrame(
             m_keypoint_matches.Slice(),
             m_num_valid_matches,
             m_kp_match_ratio_thresh,
-            kp_match_pixel_dist,
             m_kp_match_dist_thresh,
             stream);
         m_keypoint_matches.ResizeArrayOrException(m_num_valid_matches);
@@ -146,7 +144,7 @@ void star::KeyPointDetectProcessor::saveContext(
     unsigned frame_idx, cudaStream_t stream)
 {
     auto &context = easy3d::Context::Instance();
-    context.addPointCloud("measure_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
+    context.addPointCloud("measure_keypoints", "", m_cam2world.inverse(), m_pcd_size);
     visualize::SaveSemanticPointCloud(
         m_measure_keypoints->LiveVertexConfidenceReadOnly(),
         m_measure_keypoints->SemanticProbReadOnly(),
@@ -155,10 +153,10 @@ void star::KeyPointDetectProcessor::saveContext(
 
     if (m_model_keypoints->NumKeyPoints() > 0)
     {
-        context.addPointCloud("model_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
+        context.addPointCloud("model_keypoints", "", m_cam2world.inverse(), m_pcd_size);
         visualize::SaveSemanticPointCloud(
-            m_measure_keypoints->LiveVertexConfidenceReadOnly(),
-            m_measure_keypoints->SemanticProbReadOnly(),
+            m_model_keypoints->LiveVertexConfidenceReadOnly(),
+            m_model_keypoints->SemanticProbReadOnly(),
             visualize::default_semantic_color_dict,
             context.at("model_keypoints"));
     }
@@ -167,7 +165,7 @@ void star::KeyPointDetectProcessor::saveContext(
     if (m_num_valid_matches > 0)
     {
         getMatchedKeyPoints(*m_model_keypoints, *m_measure_keypoints, stream);
-        context.addPointCloud("matched_keypoints", "", Eigen::Matrix4f::Identity(), m_pcd_size);
+        context.addPointCloud("matched_keypoints", "", m_cam2world.inverse(), m_pcd_size);
         visualize::SaveMatchedPointCloud(
             m_matched_vertex_src.View(),
             m_matched_vertex_dst.View(),
@@ -250,6 +248,7 @@ void star::KeyPointDetectProcessor::buildKeyPoints(
     const cv::Mat &keypoint,
     const cv::Mat &descriptor,
     KeyPoints::Ptr keypoints,
+    const Extrinsic& T_to_world,
     cudaStream_t stream)
 {
     // Load the keypoint and descriptor into gpu
@@ -284,7 +283,7 @@ void star::KeyPointDetectProcessor::buildKeyPoints(
         *keypoints,
         surfel_map,
         m_g_keypoints.View(),
-        m_cam2world,
+        T_to_world,
         m_enable_semantic_surfel,
         stream);
     cudaSafeCall(cudaStreamSynchronize(stream));

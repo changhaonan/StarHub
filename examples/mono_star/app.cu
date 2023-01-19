@@ -13,16 +13,24 @@
 #include <star/visualization/Visualizer.h>
 // Viewer
 #include <easy3d_viewer/context.hpp>
+// Config
+#include <boost/program_options.hpp>
 
-int main()
+int main(int argc, char *argv[])
 {
-    std::cout << "Start testing Mono-STAR" << std::endl;
-
     using namespace star;
-    // std::string scene_name = "move_dragon";
-    // std::string scene_name = "home1";
-    // std::string scene_name = "fastycb1";
-    std::string scene_name = "fastycb2";
+    namespace po = boost::program_options;
+    
+    po::options_description desc("Allowed options");
+    desc.add_options()("help", "produce help message")("scene_name", po::value<std::string>(), "name of scene");
+    
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+
+    std::string scene_name = vm["scene_name"].as<std::string>();
+    std::cout << "Start testing Mono-STAR on " << scene_name << "..." << std::endl;
+
     auto root_path_prefix = boost::filesystem::path(__FILE__).parent_path().parent_path().parent_path();
     auto config_path_prefix = root_path_prefix / "data";
     auto output_path = root_path_prefix / "external/Easy3DViewer/public/test_data" / scene_name;
@@ -45,7 +53,6 @@ int main()
     auto keypoint_processor = std::make_shared<KeyPointDetectProcessor>();
 
     auto geometry_processor = std::make_shared<DynamicGeometryProcessor>();
-    // auto opticalflow_processor = std::make_shared<OpticalFlowProcessorOffline>();
     auto opticalflow_processor = std::make_shared<OpticalFlowProcessorGMA>();
     auto node_motion_processor = std::make_shared<NodeMotionProcessor>();
     auto opt_processor = std::make_shared<OptimizationProcessorWarpSolver>();
