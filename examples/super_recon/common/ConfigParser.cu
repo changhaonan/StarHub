@@ -66,6 +66,19 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
     STAR_CHECK(config_json.find("num_frames") != config_json.end());
     m_start_frame_idx = config_json.at("start_frame");
     m_num_frames = config_json.at("num_frames");
+    if (m_num_frames < 0)
+    {
+        auto image_path = m_data_prefix + "/cam-00";
+        // Count images that ends with .color.png
+        m_num_frames = std::count_if(
+            boost::filesystem::directory_iterator(image_path),
+            boost::filesystem::directory_iterator(),
+            [](const boost::filesystem::directory_entry &e)
+            {
+                return (e.path().string().find(".color.png") != std::string::npos);
+            });
+    }
+
     m_step_frame = config_json.at("step_frame");
     // Lambda function
     const auto check_and_load = [&](bool &assign_value, const std::string &key, bool default_value) -> void
@@ -139,7 +152,7 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
             sementic_id++;
         }
         m_semantic_label.resize(sementic_id);
-        m_dynamic_regulation[0] = max_rigidness;  // The background is the most rigid
+        m_dynamic_regulation[0] = max_rigidness; // The background is the most rigid
     }
 
     // Resample-related
