@@ -65,21 +65,22 @@ void star::ConfigParser::loadSysConfigFromJson(const void *json_ptr)
     STAR_CHECK(config_json.find("start_frame") != config_json.end());
     STAR_CHECK(config_json.find("num_frames") != config_json.end());
     m_start_frame_idx = config_json.at("start_frame");
+    m_step_frame = config_json.at("step_frame");
     m_num_frames = config_json.at("num_frames");
     if (m_num_frames < 0)
     {
         auto image_path = m_data_prefix + "/cam-00";
         // Count images that ends with .color.png
-        m_num_frames = std::count_if(
+        auto num_frames_totoal = std::count_if(
             boost::filesystem::directory_iterator(image_path),
             boost::filesystem::directory_iterator(),
             [](const boost::filesystem::directory_entry &e)
             {
                 return (e.path().string().find(".color.png") != std::string::npos);
             });
+        m_num_frames = std::floor((num_frames_totoal - m_start_frame_idx) / m_step_frame);
     }
 
-    m_step_frame = config_json.at("step_frame");
     // Lambda function
     const auto check_and_load = [&](bool &assign_value, const std::string &key, bool default_value) -> void
     {
